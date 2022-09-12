@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { PostPatternDetailService } from './post-pattern-detail.service';
 import { Prisma } from '@prisma/client';
+import { PatternValidationPipe } from '@libs/commons/pipes/pattern-validation.pipe';
 
 @Controller('post-pattern-detail')
 export class PostPatternDetailController {
@@ -20,9 +21,17 @@ export class PostPatternDetailController {
   // pattern & pagination_pattern sould be formatted in JSON.stringify()
   @Post()
   create(
+    @Body('pattern', PatternValidationPipe) pDetail: string,
+    @Body('episode_pattern', PatternValidationPipe) pEpisode: string,
     @Body() createPostPatternDetailDto: Prisma.PostDetailPatternCreateInput,
   ) {
-    return this.postPatternDetailService.create(createPostPatternDetailDto);
+    const data: Prisma.PostDetailPatternCreateInput = {
+      ...createPostPatternDetailDto,
+      pattern: pDetail,
+      episode_pattern: pEpisode,
+    };
+
+    return this.postPatternDetailService.create(data);
   }
 
   @Get()
@@ -43,9 +52,17 @@ export class PostPatternDetailController {
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
+    @Body('pattern', PatternValidationPipe) pDetail: string,
+    @Body('episode_pattern', PatternValidationPipe) pEpisode: string,
     @Body() updatePostPatternDetailDto: Prisma.PostDetailPatternUpdateInput,
   ) {
-    return this.postPatternDetailService.update(id, updatePostPatternDetailDto);
+    const data: Prisma.PostDetailPatternUpdateInput = {
+      ...updatePostPatternDetailDto,
+      pattern: pDetail,
+      episode_pattern: pEpisode,
+    };
+
+    return this.postPatternDetailService.update(id, data);
   }
 
   @Delete(':id')

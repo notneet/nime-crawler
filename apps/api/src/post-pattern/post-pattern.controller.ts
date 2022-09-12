@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { PostPatternService } from './post-pattern.service';
 import { Prisma } from '@prisma/client';
+import { PatternValidationPipe } from '@libs/commons/pipes/pattern-validation.pipe';
 
 @Controller('post-pattern')
 export class PostPatternController {
@@ -17,8 +18,18 @@ export class PostPatternController {
 
   // pattern & pagination_pattern sould be formatted in JSON.stringify()
   @Post()
-  create(@Body() createPostPatternDto: Prisma.PostPatternCreateInput) {
-    return this.postPatternService.create(createPostPatternDto);
+  create(
+    @Body('pattern', PatternValidationPipe) pPost: string,
+    @Body('pagination_pattern', PatternValidationPipe) pPagination: string,
+    @Body() createPostPatternDto: Prisma.PostPatternCreateInput,
+  ) {
+    const data: Prisma.PostPatternCreateInput = {
+      ...createPostPatternDto,
+      pattern: pPost,
+      pagination_pattern: pPagination,
+    };
+
+    return this.postPatternService.create(data);
   }
 
   @Get()
@@ -39,9 +50,17 @@ export class PostPatternController {
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
+    @Body('pattern', PatternValidationPipe) pPost: string,
+    @Body('pagination_pattern', PatternValidationPipe) pPagination: string,
     @Body() updatePostPatternDto: Prisma.PostPatternUpdateInput,
   ) {
-    return this.postPatternService.update(id, updatePostPatternDto);
+    const data: Prisma.PostPatternUpdateInput = {
+      ...updatePostPatternDto,
+      pattern: pPost,
+      pagination_pattern: pPagination,
+    };
+
+    return this.postPatternService.update(id, data);
   }
 
   @Delete(':id')
