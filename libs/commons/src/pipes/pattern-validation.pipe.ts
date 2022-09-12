@@ -14,7 +14,7 @@ export class PatternValidationPipe implements PipeTransform<string, string> {
       }
       throw new BadRequestException('Pattern must be an array');
     } catch (error) {
-      throw new BadRequestException('Pattern invalid 1');
+      throw new BadRequestException('Pattern invalid');
     }
   }
 }
