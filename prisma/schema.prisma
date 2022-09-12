@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Media {
+  id   Int    @id @default(autoincrement())
+  name String @default(dbgenerated("''")) @db.VarChar(128)
+  url  String @unique @db.VarChar(100)
+
+  @@map("media")
+}
+
+model AnimeSource {
+  id         Int       @id @default(autoincrement())
+  media_id   Int
+  url        String    @unique @db.VarChar(100)
+  interval   Int       @default(45) @db.UnsignedSmallInt
+  n_status   Int       @default(0) @db.TinyInt
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now()) @updatedAt
+
+  @@map("anime_source")
+}
+
+model PostPattern {
+  id                 Int       @id @default(autoincrement())
+  media_id           Int       @unique
+  pattern            String?   @db.Text
+  pagination_pattern String?   @db.Text
+  n_status           Int       @default(0) @db.UnsignedTinyInt
+  created_at         DateTime? @default(now())
+  updated_at         DateTime? @default(now()) @updatedAt
+
+  @@map("post_pattern")
+}
+
+model PostDetailPattern {
+  id              Int       @id @default(autoincrement())
+  media_id        Int       @unique
+  pattern         String?   @db.Text
+  n_status        Int       @default(0) @db.UnsignedTinyInt
+  episode_pattern String    @db.Text
+  created_at      DateTime? @default(now())
+  updated_at      DateTime? @default(now()) @updatedAt
+
+  @@map("post_detail_pattern")
+}
+
+model Watch {
+  id            Int       @id @default(autoincrement())
+  media_id      Int
+  url           String    @db.VarChar(128)
+  title         String?   @default(dbgenerated("''")) @db.VarChar(128)
+  title_jp      String?   @default(dbgenerated("''")) @db.VarChar(128)
+  title_en      String?   @default(dbgenerated("''")) @db.VarChar(128)
+  type          String?   @db.VarChar(10)
+  score         Decimal?  @default(0.0) @db.Decimal(3, 2)
+  status        String?   @db.VarChar(12)
+  duration      Int?      @db.UnsignedInt
+  total_episode Int?      @default(0) @db.UnsignedSmallInt
+  published     DateTime? @default(dbgenerated("'1970-01-01 00:00:00'"))
+  published_ts  DateTime? @db.Timestamp(0)
+  season        String?   @db.VarChar(100)
+  genres        String?   @db.VarChar(100)
+  producers     String?   @db.VarChar(100)
+  description   String?   @db.Text
+  cover_url     String?   @db.VarChar(100)
+  created_at    DateTime? @default(now())
+  updated_at    DateTime? @default(now()) @updatedAt
+
+  @@map("watch_media_id")
+}
+
+model Stream {
+  id           Int       @id @default(autoincrement())
+  media_id     Int
+  watch_id     Int
+  author       String?   @db.VarChar(128)
+  name         String?   @db.VarChar(100)
+  url          String?   @db.VarChar(512)
+  quality      String?   @db.VarChar(100)
+  file_size    String?   @db.VarChar(100)
+  published    DateTime? @db.Date
+  published_ts DateTime  @db.Timestamp(0)
+  created_at   DateTime? @default(now())
+  updated_at   DateTime? @default(now()) @updatedAt
+
+  @@map("stream_media_id")
+}
