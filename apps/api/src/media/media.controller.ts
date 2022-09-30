@@ -30,12 +30,12 @@ export class MediaController {
     return this.mediaService.findByUrl(urlMedia);
   }
 
-  @Patch(':id')
+  @Patch(':url')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('url') urlMedia: string,
     @Body() updateMediaDto: Prisma.MediaUpdateInput,
   ) {
-    return this.mediaService.update(id, updateMediaDto);
+    return this.mediaService.update(urlMedia, updateMediaDto);
   }
 
   @Delete(':id')

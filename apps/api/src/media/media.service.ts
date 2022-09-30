@@ -50,9 +50,9 @@ export class MediaService {
     }
   }
 
-  async update(id: number, updateMediaDto: Prisma.MediaUpdateInput) {
+  async update(urlMedia: string, updateMediaDto: Prisma.MediaUpdateInput) {
     try {
-      const media = await this.findOne(id);
+      const media = await this.findByUrl(urlMedia);
 
       if (media) {
         return this.prisma.media.updateMany({
@@ -60,7 +60,7 @@ export class MediaService {
             name: updateMediaDto.name,
             url: updateMediaDto.url,
           },
-          where: { id },
+          where: { url: urlMedia },
         });
       }
 
