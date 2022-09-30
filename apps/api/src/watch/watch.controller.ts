@@ -6,37 +6,40 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { WatchService } from './watch.service';
-import { CreateWatchDto } from './dto/create-watch.dto';
-import { UpdateWatchDto } from './dto/update-watch.dto';
+import { Prisma } from '@prisma/client';
 
 @Controller('watch')
 export class WatchController {
   constructor(private readonly watchService: WatchService) {}
 
   @Post()
-  create(@Body() createWatchDto: CreateWatchDto) {
+  create(@Body() createWatchDto: Prisma.WatchCreateInput) {
     return this.watchService.create(createWatchDto);
   }
 
   @Get()
-  findAll() {
-    return this.watchService.findAll();
+  async findAll() {
+    return await this.watchService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.watchService.findOne(+id);
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return await this.watchService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWatchDto: UpdateWatchDto) {
-    return this.watchService.update(+id, updateWatchDto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateWatchDto: Prisma.WatchUpdateInput,
+  ) {
+    return this.watchService.update(id, updateWatchDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.watchService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.watchService.remove(id);
   }
 }

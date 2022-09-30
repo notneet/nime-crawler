@@ -57,7 +57,7 @@ model PostDetailPattern {
 model Watch {
   id            Int       @id @default(autoincrement())
   media_id      Int
-  url           String    @db.VarChar(128)
+  url           String    @unique @db.VarChar(128)
   title         String?   @default(dbgenerated("''")) @db.VarChar(128)
   title_jp      String?   @default(dbgenerated("''")) @db.VarChar(128)
   title_en      String?   @default(dbgenerated("''")) @db.VarChar(128)
@@ -67,7 +67,7 @@ model Watch {
   duration      Int?      @db.UnsignedInt
   total_episode Int?      @default(0) @db.UnsignedSmallInt
   published     DateTime? @default(dbgenerated("'1970-01-01 00:00:00'"))
-  published_ts  DateTime? @db.Timestamp(0)
+  published_ts  DateTime? @default(dbgenerated("'1970-01-01 00:00:00'")) @db.Timestamp(0)
   season        String?   @db.VarChar(100)
   genres        String?   @db.VarChar(100)
   producers     String?   @db.VarChar(100)
