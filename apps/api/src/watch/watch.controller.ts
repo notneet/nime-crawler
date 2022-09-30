@@ -16,8 +16,8 @@ export class WatchController {
   constructor(private readonly watchService: WatchService) {}
 
   @Post()
-  create(@Body() createWatchDto: Prisma.WatchCreateInput) {
-    return this.watchService.create(createWatchDto);
+  async create(@Body() createWatchDto: Prisma.WatchCreateInput) {
+    return await this.watchService.create(createWatchDto);
   }
 
   @Get()
@@ -31,15 +31,15 @@ export class WatchController {
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateWatchDto: Prisma.WatchUpdateInput,
   ) {
-    return this.watchService.update(id, updateWatchDto);
+    return await this.watchService.update(id, updateWatchDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.watchService.remove(id);
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return await this.watchService.remove(id);
   }
 }
