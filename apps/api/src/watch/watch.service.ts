@@ -109,7 +109,13 @@ export class WatchService {
 
   async remove(id: number) {
     try {
-      return this.prisma.watch.deleteMany({ where: { id } });
+      const watch = await this.findOne(id);
+
+      if (watch) {
+        return this.prisma.watch.deleteMany({ where: { id } });
+      }
+
+      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }

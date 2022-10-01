@@ -85,7 +85,7 @@ model Stream {
   watch_id     Int
   author       String?   @db.VarChar(128)
   name         String?   @db.VarChar(100)
-  url          String?   @db.VarChar(512)
+  url          String?   @unique @db.VarChar(512)
   quality      String?   @db.VarChar(100)
   file_size    String?   @db.VarChar(100)
   published    DateTime? @db.Date

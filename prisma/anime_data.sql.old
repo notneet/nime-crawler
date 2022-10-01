@@ -1,13 +1,13 @@
--- MySQL dump 10.13  Distrib 5.7.39, for Linux (x86_64)
+-- MariaDB dump 10.19  Distrib 10.9.2-MariaDB, for Linux (x86_64)
 --
 -- Host: 127.0.0.1    Database: anime_data
 -- ------------------------------------------------------
--- Server version	8.0.29
+-- Server version	8.0.30
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8 */;
+/*!40101 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -43,7 +43,9 @@ CREATE TABLE `anime_source` (
 
 LOCK TABLES `anime_source` WRITE;
 /*!40000 ALTER TABLE `anime_source` DISABLE KEYS */;
-INSERT INTO `anime_source` VALUES (1,1,'https://otakudesu.watch/anime-list/',45,'2022-09-11 04:24:06','2022-09-11 04:24:06',1),(2,2,'https://194.163.183.129/a-z/',30,'2022-09-11 10:53:45','2022-09-11 11:14:36',1);
+INSERT INTO `anime_source` VALUES
+(1,1,'https://otakudesu.watch/anime-list/',45,'2022-09-11 04:24:06','2022-09-11 04:24:06',1),
+(2,2,'https://194.163.183.129/a-z/',30,'2022-09-11 10:53:45','2022-09-11 11:14:36',1);
 /*!40000 ALTER TABLE `anime_source` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -69,7 +71,10 @@ CREATE TABLE `media` (
 
 LOCK TABLES `media` WRITE;
 /*!40000 ALTER TABLE `media` DISABLE KEYS */;
-INSERT INTO `media` VALUES (1,'Otakudesu','otakudesu.video'),(2,'Samehadaku','194.163.183.129'),(3,'Moenime.id','moenime.web.id');
+INSERT INTO `media` VALUES
+(1,'Otakudesu','otakudesu.watch'),
+(2,'Samehadaku','194.163.183.129'),
+(3,'Moenime.id','moenime.web.id');
 /*!40000 ALTER TABLE `media` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -129,7 +134,9 @@ CREATE TABLE `post_pattern` (
 
 LOCK TABLES `post_pattern` WRITE;
 /*!40000 ALTER TABLE `post_pattern` DISABLE KEYS */;
-INSERT INTO `post_pattern` VALUES (1,1,'{\"container\":\"//div[@class=\'container\']\",\"title\":\"./title\"}','{\"pagination\":\"//ul/li/a[@class=\'next\']\"}',0,'2022-09-11 11:27:59','2022-09-11 11:27:59'),(2,2,'{\"container\":\"//div[@class=\'container\']\",\"title\":\"./title\"}','[{\"pagination\":\"//ul/li/a[@class=\'next\']\"}]',1,'2022-09-11 11:49:21','2022-09-12 06:12:36');
+INSERT INTO `post_pattern` VALUES
+(1,1,'{\"container\":\"//div[@class=\'container\']\",\"title\":\"./title\"}','{\"pagination\":\"//ul/li/a[@class=\'next\']\"}',0,'2022-09-11 11:27:59','2022-09-11 11:27:59'),
+(2,2,'{\"container\":\"//div[@class=\'container\']\",\"title\":\"./title\"}','[{\"pagination\":\"//ul/li/a[@class=\'next\']\"}]',1,'2022-09-11 11:49:21','2022-09-12 06:12:36');
 /*!40000 ALTER TABLE `post_pattern` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -154,7 +161,6 @@ CREATE TABLE `stream_media_id` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `stream_media_id_UN` (`url`),
   KEY `stream_media_id_file_size_IDX` (`file_size`) USING BTREE,
   KEY `stream_media_id_author_IDX` (`author`) USING BTREE,
   KEY `stream_media_id_media_id_IDX` (`media_id`) USING BTREE
@@ -199,7 +205,6 @@ CREATE TABLE `watch_media_id` (
   `cover_url` varchar(100) DEFAULT NULL,
   `media_id` int NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `watch_media_id_UN` (`url`),
   KEY `stream_media_id_status_IDX` (`status`) USING BTREE,
   KEY `stream_media_id_score_IDX` (`score`) USING BTREE,
   KEY `stream_media_id_duration_IDX` (`duration`) USING BTREE,
@@ -225,4 +230,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-09-30 19:23:58
+-- Dump completed on 2022-09-24  9:15:19

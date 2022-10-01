@@ -7,5 +7,6 @@ import { PrismaModule } from '@libs/commons/prisma/prisma.module';
   imports: [PrismaModule],
   controllers: [PostPatternController],
   providers: [PostPatternService],
+  exports: [PostPatternService],
 })
 export class PostPatternModule {}

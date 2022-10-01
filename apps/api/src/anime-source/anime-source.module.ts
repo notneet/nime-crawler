@@ -7,5 +7,6 @@ import { PrismaModule } from '@libs/commons/prisma/prisma.module';
   imports: [PrismaModule],
   controllers: [AnimeSourceController],
   providers: [AnimeSourceService],
+  exports: [AnimeSourceService],
 })
 export class AnimeSourceModule {}
