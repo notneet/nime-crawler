@@ -1,3 +1,4 @@
+import { Media } from '@libs/commons/dto/media.dto';
 import {
   Controller,
   Get,
@@ -7,21 +8,26 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  HttpException,
+  HttpStatus,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import { MediaService } from './media.service';
-import { Media, Prisma } from '@prisma/client';
 
 @Controller('media')
+@UsePipes(ValidationPipe)
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @Post()
-  create(@Body() createMediaDto: Prisma.MediaCreateInput) {
-    return this.mediaService.create(createMediaDto);
+  async create(@Body() createMediaDto: Media) {
+    await this.mediaService.create(createMediaDto);
+    return new HttpException('data inserted', HttpStatus.CREATED);
   }
 
   @Get()
-  findAll(): Promise<Media[]> {
+  findAll() {
     return this.mediaService.findAll();
   }
 
@@ -31,15 +37,17 @@ export class MediaController {
   }
 
   @Patch(':url')
-  update(
+  async update(
     @Param('url') urlMedia: string,
-    @Body() updateMediaDto: Prisma.MediaUpdateInput,
+    @Body() updateMediaDto: Partial<Media>,
   ) {
-    return this.mediaService.update(urlMedia, updateMediaDto);
+    await this.mediaService.update(urlMedia, updateMediaDto);
+    return new HttpException('data updated', HttpStatus.OK);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.mediaService.remove(id);
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.mediaService.remove(id);
+    return new HttpException('data deleted', HttpStatus.OK);
   }
 }

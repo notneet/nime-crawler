@@ -7,39 +7,47 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  UsePipes,
+  ValidationPipe,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { WatchService } from './watch.service';
-import { Prisma } from '@prisma/client';
+import { Watch } from '@libs/commons/dto/watch.dto';
 
 @Controller('watch')
+@UsePipes(ValidationPipe)
 export class WatchController {
   constructor(private readonly watchService: WatchService) {}
 
   @Post()
-  async create(@Body() createWatchDto: Prisma.WatchCreateInput) {
-    return await this.watchService.create(createWatchDto);
+  async create(@Body() createWatchDto: Watch) {
+    await this.watchService.create(createWatchDto);
+    return new HttpException('data created', HttpStatus.CREATED);
   }
 
   @Get()
-  async findAll() {
-    return await this.watchService.findAll();
+  findAll() {
+    return this.watchService.findAll();
   }
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    return await this.watchService.findOne(id);
+    return this.watchService.findOne(id);
   }
 
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateWatchDto: Prisma.WatchUpdateInput,
+    @Body() updateWatchDto: Partial<Watch>,
   ) {
-    return await this.watchService.update(id, updateWatchDto);
+    await this.watchService.update(id, updateWatchDto);
+    return new HttpException('data updated', HttpStatus.OK);
   }
 
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
-    return await this.watchService.remove(id);
+    await this.watchService.remove(id);
+    return new HttpException('data deleted', HttpStatus.OK);
   }
 }

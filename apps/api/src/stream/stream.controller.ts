@@ -7,24 +7,28 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  UsePipes,
+  ValidationPipe,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { StreamService } from './stream.service';
-import { CreateStreamDto } from './dto/create-stream.dto';
-import { UpdateStreamDto } from './dto/update-stream.dto';
-import { Prisma } from '@prisma/client';
+import { Stream } from '@libs/commons/dto/stream.dto';
 
 @Controller('stream')
+@UsePipes(ValidationPipe)
 export class StreamController {
   constructor(private readonly streamService: StreamService) {}
 
   @Post()
-  async create(@Body() createStreamDto: Prisma.StreamCreateInput) {
-    return this.streamService.create(createStreamDto);
+  async create(@Body() createStreamDto: Stream) {
+    await this.streamService.create(createStreamDto);
+    return new HttpException('data created', HttpStatus.CREATED);
   }
 
   @Get()
   async findAll() {
-    return await this.streamService.findAll();
+    return this.streamService.findAll();
   }
 
   @Get(':id')
@@ -34,14 +38,16 @@ export class StreamController {
 
   @Patch(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateStreamDto: UpdateStreamDto,
+    @Param('id') id: string,
+    @Body() updateStreamDto: Partial<Stream>,
   ) {
-    return this.streamService.update(id, updateStreamDto);
+    await this.streamService.update(id, updateStreamDto);
+    return new HttpException('data updated', HttpStatus.OK);
   }
 
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.streamService.remove(id);
+    await this.streamService.remove(id);
+    return new HttpException('data deleted', HttpStatus.OK);
   }
 }

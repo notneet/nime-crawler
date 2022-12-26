@@ -7,29 +7,35 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  UsePipes,
+  ValidationPipe,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PostPatternService } from './post-pattern.service';
-import { Prisma } from '@prisma/client';
 import { PatternValidationPipe } from '@libs/commons/pipes/pattern-validation.pipe';
+import { PostPattern } from '@libs/commons/dto/post-pattern.dto';
 
 @Controller('post-pattern')
+@UsePipes(ValidationPipe)
 export class PostPatternController {
   constructor(private readonly postPatternService: PostPatternService) {}
 
   // pattern & pagination_pattern sould be formatted in JSON.stringify()
   @Post()
-  create(
+  async create(
+    @Body() createPostPatternDto: PostPattern,
     @Body('pattern', PatternValidationPipe) pPost: string,
     @Body('pagination_pattern', PatternValidationPipe) pPagination: string,
-    @Body() createPostPatternDto: Prisma.PostPatternCreateInput,
   ) {
-    const data: Prisma.PostPatternCreateInput = {
+    const data: PostPattern = {
       ...createPostPatternDto,
       pattern: pPost,
       pagination_pattern: pPagination,
     };
 
-    return this.postPatternService.create(data);
+    await this.postPatternService.create(data);
+    return new HttpException('data created', HttpStatus.CREATED);
   }
 
   @Get()
@@ -43,28 +49,31 @@ export class PostPatternController {
   }
 
   @Post('validate/:id')
-  validateSource(@Param('id', ParseIntPipe) id: number) {
-    return this.postPatternService.validate(id);
+  async validateSource(@Param('id', ParseIntPipe) id: number) {
+    await this.postPatternService.validate(id);
+    return new HttpException('success validated', HttpStatus.OK);
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body('pattern', PatternValidationPipe) pPost: string,
     @Body('pagination_pattern', PatternValidationPipe) pPagination: string,
-    @Body() updatePostPatternDto: Prisma.PostPatternUpdateInput,
+    @Body() updatePostPatternDto: Partial<PostPattern>,
   ) {
-    const data: Prisma.PostPatternUpdateInput = {
+    const data: Partial<PostPattern> = {
       ...updatePostPatternDto,
       pattern: pPost,
       pagination_pattern: pPagination,
     };
 
-    return this.postPatternService.update(id, data);
+    await this.postPatternService.update(id, data);
+    return new HttpException('data updated', HttpStatus.OK);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.postPatternService.remove(id);
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.postPatternService.remove(id);
+    return new HttpException('data deleted', HttpStatus.OK);
   }
 }

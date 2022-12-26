@@ -1,43 +1,69 @@
-import { PrismaService } from '@libs/commons/prisma/prisma.service';
+import { Watch } from '@libs/commons/dto/watch.dto';
+import { EnvKey } from '@libs/commons/helper/constant';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import * as moment from 'moment';
-import 'moment-timezone';
+import { InjectConnection } from '@nestjs/typeorm';
+import { Connection } from 'typeorm';
 
 @Injectable()
 export class WatchService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly watchTableName = 'watch';
 
-  async create(createWatchDto: Prisma.WatchCreateInput) {
+  constructor(
+    @InjectConnection(EnvKey.DATABASE_URL)
+    private readonly conWatch: Connection,
+  ) {}
+
+  async create(createWatchDto: Watch) {
     try {
       const isAvailable = await this.findByUrl(createWatchDto.url);
-      const now = moment().add(7, 'h');
 
       if (!isAvailable) {
-        return this.prisma.watch.createMany({
-          data: {
+        return this.baseQuery
+          .insert()
+          .into(`${this.watchTableName}_media_id`)
+          .values({
+            media_id: createWatchDto.media_id,
             url: createWatchDto.url,
-            title: createWatchDto.title,
-            title_jp: createWatchDto?.title_jp,
-            title_en: createWatchDto?.title_en,
-            type: createWatchDto.type,
-            score: createWatchDto.score,
-            status: createWatchDto.status,
+            cover_url: createWatchDto.cover_url,
+            description: createWatchDto.description,
             duration: createWatchDto.duration,
-            total_episode: createWatchDto.total_episode,
-            published: createWatchDto.published,
-            published_ts: moment(createWatchDto.published).format('X'),
-            season: createWatchDto.season,
             genres: createWatchDto.genres,
             producers: createWatchDto.producers,
-            description: createWatchDto.description,
-            created_at: now.toDate(),
-            updated_at: now.toDate(),
-            cover_url: createWatchDto.cover_url,
-            media_id: createWatchDto.media_id,
-          },
-          skipDuplicates: true,
-        });
+            published: createWatchDto.published,
+            published_ts: createWatchDto.published_ts,
+            score: createWatchDto.score,
+            season: createWatchDto.season,
+            status: createWatchDto.status,
+            title: createWatchDto.title,
+            title_en: createWatchDto.title_en,
+            title_jp: createWatchDto.title_jp,
+            total_episode: createWatchDto.total_episode,
+            type: createWatchDto.type,
+          } as Watch)
+          .orUpdate(
+            [
+              'cover_url',
+              'description',
+              'duration',
+              'genres',
+              'producers',
+              'published',
+              'published_ts',
+              'score',
+              'season',
+              'status',
+              'title',
+              'title_en',
+              'title_jp',
+              'total_episode',
+              'type',
+            ],
+            ['url'],
+          )
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data already exists', HttpStatus.CONFLICT);
@@ -46,62 +72,81 @@ export class WatchService {
     }
   }
 
-  async findAll() {
+  async findAll(): Promise<Watch[]> {
     try {
-      return this.prisma.watch.findMany();
+      return this.baseQuery
+        .from(`${this.watchTableName}_media_id`, 'q')
+        .getRawMany()
+        .catch((e) => {
+          throw e;
+        });
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async findByUrl(urlWatch: string) {
+  async findByUrl(urlWatch: string): Promise<Watch> {
     try {
-      return this.prisma.watch.findUnique({ where: { url: urlWatch } });
+      return this.baseQuery
+        .from(`${this.watchTableName}_media_id`, 'q')
+        .where({ url: urlWatch })
+        .getRawOne()
+        .catch((e) => {
+          throw e;
+        });
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<Watch> {
     try {
-      return this.prisma.watch.findUnique({ where: { id } });
+      return this.baseQuery
+        .from(`${this.watchTableName}_media_id`, 'q')
+        .where({ id })
+        .getRawOne()
+        .catch((e) => {
+          throw e;
+        });
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async update(id: number, updateWatchDto: Prisma.WatchUpdateInput) {
+  async update(id: number, updateWatchDto: Partial<Watch>) {
     try {
       const watch = await this.findOne(id);
-      const now = moment().add(7, 'h');
 
       if (watch) {
-        return this.prisma.watch.updateMany({
-          data: {
-            url: updateWatchDto.url,
-            title: updateWatchDto.title,
-            title_jp: updateWatchDto?.title_jp,
-            title_en: updateWatchDto?.title_en,
-            type: updateWatchDto.type,
-            score: updateWatchDto.score,
-            status: updateWatchDto.status,
-            duration: updateWatchDto.duration,
-            total_episode: updateWatchDto.total_episode,
-            published: updateWatchDto.published,
-            published_ts: moment(updateWatchDto.published.toString()).format(
-              'X',
-            ),
-            season: updateWatchDto.season,
-            genres: updateWatchDto.genres,
-            producers: updateWatchDto.producers,
-            description: updateWatchDto.description,
-            created_at: now.toDate(),
-            updated_at: now.toDate(),
-            cover_url: updateWatchDto.cover_url,
-            media_id: updateWatchDto.media_id,
-          },
-        });
+        return this.baseQuery
+          .update(`${this.watchTableName}_media_id`)
+          .set({
+            url: updateWatchDto.url || watch.url,
+            title: updateWatchDto.title || watch.title,
+            title_jp: updateWatchDto?.title_jp || watch.title_jp,
+            title_en: updateWatchDto?.title_en || watch.title_en,
+            type: updateWatchDto.type || watch.type,
+            score: updateWatchDto.score || watch.score,
+            status: updateWatchDto.status || watch.status,
+            duration: updateWatchDto.duration || watch.duration,
+            total_episode: updateWatchDto.total_episode || watch.total_episode,
+            published: updateWatchDto.published || watch.published,
+            published_ts: updateWatchDto.published || watch.published,
+            season: updateWatchDto.season || watch.season,
+            genres: updateWatchDto.genres || watch.genres,
+            producers: updateWatchDto.producers || watch.producers,
+            description: updateWatchDto.description || watch.description,
+            cover_url: updateWatchDto.cover_url || watch.cover_url,
+            media_id: updateWatchDto.media_id || watch.media_id,
+          } as Partial<Watch>)
+          .where({ id })
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
+
+      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -112,12 +157,23 @@ export class WatchService {
       const watch = await this.findOne(id);
 
       if (watch) {
-        return this.prisma.watch.deleteMany({ where: { id } });
+        return this.baseQuery
+          .delete()
+          .from(`${this.watchTableName}_media_id`)
+          .where({ id })
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private get baseQuery() {
+    return this.conWatch.createQueryBuilder();
   }
 }

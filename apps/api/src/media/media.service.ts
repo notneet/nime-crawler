@@ -1,23 +1,35 @@
-import { PrismaService } from '@libs/commons/prisma/prisma.service';
+import { EnvKey } from '@libs/commons/helper/constant';
+import { Media } from '@libs/commons/dto/media.dto';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Media, Prisma } from '@prisma/client';
+import { InjectConnection } from '@nestjs/typeorm';
+import { Connection } from 'typeorm';
 
 @Injectable()
 export class MediaService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly mediaTableName = 'media';
 
-  async create(createMediaDto: Prisma.MediaCreateInput) {
+  constructor(
+    @InjectConnection(EnvKey.DATABASE_URL)
+    private readonly conMedia: Connection,
+  ) {}
+
+  async create(createMediaDto: Partial<Media>) {
     try {
       const isAvailable = await this.findByUrl(createMediaDto.url);
 
       if (!isAvailable) {
-        return this.prisma.media.createMany({
-          data: {
+        return this.baseQuery
+          .insert()
+          .into(`${this.mediaTableName}`)
+          .values({
             name: createMediaDto.name,
             url: createMediaDto.url,
-          },
-          skipDuplicates: true,
-        });
+          } as Partial<Media>)
+          .orUpdate(['name'], ['url'])
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data already exists', HttpStatus.CONFLICT);
@@ -28,7 +40,7 @@ export class MediaService {
 
   async findAll(): Promise<Media[]> {
     try {
-      return this.prisma.media.findMany();
+      return this.baseQuery.from(`${this.mediaTableName}`, 'q').getRawMany();
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -36,7 +48,10 @@ export class MediaService {
 
   async findByUrl(urlMedia: string): Promise<Media> {
     try {
-      return this.prisma.media.findUnique({ where: { url: urlMedia } });
+      return this.baseQuery
+        .from(`${this.mediaTableName}`, 'q')
+        .where({ url: urlMedia } as Media)
+        .getRawOne();
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -44,24 +59,34 @@ export class MediaService {
 
   async findOne(id: number): Promise<Media> {
     try {
-      return this.prisma.media.findUnique({ where: { id } });
+      return this.baseQuery
+        .from(`${this.mediaTableName}`, 'q')
+        .where({ id })
+        .getRawOne()
+        .catch((e) => {
+          throw e;
+        });
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async update(urlMedia: string, updateMediaDto: Prisma.MediaUpdateInput) {
+  async update(urlMedia: string, updateMediaDto: Partial<Media>) {
     try {
       const media = await this.findByUrl(urlMedia);
 
       if (media) {
-        return this.prisma.media.updateMany({
-          data: {
-            name: updateMediaDto.name,
-            url: updateMediaDto.url,
-          },
-          where: { url: urlMedia },
-        });
+        return this.baseQuery
+          .update(`${this.mediaTableName}`)
+          .set({
+            name: updateMediaDto?.name,
+            url: updateMediaDto?.url,
+          } as Partial<Media>)
+          .where({ url: urlMedia })
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
@@ -75,12 +100,23 @@ export class MediaService {
       const media = await this.findOne(id);
 
       if (media) {
-        return this.prisma.media.deleteMany({ where: { id } });
+        return this.baseQuery
+          .delete()
+          .from(`${this.mediaTableName}`, 'q')
+          .where({ id })
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private get baseQuery() {
+    return this.conMedia.createQueryBuilder();
   }
 }

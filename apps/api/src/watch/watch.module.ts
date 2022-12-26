@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
 import { WatchService } from './watch.service';
 import { WatchController } from './watch.controller';
-import { PrismaModule } from '@libs/commons/prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [],
   controllers: [WatchController],
   providers: [WatchService],
   exports: [WatchService],

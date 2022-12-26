@@ -1,25 +1,38 @@
-import { PrismaService } from '@libs/commons/prisma/prisma.service';
+import { PostPattern } from '@libs/commons/dto/post-pattern.dto';
+import { EnvKey } from '@libs/commons/helper/constant';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { InjectConnection } from '@nestjs/typeorm';
+import { Connection } from 'typeorm';
 
 @Injectable()
 export class PostPatternService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly PostPatternTableName = 'post_pattern';
+  constructor(
+    @InjectConnection(EnvKey.DATABASE_URL)
+    private readonly conPostPattern: Connection,
+  ) {}
 
-  async create(createPostPatternDto: Prisma.PostPatternCreateInput) {
+  async create(createPostPatternDto: PostPattern) {
     try {
       const isAvailable = await this.findByMediaId(
         createPostPatternDto.media_id,
       );
 
       if (!isAvailable) {
-        return this.prisma.postPattern.createMany({
-          data: {
+        return this.baseQuery
+          .insert()
+          .into(`${this.PostPatternTableName}`)
+          .values({
             media_id: createPostPatternDto.media_id,
             pattern: createPostPatternDto.pattern,
             pagination_pattern: createPostPatternDto.pagination_pattern,
-          },
-        });
+            n_status: 1,
+          } as PostPattern)
+          .orUpdate(['pattern', 'pagination_pattern'], ['media_id'])
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data already exists', HttpStatus.CONFLICT);
@@ -28,25 +41,42 @@ export class PostPatternService {
     }
   }
 
-  async findAll() {
+  async findAll(): Promise<PostPattern[]> {
     try {
-      return this.prisma.postPattern.findMany();
+      return this.baseQuery
+        .from(`${this.PostPatternTableName}`, 'q')
+        .getRawMany()
+        .catch((e) => {
+          throw e;
+        });
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<PostPattern> {
     try {
-      return this.prisma.postPattern.findUnique({ where: { id } });
+      return this.baseQuery
+        .from(`${this.PostPatternTableName}`, 'q')
+        .where({ id })
+        .getRawOne()
+        .catch((e) => {
+          throw e;
+        });
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async findByMediaId(id: number) {
+  async findByMediaId(id: number): Promise<PostPattern> {
     try {
-      return this.prisma.postPattern.findUnique({ where: { media_id: id } });
+      return this.baseQuery
+        .from(`${this.PostPatternTableName}`, 'q')
+        .where({ media_id: id })
+        .getRawOne()
+        .catch((e) => {
+          throw e;
+        });
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -58,10 +88,14 @@ export class PostPatternService {
       const lastNStatus = isAvailable.n_status;
 
       if (isAvailable) {
-        return this.prisma.postPattern.updateMany({
-          where: { id },
-          data: { n_status: Number(!lastNStatus) },
-        });
+        return this.baseQuery
+          .update(`${this.PostPatternTableName}`)
+          .set({ n_status: Number(!lastNStatus) } as Partial<PostPattern>)
+          .where({ id })
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
@@ -70,22 +104,26 @@ export class PostPatternService {
     }
   }
 
-  async update(
-    id: number,
-    updatePostPatternDto: Prisma.PostPatternUpdateInput,
-  ) {
+  async update(id: number, updatePostPatternDto: Partial<PostPattern>) {
     try {
-      const postPattern = await this.findOne(id);
+      const { media_id, pattern, pagination_pattern, n_status } =
+        await this.findOne(id);
 
-      if (postPattern) {
-        return this.prisma.postPattern.updateMany({
-          data: {
-            media_id: updatePostPatternDto.media_id,
-            pattern: updatePostPatternDto.pattern,
-            pagination_pattern: updatePostPatternDto.pagination_pattern,
-          },
-          where: { id },
-        });
+      if (media_id) {
+        return this.baseQuery
+          .update(`${this.PostPatternTableName}`)
+          .set({
+            media_id: updatePostPatternDto.media_id || media_id,
+            pattern: updatePostPatternDto.pattern || pattern,
+            pagination_pattern:
+              updatePostPatternDto.pagination_pattern || pagination_pattern,
+            n_status: updatePostPatternDto.n_status || n_status,
+          } as Partial<PostPattern>)
+          .where({ id })
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
@@ -99,12 +137,23 @@ export class PostPatternService {
       const postPattern = await this.findOne(id);
 
       if (postPattern) {
-        return this.prisma.postPattern.deleteMany({ where: { id } });
+        return this.baseQuery
+          .delete()
+          .from(`${this.PostPatternTableName}`)
+          .where({ id })
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private get baseQuery() {
+    return this.conPostPattern.createQueryBuilder();
   }
 }

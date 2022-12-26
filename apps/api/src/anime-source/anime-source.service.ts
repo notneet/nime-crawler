@@ -1,23 +1,37 @@
-import { PrismaService } from '@libs/commons/prisma/prisma.service';
+import { AnimeSource } from '@libs/commons/dto/anime-souce.dto';
+import { EnvKey } from '@libs/commons/helper/constant';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { AnimeSource, Prisma } from '@prisma/client';
+import { InjectConnection } from '@nestjs/typeorm';
+import { Connection } from 'typeorm';
 
 @Injectable()
 export class AnimeSourceService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly animeSourceTableName = 'anime_source';
 
-  async create(createAnimeSourceDto: Prisma.AnimeSourceCreateInput) {
+  constructor(
+    @InjectConnection(EnvKey.DATABASE_URL)
+    private readonly conAnimeSource: Connection,
+  ) {}
+
+  async create(createAnimeSourceDto: AnimeSource) {
     try {
       const isAvailable = await this.findByUrl(createAnimeSourceDto.url);
 
       if (!isAvailable) {
-        return this.prisma.animeSource.createMany({
-          data: {
+        return this.baseQuery
+          .insert()
+          .into(`${this.animeSourceTableName}`)
+          .values({
             media_id: createAnimeSourceDto.media_id,
             url: createAnimeSourceDto.url,
             interval: createAnimeSourceDto.interval,
-          },
-        });
+            n_status: 1,
+          } as AnimeSource)
+          .orUpdate(['media_id', 'interval', 'n_status'], ['url'])
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data already exists', HttpStatus.CONFLICT);
@@ -28,7 +42,12 @@ export class AnimeSourceService {
 
   async findAll(): Promise<AnimeSource[]> {
     try {
-      return this.prisma.animeSource.findMany();
+      return this.baseQuery
+        .from(`${this.animeSourceTableName}`, 'q')
+        .getRawMany()
+        .catch((e) => {
+          throw e;
+        });
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -36,7 +55,13 @@ export class AnimeSourceService {
 
   async findByUrl(urlSource: string): Promise<AnimeSource> {
     try {
-      return this.prisma.animeSource.findUnique({ where: { url: urlSource } });
+      return this.baseQuery
+        .from(`${this.animeSourceTableName}`, 'q')
+        .where({ url: urlSource } as Partial<AnimeSource>)
+        .getRawOne()
+        .catch((e) => {
+          throw e;
+        });
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -48,10 +73,14 @@ export class AnimeSourceService {
       const lastNStatus = isAvailable.n_status;
 
       if (isAvailable) {
-        return this.prisma.animeSource.updateMany({
-          where: { id },
-          data: { n_status: Number(!lastNStatus) },
-        });
+        return this.baseQuery
+          .update(`${this.animeSourceTableName}`)
+          .set({ n_status: Number(!lastNStatus) } as Partial<AnimeSource>)
+          .where({ id })
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
@@ -62,29 +91,36 @@ export class AnimeSourceService {
 
   async findOne(id: number): Promise<AnimeSource> {
     try {
-      return this.prisma.animeSource.findUnique({ where: { id } });
+      return this.baseQuery
+        .from(`${this.animeSourceTableName}`, 'q')
+        .where({ id })
+        .getRawOne()
+        .catch((e) => {
+          throw e;
+        });
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async update(
-    id: number,
-    updateAnimeSourceDto: Prisma.AnimeSourceUpdateInput,
-  ) {
+  async update(id: number, updateAnimeSourceDto: Partial<AnimeSource>) {
     try {
       const isAvailable = await this.findOne(id);
 
       if (isAvailable) {
-        return this.prisma.animeSource.updateMany({
-          data: {
+        return this.baseQuery
+          .update(`${this.animeSourceTableName}`)
+          .set({
             media_id: updateAnimeSourceDto.media_id,
             url: updateAnimeSourceDto.url,
             interval: updateAnimeSourceDto.interval,
-            n_status: 0,
-          },
-          where: { id },
-        });
+            n_status: updateAnimeSourceDto.n_status,
+          } as Partial<AnimeSource>)
+          .where({ id })
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
@@ -98,12 +134,23 @@ export class AnimeSourceService {
       const animeSource = await this.findOne(id);
 
       if (animeSource) {
-        return this.prisma.animeSource.deleteMany({ where: { id } });
+        return this.baseQuery
+          .delete()
+          .from(`${this.animeSourceTableName}`)
+          .where({ id })
+          .execute()
+          .catch((e) => {
+            throw e;
+          });
       }
 
       throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
     } catch (error) {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private get baseQuery() {
+    return this.conAnimeSource.createQueryBuilder();
   }
 }
