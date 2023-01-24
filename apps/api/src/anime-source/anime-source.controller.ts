@@ -1,4 +1,7 @@
-import { AnimeSource } from '@libs/commons/dto/anime-souce.dto';
+import { AnimeSourceDto } from '@libs/commons/dto/anime-souce.dto';
+import { CreateAnimeSourceDto } from '@libs/commons/dto/create/create-anime-source.dto';
+import { UpdateAnimeSourceDto } from '@libs/commons/dto/update/update-anime-source.dto';
+import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 import {
   Controller,
   Get,
@@ -8,52 +11,48 @@ import {
   Param,
   Delete,
   ParseIntPipe,
-  HttpException,
-  HttpStatus,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { AnimeSourceService } from './anime-source.service';
+import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
 
 @Controller('anime-source')
-@UsePipes(ValidationPipe)
+@Serialize(AnimeSourceDto)
 export class AnimeSourceController {
   constructor(private readonly animeSourceService: AnimeSourceService) {}
 
   @Post()
-  async create(@Body() createAnimeSourceDto: AnimeSource) {
-    await this.animeSourceService.create(createAnimeSourceDto);
-    return new HttpException('data created', HttpStatus.CREATED);
+  create(@Body() createAnimeSourceDto: CreateAnimeSourceDto) {
+    return this.animeSourceService.create(createAnimeSourceDto);
   }
 
   @Get()
-  findAll(): Promise<AnimeSource[]> {
+  findAll() {
     return this.animeSourceService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<AnimeSource> {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.animeSourceService.findOne(id);
   }
 
   @Post('validate/:id')
-  async validateSource(@Param('id', ParseIntPipe) id: number) {
-    await this.animeSourceService.validate(id);
-    return new HttpException('success validated', HttpStatus.OK);
+  validateSource(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: ValidatePatternDto,
+  ) {
+    return this.animeSourceService.validate(id, Number(body.n_status));
   }
 
   @Patch(':id')
-  async update(
+  update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateAnimeSourceDto: Partial<AnimeSource>,
+    @Body() updateAnimeSourceDto: UpdateAnimeSourceDto,
   ) {
-    await this.animeSourceService.update(id, updateAnimeSourceDto);
-    return new HttpException('data updated', HttpStatus.OK);
+    return this.animeSourceService.update(id, updateAnimeSourceDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.animeSourceService.remove(id);
-    return new HttpException('data deleted', HttpStatus.OK);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.animeSourceService.remove(id);
   }
 }

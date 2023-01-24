@@ -1,15 +1,9 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Expose } from 'class-transformer';
 
-export class Media {
-  @IsNumber()
-  @IsOptional()
-  id?: number;
-
-  @IsString()
-  @IsNotEmpty()
+export class MediaDto {
+  @Expose()
   name: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @Expose()
   url: string;
 }

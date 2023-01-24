@@ -1,131 +1,84 @@
-import { AnimeSource } from '@libs/commons/dto/anime-souce.dto';
-import { EnvKey } from '@libs/commons/helper/constant';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AnimeSource } from '@libs/commons/entities/anime-source.entity';
+import { Repository } from 'typeorm';
+import { CreateAnimeSourceDto } from '@libs/commons/dto/create/create-anime-source.dto';
+import { UpdateAnimeSourceDto } from '@libs/commons/dto/update/update-anime-source.dto';
 
 @Injectable()
 export class AnimeSourceService {
-  private readonly animeSourceTableName = 'anime_source';
-
   constructor(
-    @InjectConnection(EnvKey.DATABASE_URL)
-    private readonly conAnimeSource: Connection,
+    @InjectRepository(AnimeSource)
+    private readonly conAnimeSource: Repository<AnimeSource>,
   ) {}
 
-  async create(createAnimeSourceDto: AnimeSource) {
+  async create(createAnimeSourceDto: CreateAnimeSourceDto) {
     try {
-      const isAvailable = await this.findByUrl(createAnimeSourceDto.url);
+      let animeSource = await this.findByUrl(createAnimeSourceDto.url);
 
-      if (!isAvailable) {
-        return this.baseQuery
-          .insert()
-          .into(`${this.animeSourceTableName}`)
-          .values({
-            media_id: createAnimeSourceDto.media_id,
-            url: createAnimeSourceDto.url,
-            interval: createAnimeSourceDto.interval,
-            n_status: 1,
-          } as AnimeSource)
-          .orUpdate(['media_id', 'interval', 'n_status'], ['url'])
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
+      if (!animeSource) {
+        animeSource = this.conAnimeSource.create(createAnimeSourceDto);
+        return this.conAnimeSource.insert(animeSource);
       }
 
-      throw new HttpException('Data already exists', HttpStatus.CONFLICT);
+      Object.assign(animeSource, createAnimeSourceDto);
+      return this.conAnimeSource.update({ id: animeSource.id }, animeSource);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findAll(): Promise<AnimeSource[]> {
+  async findAll() {
     try {
-      return this.baseQuery
-        .from(`${this.animeSourceTableName}`, 'q')
-        .getRawMany()
-        .catch((e) => {
-          throw e;
-        });
+      return this.conAnimeSource.find();
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findByUrl(urlSource: string): Promise<AnimeSource> {
+  async findByUrl(urlSource: string) {
     try {
-      return this.baseQuery
-        .from(`${this.animeSourceTableName}`, 'q')
-        .where({ url: urlSource } as Partial<AnimeSource>)
-        .getRawOne()
-        .catch((e) => {
-          throw e;
-        });
+      return this.conAnimeSource.findOne({ where: { url: urlSource } });
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async validate(id: number) {
-    try {
-      const isAvailable = await this.findOne(id);
-      const lastNStatus = isAvailable.n_status;
-
-      if (isAvailable) {
-        return this.baseQuery
-          .update(`${this.animeSourceTableName}`)
-          .set({ n_status: Number(!lastNStatus) } as Partial<AnimeSource>)
-          .where({ id })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
-
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
-    } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  async findOne(id: number): Promise<AnimeSource> {
-    try {
-      return this.baseQuery
-        .from(`${this.animeSourceTableName}`, 'q')
-        .where({ id })
-        .getRawOne()
-        .catch((e) => {
-          throw e;
-        });
-    } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  async update(id: number, updateAnimeSourceDto: Partial<AnimeSource>) {
+  async validate(id: number, nStatus: number) {
     try {
       const isAvailable = await this.findOne(id);
 
-      if (isAvailable) {
-        return this.baseQuery
-          .update(`${this.animeSourceTableName}`)
-          .set({
-            media_id: updateAnimeSourceDto.media_id,
-            url: updateAnimeSourceDto.url,
-            interval: updateAnimeSourceDto.interval,
-            n_status: updateAnimeSourceDto.n_status,
-          } as Partial<AnimeSource>)
-          .where({ id })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
+      if (!isAvailable) throw new NotFoundException('data not found');
+      isAvailable.n_status = nStatus;
 
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
+      return this.conAnimeSource.save(isAvailable);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findOne(id: number) {
+    try {
+      return this.conAnimeSource.findOne({ where: { id } });
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async update(id: number, updateAnimeSourceDto: UpdateAnimeSourceDto) {
+    try {
+      const animeSource = await this.findOne(id);
+
+      if (!animeSource) throw new NotFoundException('data not found');
+      Object.assign(animeSource, updateAnimeSourceDto);
+
+      return this.conAnimeSource.update({ id }, animeSource);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -133,24 +86,11 @@ export class AnimeSourceService {
     try {
       const animeSource = await this.findOne(id);
 
-      if (animeSource) {
-        return this.baseQuery
-          .delete()
-          .from(`${this.animeSourceTableName}`)
-          .where({ id })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
+      if (!animeSource) throw new NotFoundException('data not found');
 
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
+      return this.conAnimeSource.remove(animeSource);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
-  }
-
-  private get baseQuery() {
-    return this.conAnimeSource.createQueryBuilder();
   }
 }

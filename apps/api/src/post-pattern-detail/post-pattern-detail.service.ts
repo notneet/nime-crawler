@@ -1,138 +1,99 @@
-import { PatternPostDetail } from '@libs/commons/dto/post-pattern-detail.dto';
+import { CreatePostDetailPatternDto } from '@libs/commons/dto/create/create-post-detail-pattern.dto';
+import { UpdatePostDetailPatternDto } from '@libs/commons/dto/update/update-post-detail-patter.dto';
+import { PostDetailPattern } from '@libs/commons/entities/post-detail-pattern.entity';
 import { EnvKey } from '@libs/commons/helper/constant';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
+import { Connection, Repository } from 'typeorm';
 
 @Injectable()
 export class PostPatternDetailService {
   private readonly postPatternDetailTableName = 'post_detail_pattern';
 
   constructor(
-    @InjectConnection(EnvKey.DATABASE_URL)
-    private readonly conPostPatternDetail: Connection,
+    @InjectRepository(PostDetailPattern)
+    private readonly conPostPatternDetail: Repository<PostDetailPattern>,
   ) {}
 
-  async create(createPostPatternDetailDto: PatternPostDetail) {
+  async create(createPostPatternDetailDto: CreatePostDetailPatternDto) {
     try {
-      const isAvailable = await this.findByMediaId(
+      let postDetail = await this.findByMediaId(
         createPostPatternDetailDto.media_id,
       );
 
-      if (!isAvailable) {
-        return this.baseQuery
-          .insert()
-          .into(`${this.postPatternDetailTableName}`)
-          .values({
-            media_id: createPostPatternDetailDto.media_id,
-            pattern: createPostPatternDetailDto?.pattern,
-            episode_pattern: createPostPatternDetailDto.episode_pattern,
-            n_status: 1,
-          } as PatternPostDetail)
-          .orUpdate(['pattern', 'episode_pattern'], ['media_id'])
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
+      if (!postDetail) {
+        postDetail = this.conPostPatternDetail.create(
+          createPostPatternDetailDto,
+        );
+        return this.conPostPatternDetail.insert(postDetail);
       }
+      Object.assign(postDetail, createPostPatternDetailDto);
 
-      throw new HttpException('Data already exists', HttpStatus.CONFLICT);
+      return this.conPostPatternDetail.update(
+        { id: postDetail.id },
+        postDetail,
+      );
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findAll(): Promise<PatternPostDetail[]> {
+  async findAll() {
     try {
-      return this.baseQuery
-        .from(`${this.postPatternDetailTableName}`, 'q')
-        .getRawMany()
-        .catch((e) => {
-          throw e;
-        });
+      return this.conPostPatternDetail.find();
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findOne(id: number): Promise<PatternPostDetail> {
+  async findOne(id: number) {
     try {
-      return this.baseQuery
-        .from(`${this.postPatternDetailTableName}`, 'q')
-        .where({ id })
-        .getRawOne()
-        .catch((e) => {
-          throw e;
-        });
+      return this.conPostPatternDetail.findOne({ where: { id } });
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findByMediaId(id: number): Promise<PatternPostDetail> {
+  async findByMediaId(id: number) {
     try {
-      return this.baseQuery
-        .from(`${this.postPatternDetailTableName}`, 'q')
-        .where({ id })
-        .getRawOne()
-        .catch((e) => {
-          throw e;
-        });
+      return this.conPostPatternDetail.findOne({ where: { media_id: id } });
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async validate(id: number) {
+  async validate(id: number, nStatus: number) {
     try {
-      const isAvailable = await this.findOne(id);
-      const lastNStatus = isAvailable.n_status;
+      const postDetail = await this.findOne(id);
 
-      if (isAvailable) {
-        return this.baseQuery
-          .update(`${this.postPatternDetailTableName}`)
-          .set({ n_status: Number(!lastNStatus) } as Partial<PatternPostDetail>)
-          .where({ id })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
+      if (!postDetail) throw new NotFoundException('data not found');
+      postDetail.n_status = nStatus;
 
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
+      return this.conPostPatternDetail.save(postDetail);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
   async update(
     id: number,
-    updatePostPatternDetailDto: Partial<PatternPostDetail>,
+    updatePostPatternDetailDto: UpdatePostDetailPatternDto,
   ) {
     try {
-      const { media_id, pattern, episode_pattern, n_status } =
-        await this.findOne(id);
+      const postDetail = await this.findOne(id);
 
-      if (media_id) {
-        return this.baseQuery
-          .update(`${this.postPatternDetailTableName}`)
-          .set({
-            media_id: updatePostPatternDetailDto?.media_id || media_id,
-            pattern: updatePostPatternDetailDto?.pattern || pattern,
-            episode_pattern:
-              updatePostPatternDetailDto?.episode_pattern || episode_pattern,
-            n_status: updatePostPatternDetailDto?.n_status || n_status,
-          } as Partial<PatternPostDetail>)
-          .where({ id })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
+      if (!postDetail) throw new NotFoundException('data not found');
+      Object.assign(postDetail, updatePostPatternDetailDto);
 
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
+      return this.conPostPatternDetail.update({ id }, postDetail);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -153,7 +114,7 @@ export class PostPatternDetailService {
 
       throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 

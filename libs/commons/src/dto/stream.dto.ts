@@ -1,49 +1,33 @@
-import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Expose } from 'class-transformer';
 
-export class Stream {
-  @IsNumber()
-  @IsOptional()
-  id?: number;
+export class StreamDto {
+  @Expose()
+  watch_id: string;
 
-  @IsNumber()
-  watch_id: number;
+  @Expose()
+  object_id: string;
 
-  @IsString()
-  @IsOptional()
-  author?: string;
+  @Expose()
+  author: string;
 
-  @IsDate()
-  @IsOptional()
-  published?: Date;
+  @Expose()
+  published: Date;
 
-  @IsDate()
-  @IsOptional()
-  published_ts?: Date;
+  @Expose()
+  published_ts: Date;
 
-  @IsString()
-  @IsOptional()
-  name?: string;
+  @Expose()
+  name: string;
 
-  @IsString()
-  @IsOptional()
-  url?: string;
+  @Expose()
+  url: string;
 
-  @IsString()
-  @IsOptional()
-  quality?: string;
+  @Expose()
+  quality: string;
 
-  @IsString()
-  @IsOptional()
-  file_size?: string;
+  @Expose()
+  file_size: string;
 
-  @IsNumber()
+  @Expose()
   media_id: number;
-
-  @IsDate()
-  @IsOptional()
-  created_at?: Date;
-
-  @IsDate()
-  @IsOptional()
-  updated_at?: Date;
 }

@@ -22,7 +22,7 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
 
     connectionName = connectionName || this.defaultConfig;
     const config = {
-      type: 'mariadb',
+      type: 'mysql',
       cache: {
         type: 'redis',
         options: {
@@ -36,8 +36,9 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
         charset: 'utf8mb4_unicode_ci',
         connectionLimit: this.maxConLimit,
       },
-      keepConnectionAlive: true,
+      keepConnectionAlive: false,
       autoLoadEntities: true,
+      // synchronize: false,
       name: connectionName,
       ...this.getConnectionConfig(connectionName),
     } as MysqlConnectionOptions;
@@ -50,7 +51,7 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
   }
 
   getConnectionConfig(connectionName: string): MysqlConnectionOptions {
-    if (connectionName === EnvKey.DATABASE_URL) {
+    if (connectionName === 'default') {
       return {
         type: 'mariadb',
         url: this.config.get(EnvKey.DATABASE_URL),

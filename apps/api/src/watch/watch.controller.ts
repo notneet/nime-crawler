@@ -7,23 +7,24 @@ import {
   Param,
   Delete,
   ParseIntPipe,
-  UsePipes,
-  ValidationPipe,
-  HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { WatchService } from './watch.service';
-import { Watch } from '@libs/commons/dto/watch.dto';
+import { WatchDto } from '@libs/commons/dto/watch.dto';
+import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
+import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
+import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 
 @Controller('watch')
-@UsePipes(ValidationPipe)
+@Serialize(WatchDto)
 export class WatchController {
   constructor(private readonly watchService: WatchService) {}
 
-  @Post()
-  async create(@Body() createWatchDto: Watch) {
-    await this.watchService.create(createWatchDto);
-    return new HttpException('data created', HttpStatus.CREATED);
+  @Post(':id')
+  create(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() createWatchDto: CreateWatchDto,
+  ) {
+    return this.watchService.create(id, createWatchDto);
   }
 
   @Get()
@@ -32,22 +33,17 @@ export class WatchController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.watchService.findOne(id);
+  findOne(@Param('id') id: string) {
+    return this.watchService.findByObjectId(id);
   }
 
   @Patch(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateWatchDto: Partial<Watch>,
-  ) {
-    await this.watchService.update(id, updateWatchDto);
-    return new HttpException('data updated', HttpStatus.OK);
+  update(@Param('id') id: string, @Body() updateWatchDto: UpdateWatchDto) {
+    return this.watchService.update(id, updateWatchDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.watchService.remove(id);
-    return new HttpException('data deleted', HttpStatus.OK);
+  remove(@Param('id') id: string) {
+    return this.watchService.remove(id);
   }
 }

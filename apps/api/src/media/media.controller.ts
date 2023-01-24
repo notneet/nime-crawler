@@ -1,4 +1,7 @@
-import { Media } from '@libs/commons/dto/media.dto';
+import { CreateMediaDto } from '@libs/commons/dto/create/create-media.dto';
+import { MediaDto } from '@libs/commons/dto/media.dto';
+import { UpdateMediaDto } from '@libs/commons/dto/update/update-media.dto';
+import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 import {
   Controller,
   Get,
@@ -8,22 +11,17 @@ import {
   Param,
   Delete,
   ParseIntPipe,
-  HttpException,
-  HttpStatus,
-  ValidationPipe,
-  UsePipes,
 } from '@nestjs/common';
 import { MediaService } from './media.service';
 
 @Controller('media')
-@UsePipes(ValidationPipe)
+@Serialize(MediaDto)
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @Post()
-  async create(@Body() createMediaDto: Media) {
-    await this.mediaService.create(createMediaDto);
-    return new HttpException('data inserted', HttpStatus.CREATED);
+  create(@Body() createMediaDto: CreateMediaDto) {
+    return this.mediaService.create(createMediaDto);
   }
 
   @Get()
@@ -37,17 +35,15 @@ export class MediaController {
   }
 
   @Patch(':url')
-  async update(
+  update(
     @Param('url') urlMedia: string,
-    @Body() updateMediaDto: Partial<Media>,
+    @Body() updateMediaDto: UpdateMediaDto,
   ) {
-    await this.mediaService.update(urlMedia, updateMediaDto);
-    return new HttpException('data updated', HttpStatus.OK);
+    return this.mediaService.update(urlMedia, updateMediaDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.mediaService.remove(id);
-    return new HttpException('data deleted', HttpStatus.OK);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.mediaService.remove(id);
   }
 }

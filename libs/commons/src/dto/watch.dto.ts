@@ -1,87 +1,60 @@
-import {
-  IsDate,
-  IsDecimal,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { Expose } from 'class-transformer';
 
-export class Watch {
-  @IsNumber()
-  @IsOptional()
-  id?: number;
+export class WatchDto {
+  @Expose()
+  id: number;
 
-  @IsString()
+  @Expose()
+  object_id: string;
+
+  @Expose()
   url: string;
 
-  @IsString()
-  @IsOptional()
-  title?: string;
+  @Expose()
+  title: string;
 
-  @IsString()
-  @IsOptional()
-  title_jp?: string;
+  @Expose()
+  title_jp: string;
 
-  @IsString()
-  @IsOptional()
-  title_en?: string;
+  @Expose()
+  title_en: string;
 
-  @IsString()
-  @IsOptional()
-  type?: string;
+  @Expose()
+  type: string;
 
-  @IsDecimal()
-  @IsOptional()
-  score?: number;
+  @Expose()
+  score: number;
 
-  @IsString()
-  @IsOptional()
-  status?: string;
+  @Expose()
+  status: string;
 
-  @IsNumber()
-  @IsOptional()
-  duration?: number;
+  @Expose()
+  duration: number;
 
-  @IsNumber()
-  @IsOptional()
-  total_episode?: number;
+  @Expose()
+  total_episode: number;
 
-  @IsDate()
-  @IsOptional()
-  published?: Date;
+  @Expose()
+  published: Date;
 
-  @IsDate()
-  @IsOptional()
-  published_ts?: Date;
+  @Expose()
+  published_ts: Date;
 
-  @IsString()
-  @IsOptional()
-  season?: string;
+  @Expose()
+  season: string;
 
-  @IsString()
-  @IsOptional()
-  genres?: string;
+  @Expose()
+  genres: string;
 
-  @IsString()
-  @IsOptional()
-  producers?: string;
+  @Expose()
+  producers: string;
 
-  @IsString()
-  @IsOptional()
-  description?: string;
+  @Expose()
+  description: string;
 
-  @IsDate()
-  @IsOptional()
-  created_at?: Date;
+  @Expose()
+  cover_url: string;
 
-  @IsDate()
-  @IsOptional()
-  updated_at?: Date;
-
-  @IsString()
-  @IsOptional()
-  cover_url?: string;
-
-  @IsNumber()
+  @Expose()
   media_id: number;
 }

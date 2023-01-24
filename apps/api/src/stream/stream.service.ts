@@ -1,144 +1,103 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import 'moment-timezone';
-import { Stream } from '@libs/commons/dto/stream.dto';
-import { InjectConnection } from '@nestjs/typeorm';
-import { EnvKey } from '@libs/commons/helper/constant';
-import { Connection } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Stream } from '@libs/commons/entities/stream.entity';
+import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
+import { WatchService } from '../watch/watch.service';
+import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
 
 @Injectable()
 export class StreamService {
-  private readonly streamTableName = 'stream';
-
   constructor(
-    @InjectConnection(EnvKey.DATABASE_URL)
-    private readonly conWatch: Connection,
+    @InjectRepository(Stream)
+    private readonly conStream: Repository<Stream>,
+    private readonly watchService: WatchService,
   ) {}
 
-  async create(createStreamDto: Stream) {
+  async create(createStreamDto: CreateStreamDto) {
     try {
-      const isAvailable = await this.findByUrl(createStreamDto.url);
+      let watch = await this.watchService.findByObjectId(
+        createStreamDto.watch_id,
+      );
 
-      if (!isAvailable) {
-        return this.baseQuery
-          .insert()
-          .into(`${this.streamTableName}_media_id`)
-          .values({
-            watch_id: createStreamDto.watch_id,
-            author: createStreamDto.author,
-            published: createStreamDto.published,
-            published_ts: createStreamDto.published_ts,
-            name: createStreamDto.name,
-            url: createStreamDto.url,
-            quality: createStreamDto.quality,
-            file_size: createStreamDto.file_size,
-            media_id: createStreamDto.media_id,
-          } as Stream)
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
+      if (!watch) return new NotFoundException('parent post not found');
+      let stream = await this.findByUrl(createStreamDto.url);
+
+      if (!stream) {
+        stream = this.conStream.create(createStreamDto);
+        return this.conStream.insert(stream);
       }
+      Object.assign(stream, createStreamDto);
 
-      throw new HttpException('Data already exists', HttpStatus.CONFLICT);
+      return this.conStream.update({ id: stream.id }, stream);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findAll(): Promise<Stream[]> {
+  async findAll() {
     try {
-      return this.baseQuery
-        .from(`${this.streamTableName}_media_id`, 'q')
-        .getRawMany()
-        .catch((e) => {
-          throw e;
-        });
+      return this.conStream.find();
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findByUrl(urlStream: string): Promise<Stream> {
+  async findByUrl(urlStream: string) {
     try {
-      return this.baseQuery
-        .from(`${this.streamTableName}_media_id`, 'q')
-        .where({ url: urlStream })
-        .getRawOne()
-        .catch((e) => {
-          throw e;
-        });
+      return this.conStream.findOne({
+        where: { url: urlStream },
+      });
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findOne(id: number): Promise<Stream> {
+  async findOne(id: number) {
     try {
-      return this.baseQuery
-        .from(`${this.streamTableName}_media_id`, 'q')
-        .where({ id })
-        .execute()
-        .catch((e) => {
-          throw e;
-        });
+      const stream = await this.conStream.findOne({ where: { id } });
+      if (!stream) throw new NotFoundException('data not found');
+
+      return stream;
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async update(urlStream: string, updateStreamDto: Partial<Stream>) {
+  async findByObjectId(id: string) {
     try {
-      const stream = await this.findByUrl(urlStream);
+      const stream = await this.conStream.findOne({ where: { object_id: id } });
+      if (!stream) throw new NotFoundException('data not found');
 
-      if (stream) {
-        return this.baseQuery
-          .update(`${this.streamTableName}_media_id`)
-          .set({
-            watch_id: updateStreamDto.watch_id || stream.media_id,
-            author: updateStreamDto.author || stream.author,
-            published: updateStreamDto.published || stream.published,
-            published_ts: updateStreamDto.published_ts || stream.published_ts,
-            name: updateStreamDto.name || stream.name,
-            url: updateStreamDto.url || stream.url,
-            quality: updateStreamDto.quality || stream.quality,
-            file_size: updateStreamDto.file_size || stream.file_size,
-            media_id: updateStreamDto.media_id || stream.media_id,
-          } as Partial<Stream>)
-          .where({ url: urlStream })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
-
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
+      return stream;
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async remove(id: number) {
+  async update(id: string, updateStreamDto: UpdateStreamDto) {
     try {
-      const stream = await this.findOne(id);
+      const stream = await this.findByObjectId(id);
+      Object.assign(stream, updateStreamDto);
 
-      if (stream) {
-        return this.baseQuery
-          .delete()
-          .from(`${this.streamTableName}_media_id`)
-          .where({ id })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
-
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
+      return this.conStream.update({ watch_id: id }, stream);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  private get baseQuery() {
-    return this.conWatch.createQueryBuilder();
+  async remove(id: string) {
+    try {
+      const stream = await this.findByObjectId(id);
+
+      return this.conStream.remove(stream);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }

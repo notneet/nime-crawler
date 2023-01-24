@@ -1,97 +1,71 @@
-import { EnvKey } from '@libs/commons/helper/constant';
-import { Media } from '@libs/commons/dto/media.dto';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Media } from '@libs/commons/entities/media.entity';
+import { Repository } from 'typeorm';
+import { CreateMediaDto } from '@libs/commons/dto/create/create-media.dto';
+import { UpdateMediaDto } from '@libs/commons/dto/update/update-media.dto';
 
 @Injectable()
 export class MediaService {
-  private readonly mediaTableName = 'media';
-
   constructor(
-    @InjectConnection(EnvKey.DATABASE_URL)
-    private readonly conMedia: Connection,
+    @InjectRepository(Media)
+    private readonly conMedia: Repository<Media>,
   ) {}
 
-  async create(createMediaDto: Partial<Media>) {
+  async create(createMediaDto: CreateMediaDto) {
     try {
-      const isAvailable = await this.findByUrl(createMediaDto.url);
+      let media = await this.findByUrl(createMediaDto.url);
 
-      if (!isAvailable) {
-        return this.baseQuery
-          .insert()
-          .into(`${this.mediaTableName}`)
-          .values({
-            name: createMediaDto.name,
-            url: createMediaDto.url,
-          } as Partial<Media>)
-          .orUpdate(['name'], ['url'])
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
+      if (!media) {
+        media = this.conMedia.create(createMediaDto);
+        return this.conMedia.insert(media);
       }
 
-      throw new HttpException('Data already exists', HttpStatus.CONFLICT);
+      Object.assign(media, createMediaDto);
+      return this.conMedia.update({ id: media.id }, media);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findAll(): Promise<Media[]> {
+  async findAll() {
     try {
-      return this.baseQuery.from(`${this.mediaTableName}`, 'q').getRawMany();
+      return this.conMedia.find();
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findByUrl(urlMedia: string): Promise<Media> {
+  async findByUrl(urlMedia: string) {
     try {
-      return this.baseQuery
-        .from(`${this.mediaTableName}`, 'q')
-        .where({ url: urlMedia } as Media)
-        .getRawOne();
+      return this.conMedia.findOne({ where: { url: urlMedia } });
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findOne(id: number): Promise<Media> {
+  async findOne(id: number) {
     try {
-      return this.baseQuery
-        .from(`${this.mediaTableName}`, 'q')
-        .where({ id })
-        .getRawOne()
-        .catch((e) => {
-          throw e;
-        });
+      return this.conMedia.findOne({ where: { id } });
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async update(urlMedia: string, updateMediaDto: Partial<Media>) {
+  async update(urlMedia: string, updateMediaDto: UpdateMediaDto) {
     try {
       const media = await this.findByUrl(urlMedia);
 
-      if (media) {
-        return this.baseQuery
-          .update(`${this.mediaTableName}`)
-          .set({
-            name: updateMediaDto?.name,
-            url: updateMediaDto?.url,
-          } as Partial<Media>)
-          .where({ url: urlMedia })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
+      if (!media) throw new NotFoundException('data not found');
+      Object.assign(media, updateMediaDto);
 
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
+      return this.conMedia.update({ url: urlMedia }, media);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -99,24 +73,11 @@ export class MediaService {
     try {
       const media = await this.findOne(id);
 
-      if (media) {
-        return this.baseQuery
-          .delete()
-          .from(`${this.mediaTableName}`, 'q')
-          .where({ id })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
+      if (!media) throw new NotFoundException('data not found');
 
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
+      return this.conMedia.remove(media);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
-  }
-
-  private get baseQuery() {
-    return this.conMedia.createQueryBuilder();
   }
 }

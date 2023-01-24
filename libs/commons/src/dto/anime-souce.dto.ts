@@ -1,37 +1,39 @@
-import {
-  IsDate,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { Expose } from 'class-transformer';
 
-export class AnimeSource {
-  @IsNumber()
-  @IsOptional()
-  id?: number;
+export class AnimeSourceDto {
+  @Expose()
+  id: number;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @Expose()
   media_id: number;
 
-  @IsString()
-  @IsNotEmpty()
+  @Expose()
   url: string;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @Expose()
   interval: number;
 
-  @IsDate()
-  @IsOptional()
-  created_at?: Date;
-
-  @IsDate()
-  @IsOptional()
-  updated_at?: Date;
-
-  @IsNumber()
-  @IsNotEmpty()
+  @Expose()
   n_status: number;
+
+  @Expose()
+  timeout: number;
+
+  @Expose()
+  max_itterate_post: number;
+
+  @Expose()
+  max_itterate_detail: number;
+
+  @Expose()
+  lang_code: string;
+
+  @Expose()
+  country_code: string;
+
+  @Expose()
+  last_modified: Date;
+
+  @Expose()
+  last_crawled: Date;
 }

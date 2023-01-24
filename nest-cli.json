@@ -29,6 +29,24 @@
       "compilerOptions": {
         "tsConfigPath": "apps/api/tsconfig.app.json"
       }
+    },
+    "cron-interval": {
+      "type": "application",
+      "root": "apps/cron-interval",
+      "entryFile": "main",
+      "sourceRoot": "apps/cron-interval/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/cron-interval/tsconfig.app.json"
+      }
+    },
+    "read-anime-source": {
+      "type": "application",
+      "root": "apps/read-anime-source",
+      "entryFile": "main",
+      "sourceRoot": "apps/read-anime-source/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/read-anime-source/tsconfig.app.json"
+      }
     }
   },
   "compilerOptions": {

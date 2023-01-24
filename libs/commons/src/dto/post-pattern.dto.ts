@@ -1,37 +1,18 @@
-import {
-  IsArray,
-  IsDate,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-} from 'class-validator';
+import { Expose } from 'class-transformer';
 
-export class PostPattern {
-  @IsNumber()
-  @IsOptional()
-  id?: number;
+export class PostPatternDto {
+  @Expose()
+  id: number;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @Expose()
   media_id: number;
 
-  @IsArray()
-  @IsOptional()
-  pattern?: string;
+  @Expose()
+  pattern: string;
 
-  @IsArray()
-  @IsOptional()
-  pagination_pattern?: string;
+  @Expose()
+  pagination_pattern: string;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @Expose()
   n_status: number;
-
-  @IsDate()
-  @IsOptional()
-  created_at?: Date;
-
-  @IsDate()
-  @IsOptional()
-  updated_at?: Date;
 }

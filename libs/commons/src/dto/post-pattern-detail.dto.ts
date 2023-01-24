@@ -1,37 +1,20 @@
-import {
-  IsDate,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { Expose } from 'class-transformer';
 
-export class PatternPostDetail {
-  @IsNumber()
-  @IsOptional()
-  id?: number;
+export class PatternPostDetailDto {
+  type: 'post-detail';
 
-  @IsNumber()
-  @IsNotEmpty()
+  @Expose()
+  id: number;
+
+  @Expose()
   media_id: number;
 
-  @IsString()
-  @IsOptional()
-  pattern?: string;
+  @Expose()
+  pattern: string;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @Expose()
   n_status: number;
 
-  @IsDate()
-  @IsOptional()
-  created_at?: Date;
-
-  @IsDate()
-  @IsOptional()
-  updated_at?: Date;
-
-  @IsString()
-  @IsOptional()
-  episode_pattern?: string;
+  @Expose()
+  episode_pattern: string;
 }

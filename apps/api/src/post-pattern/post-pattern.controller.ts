@@ -8,34 +8,26 @@ import {
   Delete,
   ParseIntPipe,
   UsePipes,
-  ValidationPipe,
-  HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { PostPatternService } from './post-pattern.service';
 import { PatternValidationPipe } from '@libs/commons/pipes/pattern-validation.pipe';
-import { PostPattern } from '@libs/commons/dto/post-pattern.dto';
+import { PostPatternDto } from '@libs/commons/dto/post-pattern.dto';
+import { ValidatePostPatternDto } from '@libs/commons/dto/update/validate-post-pattern.dto';
+import { CreatePostPatternDto } from '@libs/commons/dto/create/create-post-pattern.dto';
+import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
+import { UpdatePostPatternDto } from '@libs/commons/dto/update/update-post-pattern.dto';
+import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
 
 @Controller('post-pattern')
-@UsePipes(ValidationPipe)
+@Serialize(PostPatternDto)
 export class PostPatternController {
   constructor(private readonly postPatternService: PostPatternService) {}
 
   // pattern & pagination_pattern sould be formatted in JSON.stringify()
   @Post()
-  async create(
-    @Body() createPostPatternDto: PostPattern,
-    @Body('pattern', PatternValidationPipe) pPost: string,
-    @Body('pagination_pattern', PatternValidationPipe) pPagination: string,
-  ) {
-    const data: PostPattern = {
-      ...createPostPatternDto,
-      pattern: pPost,
-      pagination_pattern: pPagination,
-    };
-
-    await this.postPatternService.create(data);
-    return new HttpException('data created', HttpStatus.CREATED);
+  // @UsePipes(new PatternValidationPipe())
+  create(@Body() createPostPatternDto: CreatePostPatternDto) {
+    return this.postPatternService.create(createPostPatternDto);
   }
 
   @Get()
@@ -49,31 +41,23 @@ export class PostPatternController {
   }
 
   @Post('validate/:id')
-  async validateSource(@Param('id', ParseIntPipe) id: number) {
-    await this.postPatternService.validate(id);
-    return new HttpException('success validated', HttpStatus.OK);
+  validateSource(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: ValidatePatternDto,
+  ) {
+    return this.postPatternService.validate(id, Number(body.n_status));
   }
 
   @Patch(':id')
-  async update(
+  update(
     @Param('id', ParseIntPipe) id: number,
-    @Body('pattern', PatternValidationPipe) pPost: string,
-    @Body('pagination_pattern', PatternValidationPipe) pPagination: string,
-    @Body() updatePostPatternDto: Partial<PostPattern>,
+    @Body() updatePostPatternDto: UpdatePostPatternDto,
   ) {
-    const data: Partial<PostPattern> = {
-      ...updatePostPatternDto,
-      pattern: pPost,
-      pagination_pattern: pPagination,
-    };
-
-    await this.postPatternService.update(id, data);
-    return new HttpException('data updated', HttpStatus.OK);
+    return this.postPatternService.update(id, updatePostPatternDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.postPatternService.remove(id);
-    return new HttpException('data deleted', HttpStatus.OK);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.postPatternService.remove(id);
   }
 }

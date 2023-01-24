@@ -1,179 +1,99 @@
-import { Watch } from '@libs/commons/dto/watch.dto';
-import { EnvKey } from '@libs/commons/helper/constant';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
+import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
+import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
+import { Watch } from '@libs/commons/entities/watch.entity';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class WatchService {
-  private readonly watchTableName = 'watch';
-
   constructor(
-    @InjectConnection(EnvKey.DATABASE_URL)
-    private readonly conWatch: Connection,
+    @InjectRepository(Watch)
+    private readonly conWatch: Repository<Watch>,
   ) {}
 
-  async create(createWatchDto: Watch) {
+  async create(id: number, createWatchDto: CreateWatchDto) {
     try {
-      const isAvailable = await this.findByUrl(createWatchDto.url);
+      let watch = await this.findByUrl(createWatchDto.url);
 
-      if (!isAvailable) {
-        return this.baseQuery
-          .insert()
-          .into(`${this.watchTableName}_media_id`)
-          .values({
-            media_id: createWatchDto.media_id,
-            url: createWatchDto.url,
-            cover_url: createWatchDto.cover_url,
-            description: createWatchDto.description,
-            duration: createWatchDto.duration,
-            genres: createWatchDto.genres,
-            producers: createWatchDto.producers,
-            published: createWatchDto.published,
-            published_ts: createWatchDto.published_ts,
-            score: createWatchDto.score,
-            season: createWatchDto.season,
-            status: createWatchDto.status,
-            title: createWatchDto.title,
-            title_en: createWatchDto.title_en,
-            title_jp: createWatchDto.title_jp,
-            total_episode: createWatchDto.total_episode,
-            type: createWatchDto.type,
-          } as Watch)
-          .orUpdate(
-            [
-              'cover_url',
-              'description',
-              'duration',
-              'genres',
-              'producers',
-              'published',
-              'published_ts',
-              'score',
-              'season',
-              'status',
-              'title',
-              'title_en',
-              'title_jp',
-              'total_episode',
-              'type',
-            ],
-            ['url'],
-          )
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
+      if (!watch) {
+        watch = this.conWatch.create(createWatchDto);
+        return this.conWatch.insert(watch);
       }
+      Object.assign(watch, createWatchDto);
 
-      throw new HttpException('Data already exists', HttpStatus.CONFLICT);
+      return this.conWatch.update({ id: watch.id }, watch);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findAll(): Promise<Watch[]> {
+  async findAll() {
     try {
-      return this.baseQuery
-        .from(`${this.watchTableName}_media_id`, 'q')
-        .getRawMany()
-        .catch((e) => {
-          throw e;
-        });
+      return this.conWatch.find();
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findByUrl(urlWatch: string): Promise<Watch> {
+  async findByUrl(urlWatch: string) {
     try {
-      return this.baseQuery
-        .from(`${this.watchTableName}_media_id`, 'q')
-        .where({ url: urlWatch })
-        .getRawOne()
-        .catch((e) => {
-          throw e;
-        });
+      return this.conWatch.findOne({
+        where: {
+          url: urlWatch,
+        },
+      });
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async findOne(id: number): Promise<Watch> {
+  async findByObjectId(objectId: string) {
     try {
-      return this.baseQuery
-        .from(`${this.watchTableName}_media_id`, 'q')
-        .where({ id })
-        .getRawOne()
-        .catch((e) => {
-          throw e;
-        });
+      const watch = await this.conWatch.findOne({
+        where: { object_id: objectId },
+      });
+      if (!watch) throw new NotFoundException('data not found');
+
+      return watch;
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async update(id: number, updateWatchDto: Partial<Watch>) {
+  async findOne(id: number) {
     try {
-      const watch = await this.findOne(id);
+      const watch = await this.conWatch.findOne({ where: { id } });
+      if (!watch) throw new NotFoundException('data not found');
 
-      if (watch) {
-        return this.baseQuery
-          .update(`${this.watchTableName}_media_id`)
-          .set({
-            url: updateWatchDto.url || watch.url,
-            title: updateWatchDto.title || watch.title,
-            title_jp: updateWatchDto?.title_jp || watch.title_jp,
-            title_en: updateWatchDto?.title_en || watch.title_en,
-            type: updateWatchDto.type || watch.type,
-            score: updateWatchDto.score || watch.score,
-            status: updateWatchDto.status || watch.status,
-            duration: updateWatchDto.duration || watch.duration,
-            total_episode: updateWatchDto.total_episode || watch.total_episode,
-            published: updateWatchDto.published || watch.published,
-            published_ts: updateWatchDto.published || watch.published,
-            season: updateWatchDto.season || watch.season,
-            genres: updateWatchDto.genres || watch.genres,
-            producers: updateWatchDto.producers || watch.producers,
-            description: updateWatchDto.description || watch.description,
-            cover_url: updateWatchDto.cover_url || watch.cover_url,
-            media_id: updateWatchDto.media_id || watch.media_id,
-          } as Partial<Watch>)
-          .where({ id })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
-
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
+      return watch;
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  async remove(id: number) {
+  async update(id: string, updateWatchDto: UpdateWatchDto) {
     try {
-      const watch = await this.findOne(id);
+      const watch = await this.findByObjectId(id);
+      Object.assign(watch, updateWatchDto);
 
-      if (watch) {
-        return this.baseQuery
-          .delete()
-          .from(`${this.watchTableName}_media_id`)
-          .where({ id })
-          .execute()
-          .catch((e) => {
-            throw e;
-          });
-      }
-
-      throw new HttpException('Data not found', HttpStatus.NOT_FOUND);
+      return this.conWatch.update({ object_id: id }, watch);
     } catch (error) {
-      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException(error);
     }
   }
 
-  private get baseQuery() {
-    return this.conWatch.createQueryBuilder();
+  async remove(id: string) {
+    try {
+      const watch = await this.findByObjectId(id);
+
+      return this.conWatch.remove(watch);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }
