@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Media } from '@libs/commons/entities/media.entity';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { CreateMediaDto } from '@libs/commons/dto/create/create-media.dto';
 import { UpdateMediaDto } from '@libs/commons/dto/update/update-media.dto';
 
@@ -43,6 +43,14 @@ export class MediaService {
   async findByUrl(urlMedia: string) {
     try {
       return this.conMedia.findOne({ where: { url: urlMedia } });
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findByUrlLike(urlMedia: string) {
+    try {
+      return this.conMedia.findOne({ where: { url: Like(`%${urlMedia}%`) } });
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

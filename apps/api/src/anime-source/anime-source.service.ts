@@ -48,6 +48,39 @@ export class AnimeSourceService {
     }
   }
 
+  async findByNStatus(nStatus = 1) {
+    try {
+      return this.conAnimeSource.find({ where: { n_status: nStatus } });
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findByIntervalsAndGroup() {
+    try {
+      const listInterval = await this.conAnimeSource
+        .createQueryBuilder(`q`)
+        .groupBy('q.interval')
+        .getMany();
+      return listInterval.map((it) => it.interval);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findByIntervalAndLastId(interval: number, lastId: number) {
+    try {
+      return this.conAnimeSource
+        .createQueryBuilder(`q`)
+        .where(`q.interval = :interval`, { interval })
+        .andWhere('q.id > :lastId', { lastId })
+        .limit(15)
+        .getMany();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
   async validate(id: number, nStatus: number) {
     try {
       const isAvailable = await this.findOne(id);

@@ -47,6 +47,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/read-anime-source/tsconfig.app.json"
       }
+    },
+    "routing-queue": {
+      "type": "application",
+      "root": "apps/routing-queue",
+      "entryFile": "main",
+      "sourceRoot": "apps/routing-queue/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/routing-queue/tsconfig.app.json"
+      }
     }
   },
   "compilerOptions": {

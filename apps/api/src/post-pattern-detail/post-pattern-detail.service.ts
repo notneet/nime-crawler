@@ -10,7 +10,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
+import { Connection, In, Repository } from 'typeorm';
 
 @Injectable()
 export class PostPatternDetailService {
@@ -63,6 +63,14 @@ export class PostPatternDetailService {
   async findByMediaId(id: number) {
     try {
       return this.conPostPatternDetail.findOne({ where: { media_id: id } });
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findByMediaIds(id: number[]) {
+    try {
+      return this.conPostPatternDetail.find({ where: { media_id: In(id) } });
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class PostPatternService {
@@ -50,6 +50,14 @@ export class PostPatternService {
   async findByMediaId(id: number) {
     try {
       return this.conPostPattern.findOne({ where: { media_id: id } });
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async findByMediaIds(id: number[]) {
+    try {
+      return this.conPostPattern.find({ where: { media_id: In(id) } });
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
