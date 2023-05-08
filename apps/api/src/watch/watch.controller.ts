@@ -24,7 +24,7 @@ export class WatchController {
     @Param('id', ParseIntPipe) id: number,
     @Body() createWatchDto: CreateWatchDto,
   ) {
-    return this.watchService.create(id, createWatchDto);
+    return this.watchService.create(createWatchDto, id);
   }
 
   @Get()

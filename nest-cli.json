@@ -56,6 +56,24 @@
       "compilerOptions": {
         "tsConfigPath": "apps/routing-queue/tsconfig.app.json"
       }
+    },
+    "scraper-service": {
+      "type": "application",
+      "root": "apps/scraper-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/scraper-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/scraper-service/tsconfig.app.json"
+      }
+    },
+    "scraper-stream": {
+      "type": "application",
+      "root": "apps/scraper-stream",
+      "entryFile": "main",
+      "sourceRoot": "apps/scraper-stream/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/scraper-stream/tsconfig.app.json"
+      }
     }
   },
   "compilerOptions": {

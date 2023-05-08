@@ -32,6 +32,9 @@ export class AnimeSource {
   @Column({ length: 5 })
   country_code: string;
 
+  @Column({ length: 10 })
+  engine: string;
+
   @Column({ type: 'timestamp' })
   last_modified: Date;
 

@@ -20,5 +20,5 @@ export class UpdatePostDetailPatternDto {
   @IsArray()
   @ArrayNotEmpty()
   @IsOptional()
-  episode_pattern: string;
+  pagination_pattern: string;
 }

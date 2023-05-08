@@ -16,5 +16,5 @@ export class PatternPostDetailDto {
   n_status: number;
 
   @Expose()
-  episode_pattern: string;
+  pagination_pattern: string;
 }
