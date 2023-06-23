@@ -94,11 +94,7 @@ export class ReadAnimePostController {
       postListEpsPattern: pListEps,
       contentResultType: 'text',
     });
-<<<<<<< HEAD
     // console.log(`result`, result);
-=======
-    console.log(`result`, result);
->>>>>>> 52cdb53cedd47ffb12ab82f4aee89182589ecf85
 
     await this.watchService.saveToDB(
       {
@@ -108,11 +104,7 @@ export class ReadAnimePostController {
         title_jp: result.title_jp,
         title_en: result.title_en,
         type: result.type,
-<<<<<<< HEAD
         score: 0, //result.score,
-=======
-        score: result.score,
->>>>>>> 52cdb53cedd47ffb12ab82f4aee89182589ecf85
         status: result.status,
         duration: result.duration,
         total_episode: result.total_episode,

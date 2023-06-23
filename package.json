@@ -19,15 +19,12 @@
     "start:dev:routing-queue": "nest start --watch routing-queue",
     "start:dev:scraper-service": "nest start --watch scraper-service",
     "start:dev:scraper-stream": "nest start --watch scraper-stream",
-<<<<<<< HEAD
     "build:api": "nest build api",
     "build:cron-interval": "nest build cron-interval",
     "build:read-anime-source": "nest build read-anime-source",
     "build:routing-queue": "nest build routing-queue",
     "build:scraper-service": "nest build scraper-service",
     "build:scraper-stream": "nest build scraper-stream",
-=======
->>>>>>> 52cdb53cedd47ffb12ab82f4aee89182589ecf85
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
