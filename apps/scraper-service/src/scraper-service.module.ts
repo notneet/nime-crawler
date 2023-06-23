@@ -19,7 +19,12 @@ import { TypeOrmConfig } from '@libs/commons/typeorm-config/typeorm-config';
     ReadAnimeModule,
     ReadAnimePostModule,
   ],
+<<<<<<< HEAD
   // controllers: [ScraperServiceController],
   // providers: [ScraperServiceService],
+=======
+  controllers: [ScraperServiceController],
+  providers: [ScraperServiceService],
+>>>>>>> 52cdb53cedd47ffb12ab82f4aee89182589ecf85
 })
 export class ScraperServiceModule {}

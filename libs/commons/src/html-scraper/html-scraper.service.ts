@@ -263,7 +263,10 @@ export class HtmlScraperService {
     mixedPattern: string,
     returnType?: 'string' | 'number',
   ): T {
+<<<<<<< HEAD
     const regexDecimal = /[0-9]+(\.[0-9]+)?/g;
+=======
+>>>>>>> 52cdb53cedd47ffb12ab82f4aee89182589ecf85
     const isFound = rawDocument.get(mixedPattern);
     if (!isFound) return null;
     const result = isFound
@@ -271,6 +274,7 @@ export class HtmlScraperService {
       ?.replace(/^:?\s*/, '')
       ?.trim();
 
+<<<<<<< HEAD
     if (returnType === 'number' && isNaN(Number(result))) {
       console.log(result);
     }
@@ -278,6 +282,9 @@ export class HtmlScraperService {
     return returnType === 'number'
       ? (Number(result?.match(regexDecimal)[0]) as T)
       : (result as T);
+=======
+    return returnType === 'number' ? (Number(result) as T) : (result as T);
+>>>>>>> 52cdb53cedd47ffb12ab82f4aee89182589ecf85
   }
 
   private getLinkPagination(rawDocument: libxmljs.Node) {
