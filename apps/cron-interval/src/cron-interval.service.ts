@@ -4,24 +4,59 @@ import {
   Q_ROUTING_QUEUE,
   TimeUnit,
 } from '@libs/commons/helper/constant';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PostPatternDetailService } from 'apps/api/src/post-pattern-detail/post-pattern-detail.service';
 import { PostPatternService } from 'apps/api/src/post-pattern/post-pattern.service';
 import { AnimeSourceService } from '../../api/src/anime-source/anime-source.service';
 import { MediaService } from '../../api/src/media/media.service';
 import { ClientProxy } from '@nestjs/microservices';
 
+interface BaseAnimePattern {
+  media_id: number;
+  pattern: string;
+}
+
+interface IPostPattern extends BaseAnimePattern {
+  pagination_pattern: string;
+}
+
+interface IPostPatternDetail extends BaseAnimePattern {
+  pagination_pattern: string;
+}
+
+export interface ScrapeAnime {
+  origin: string;
+  pageUrl: string;
+  nextPage?: string;
+  patternPost: IPostPattern;
+  patternPostDetail: IPostPatternDetail;
+  description: string;
+  timeout: number;
+  langCode: string;
+  countryCode: string;
+  mediaId: number;
+  numItterate: number;
+  maxItteratePost: number;
+  maxItteratePostDetail: number;
+  numRetry: number;
+  numPage: number;
+  engine: string;
+}
+
 type ScapperOpt = {
-  postPattern?: string;
-  postPatternDetail?: string;
+  pageUrl?: string;
+  postPattern?: IPostPattern;
+  postPatternDetail?: IPostPatternDetail;
   maxItteratePostPage?: number;
   maxItteratePostDetailPage?: number;
   description: string;
-  page?: number;
+  numPage?: number;
+  engine: string;
 } & AnimeSource;
 
 @Injectable()
 export class CronIntervalService {
+  private readonly logger = new Logger(CronIntervalService.name);
   private lastInterval = new Map<number, Date>();
 
   constructor(
@@ -79,11 +114,28 @@ export class CronIntervalService {
         );
 
         const desc = `scraping data from ${animeSource.url} (${animeSource.media_id}) on interval ${animeSource.interval}`;
+        const postPatternPayload: IPostPattern = {
+          media_id: postPattern?.media_id || null,
+          pattern: postPattern?.pattern || '[]',
+          pagination_pattern: postPattern?.pagination_pattern || '[]',
+        };
+        const postPatternDetailPayload: IPostPatternDetail = {
+          media_id: postPatternDetail?.media_id || null,
+          pattern: postPatternDetail?.pattern || '[]',
+          pagination_pattern: postPatternDetail?.pagination_pattern || '[]',
+        };
+
+        this.logger.debug(desc);
+
         await this.emitToScrapper({
           ...animeSource,
-          postPattern: postPattern?.pattern || '[]',
-          postPatternDetail: postPatternDetail?.pattern || '[]',
+          pageUrl: animeSource.url,
+          postPattern: postPatternPayload,
+          postPatternDetail: postPatternDetailPayload,
+          maxItteratePostPage: animeSource.max_itterate_post,
+          maxItteratePostDetailPage: animeSource.max_itterate_detail,
           description: desc,
+          engine: animeSource.engine,
         });
       }
       await new Promise((res) => setTimeout(res, 300));
@@ -93,8 +145,10 @@ export class CronIntervalService {
   }
 
   async emitToScrapper(opts: ScapperOpt) {
-    const data = {
+    const data: ScrapeAnime = {
       origin: this.extractOrigin(opts.url),
+      pageUrl: opts.pageUrl,
+      nextPage: null,
       patternPost: opts.postPattern,
       patternPostDetail: opts.postPatternDetail,
       description: opts.description,
@@ -103,8 +157,11 @@ export class CronIntervalService {
       countryCode: opts.country_code,
       mediaId: opts.media_id,
       numItterate: 0,
+      maxItteratePost: opts.maxItteratePostPage,
+      maxItteratePostDetail: opts.maxItteratePostDetailPage,
       numRetry: 0,
-      page: 1,
+      numPage: 1,
+      engine: opts.engine,
     };
 
     await Promise.resolve(this.client.emit(EventKey.READ_ANIME_SOURCE, data));

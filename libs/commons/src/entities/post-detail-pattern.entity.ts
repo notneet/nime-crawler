@@ -27,7 +27,7 @@ export class PostDetailPattern {
   updated_at: Date;
 
   @Column({ type: 'text' })
-  episode_pattern: string;
+  pagination_pattern: string;
 
   @BeforeInsert()
   @BeforeUpdate()
@@ -35,8 +35,8 @@ export class PostDetailPattern {
     if (typeof this.pattern === 'object') {
       this.pattern = JSON.stringify(this.pattern);
     }
-    if (typeof this.episode_pattern === 'object') {
-      this.episode_pattern = JSON.stringify(this.episode_pattern);
+    if (typeof this.pagination_pattern === 'object') {
+      this.pagination_pattern = JSON.stringify(this.pagination_pattern);
     }
   }
 }

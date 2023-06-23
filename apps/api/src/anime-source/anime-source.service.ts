@@ -60,6 +60,7 @@ export class AnimeSourceService {
     try {
       const listInterval = await this.conAnimeSource
         .createQueryBuilder(`q`)
+        .where(`q.n_status = 1`)
         .groupBy('q.interval')
         .getMany();
       return listInterval.map((it) => it.interval);

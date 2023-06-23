@@ -15,6 +15,10 @@ interface RMQPayload {
   date: number;
 }
 
+/**
+ * Bot ini masih belum tau untuk apa....
+ */
+
 @Controller()
 @UseInterceptors(AcknolageMessageInterceptor)
 export class ReadAnimeSourceController {
@@ -26,6 +30,7 @@ export class ReadAnimeSourceController {
 
   @EventPattern(EventKey.READ_ANIME_SOURCE)
   async handleBookCreatedEvent(data: string) {
+    console.log(data);
     const payload: RMQPayload = JSON.parse(data);
     return this.logger.log(payload.date);
   }

@@ -71,4 +71,7 @@ export class CreateWatchDto {
 
   @IsNumber()
   media_id: number;
+
+  @IsString()
+  object_id: string;
 }

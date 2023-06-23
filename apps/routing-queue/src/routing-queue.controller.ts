@@ -1,4 +1,8 @@
-import { EventKey, Q_ANIME_SOURCE } from '@libs/commons/helper/constant';
+import {
+  DefKey,
+  EventKey,
+  Q_ANIME_SOURCE,
+} from '@libs/commons/helper/constant';
 import { RabbitMQCtx } from '@libs/commons/types/rabbitmq-context';
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ClientProxy, Ctx, EventPattern, Payload } from '@nestjs/microservices';
@@ -19,14 +23,10 @@ export class RoutingQueueController {
     @Payload() data: any,
     @Ctx() context: RabbitMQCtx,
   ) {
-    if (data) {
-      console.log(data);
-    }
-    return this.handleRouting(context, data);
-    // return this.clientReadAnimeSource.emit(EventKey.READ_ANIME_SOURCE, data);
+    return this.handleRouting(context, data, DefKey.Q_ANIME_SOURCE);
   }
 
-  handleRouting(ctx: RabbitMQCtx, payload: any) {
+  handleRouting(ctx: RabbitMQCtx, payload: any, sendToQueue: string) {
     const channel = ctx.getChannelRef() as Channel;
     const message = ctx.getMessage() as Message;
     const ctxPattern = ctx.getPattern();
@@ -39,9 +39,8 @@ export class RoutingQueueController {
       throw new Error(`cant routing ${'qwe'}`);
     }
 
-    // channel.sendToQueue('qwe',msg)
-
-    console.log(ctxPattern, payload);
+    channel.sendToQueue(sendToQueue, msg);
+    channel.ack(message);
   }
 
   @Get()
