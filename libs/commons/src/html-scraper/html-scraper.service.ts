@@ -6,8 +6,8 @@ import * as useragent from 'random-useragent';
 import { delay, lastValueFrom, map, retryWhen, take } from 'rxjs';
 import { EnvKey } from '../helper/constant';
 import * as libxmljs from 'libxmljs2';
-import * as parse5 from 'parse5';
 import { hashUUID } from '../helper/md5';
+import { arrayNotEmpty, isNotEmpty } from 'class-validator';
 
 interface ParsedPattern {
   key: string;
@@ -61,6 +61,7 @@ export interface AnimeDetail {
   description: string;
   cover_url: string;
   episode_urls: string[];
+  n_status: number;
 }
 
 @Injectable()
@@ -131,7 +132,6 @@ export class HtmlScraperService {
 
     try {
       document = libxmljs.parseHtmlString(payload.rawHTML);
-
       if (!document) {
         throw new Error('Document is empty');
       }
@@ -144,6 +144,9 @@ export class HtmlScraperService {
       );
       const listEpsContentXpath = document.find(
         `${payload.containerPattern}/${payload.postListEpsPattern}`,
+      );
+      const descriptionComponent = document.find(
+        `${payload.containerPattern}/${payload.postDescPattern}`,
       );
 
       const data: AnimeDetail = {
@@ -199,12 +202,10 @@ export class HtmlScraperService {
           document,
           `${payload.containerPattern}/${payload.postProducerPattern}`,
         ),
-        description: this.getSingleContent<string>(
-          document,
-          `${payload.containerPattern}/${payload.postDescPattern}`,
-        ),
+        description: this.getContent(descriptionComponent, 'text')?.join('\n'),
         cover_url: this.getContent(coverContentXpath, 'value')?.join(', '),
         episode_urls: this.getContent(listEpsContentXpath, 'value'),
+        n_status: 1,
       };
 
       return data;
@@ -247,9 +248,13 @@ export class HtmlScraperService {
     let result: string[] = [];
     switch (type) {
       case 'text':
+        if (!arrayNotEmpty(rawDocument)) return [];
+
         rawDocument.forEach((val) => result.push((<any>val).text()));
         break;
       case 'value':
+        if (!arrayNotEmpty(rawDocument)) return [];
+
         rawDocument.forEach((val) => result.push((<any>val).value()));
         break;
       default:
@@ -265,19 +270,23 @@ export class HtmlScraperService {
   ): T {
     const regexDecimal = /[0-9]+(\.[0-9]+)?/g;
     const isFound = rawDocument.get(mixedPattern);
-    if (!isFound) return null;
-    const result = isFound
-      ?.toString()
-      ?.replace(/^:?\s*/, '')
-      ?.trim();
 
-    if (returnType === 'number' && isNaN(Number(result))) {
-      console.log(result);
+    if (!isNotEmpty(isFound)) return null;
+    if (returnType === 'number') {
+      const extractedResult = isFound?.toString()?.replace(/^:?\s*/, '');
+
+      if (
+        isNotEmpty(extractedResult) &&
+        !isNaN(Number(extractedResult)) &&
+        extractedResult !== '-'
+      ) {
+        return extractedResult?.match(regexDecimal)[0] as T;
+      }
+
+      return null;
+    } else {
+      return isFound?.toString()?.replace(':', '')?.trim() as T;
     }
-
-    return returnType === 'number'
-      ? (Number(result?.match(regexDecimal)[0]) as T)
-      : (result as T);
   }
 
   private getLinkPagination(rawDocument: libxmljs.Node) {

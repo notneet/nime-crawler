@@ -75,6 +75,7 @@ export class AnimeSourceService {
         .createQueryBuilder(`q`)
         .where(`q.interval = :interval`, { interval })
         .andWhere('q.id > :lastId', { lastId })
+        .andWhere('q.n_status = 1')
         .limit(15)
         .getMany();
     } catch (error) {

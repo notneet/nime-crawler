@@ -74,4 +74,7 @@ export class CreateWatchDto {
 
   @IsString()
   object_id: string;
+
+  @IsNumber()
+  n_status: number;
 }

@@ -1,0 +1,29 @@
+{
+  "pattern": "read_anime_detail",
+  "data": {
+    "pageUrl": "https://kusonime.com/chainsaw-man-batch-subtitle-indonesia/",
+    "origin": "kusonime.com",
+    "nextPage": null,
+    "patternPost": {
+      "media_id": 2,
+      "pattern": "[{\"key\":\"CONTAINER\",\"pattern\":\"//div[@id='abtext']\",\"result_type\":null},{\"key\":\"LINK_PATTERN\",\"pattern\":\"./div[@class='bariskelom']//a/@href\",\"result_type\":\"value\"}]",
+      "pagination_pattern": "[{\"key\":\"PAGINATION_PATTERN\",\"pattern\":\"//div[@class='wp-pagenavi']/a[@class='nextpostslink' and last()]/@href\",\"result_type\":\"value\"}]"
+    },
+    "patternPostDetail": {
+      "media_id": 2,
+      "pattern": "[{\"key\":\"POST_CONTAINER\",\"pattern\":\"//div[@class='venser']\",\"result_type\":null},{\"key\":\"POST_TITLE\",\"pattern\":\"./div[@class='post-thumb']/h1/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_TITLE_JP\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/div[@class='info']/p[1]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipe\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_TITLE_EN\",\"pattern\":\"\",\"result_type\":\"text\"},{\"key\":\"POST_TYPE\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/div[@class='info']/p[5]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_SCORE\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/div[@class='info']/p[8]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_STATUS\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/div[@class='info']/p[6]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_DURATION\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/div[@class='info']/p[9]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_TOTAL_EPISODE\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/div[@class='info']/p[7]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_SEASON\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/div[@class='info']/p[3]/a/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_GENRES\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/div[@class='info']/p[2]/a/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_PRODUCERS\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/div[@class='info']/p[4]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_DESCRIPTION\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/p/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_COVER\",\"pattern\":\"./div[@class='post-thumb']/img/@src\",\"result_type\":\"value\"},{\"key\":\"EPISODE_PATTERN\",\"pattern\":\"./div[@class='venutama']/div[@class='lexot']/div[@class='dlbod']/div/div[@class='smokeurl']/a/@href\",\"result_type\":\"value\"}]",
+      "pagination_pattern": "[]"
+    },
+    "description": "scraping data from https://kusonime.com/list-anime-batch-sub-indo/ (2) on interval 30",
+    "timeout": 45,
+    "langCode": "id",
+    "countryCode": "id",
+    "mediaId": 2,
+    "numItterate": 0,
+    "maxItteratePost": 10,
+    "maxItteratePostDetail": 10,
+    "numRetry": 0,
+    "numPage": 1,
+    "engine": "html"
+  }
+}

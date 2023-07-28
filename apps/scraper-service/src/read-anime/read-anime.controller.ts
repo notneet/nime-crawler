@@ -9,6 +9,7 @@ import { Controller, Inject, Logger, UseInterceptors } from '@nestjs/common';
 import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
 import { ScrapeAnime } from '../../../cron-interval/src/cron-interval.service';
 import { AcknolageMessageInterceptor } from '../interceptors/acknolage-message.interceptor';
+import { isEmpty, isNotEmpty } from 'class-validator';
 
 export interface ParsedPattern {
   key: string;
@@ -40,6 +41,8 @@ export class ReadAnimeController {
   }
 
   private async scrapeWithHTML(data: ScrapeAnime) {
+    if (isEmpty(data.pageUrl)) return;
+
     const { pageUrl, ...payload } = data;
     const parsedPattern: ParsedPattern[] = JSON.parse(data.patternPost.pattern);
     const parsedPaginationPattern: ParsedPattern[] = JSON.parse(
@@ -86,7 +89,7 @@ export class ReadAnimeController {
     }
 
     data.pageUrl = urlNextPage;
-    if (data.pageUrl !== null) {
+    if (isNotEmpty(data?.pageUrl)) {
       this.emitNextPage(data);
     }
   }
