@@ -51,7 +51,9 @@ export class AcknolageMessageInterceptor implements NestInterceptor {
           this.logger.error('connection lost');
         }
       }
-      //   this.logger.debug(`exectime ${diffDate}s ${data.endPoint}`);
+      this.logger.debug(
+        `exectime ${diffDate}s ${data?.endPoint || data?.pageUrl}`,
+      );
     };
     return next.handle().pipe(tap(ackOrReject));
   }

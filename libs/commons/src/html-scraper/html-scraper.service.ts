@@ -207,7 +207,9 @@ export class HtmlScraperService {
             payload?.containerPattern,
             payload?.postProducerPattern,
           ),
-        ),
+        )
+          ?.split(', ')
+          ?.join(','),
         description: this.getContent(descriptionComponent, 'text')?.join('\n'),
         cover_url: this.getContent(coverContentXpath, 'value')?.join(', '),
         episode_urls: this.getContent(listEpsContentXpath, 'value'),
