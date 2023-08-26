@@ -23,7 +23,7 @@ interface WebsitePayload {
   secondaryPattern?: string;
 }
 
-interface WebsiteDetailPayload {
+export interface WebsiteDetailPayload {
   baseUrl: string;
   rawHTML?: string;
   containerPattern: string;
@@ -109,7 +109,7 @@ export class HtmlScraperService {
         throw new Error('Document is empty');
       }
       const resultContentXpath = document.find(
-        `${payload.containerPattern}/${payload.valuePattern}`,
+        this.makeXpath(payload?.containerPattern, payload?.valuePattern),
       );
       content.push(
         ...this.getContent(resultContentXpath, payload.contentResultType),
@@ -137,49 +137,52 @@ export class HtmlScraperService {
       }
 
       const genreContentXpath = document.find(
-        `${payload.containerPattern}/${payload.postGenrePattern}`,
+        this.makeXpath(payload?.containerPattern, payload?.postGenrePattern),
       );
       const coverContentXpath = document.find(
-        `${payload.containerPattern}/${payload.postCoverPattern}`,
+        this.makeXpath(payload?.containerPattern, payload?.postCoverPattern),
       );
       const listEpsContentXpath = document.find(
-        `${payload.containerPattern}/${payload.postListEpsPattern}`,
+        this.makeXpath(payload?.containerPattern, payload?.postListEpsPattern),
       );
       const descriptionComponent = document.find(
-        `${payload.containerPattern}/${payload.postDescPattern}`,
+        this.makeXpath(payload?.containerPattern, payload?.postDescPattern),
       );
 
       const data: AnimeDetail = {
         object_id: hashUUID(payload.baseUrl),
         title: this.getSingleContent<string>(
           document,
-          `${payload.containerPattern}/${payload.titlePattern}`,
+          this.makeXpath(payload?.containerPattern, payload?.titlePattern),
         ),
         title_jp: this.getSingleContent<string>(
           document,
-          `${payload.containerPattern}/${payload.titleJpPattern}`,
+          this.makeXpath(payload?.containerPattern, payload?.titleJpPattern),
         ),
         title_en: this.getSingleContent<string>(
           document,
-          `${payload.containerPattern}/${payload.titleEnPattern}`,
+          this.makeXpath(payload?.containerPattern, payload?.titleEnPattern),
         ),
         type: this.getSingleContent<string>(
           document,
-          `${payload.containerPattern}/${payload.postTypePattern}`,
+          this.makeXpath(payload?.containerPattern, payload?.postTypePattern),
         ),
         score: this.getSingleContent<number>(
           document,
-          `${payload.containerPattern}/${payload.postScorePattern}`,
+          this.makeXpath(payload?.containerPattern, payload?.postScorePattern),
           'number',
         ),
         status: this.getSingleContent<string>(
           document,
-          `${payload.containerPattern}/${payload.postStatusPattern}`,
+          this.makeXpath(payload?.containerPattern, payload?.postStatusPattern),
         ),
         duration: Number(
           this.getSingleContent<number>(
             document,
-            `${payload.containerPattern}/${payload.postDurationPattern}`,
+            this.makeXpath(
+              payload?.containerPattern,
+              payload?.postDurationPattern,
+            ),
           )
             ?.toString()
             ?.replace(/\D/g, ''),
@@ -187,7 +190,7 @@ export class HtmlScraperService {
         total_episode: Number(
           this.getSingleContent<number>(
             document,
-            `${payload.containerPattern}/${payload.postEpsPattern}`,
+            this.makeXpath(payload?.containerPattern, payload?.postEpsPattern),
           )
             ?.toString()
             ?.replace(/\D/g, ''),
@@ -195,12 +198,15 @@ export class HtmlScraperService {
         published: null,
         season: this.getSingleContent<string>(
           document,
-          `${payload.containerPattern}/${payload.postSeasonPattern}`,
+          this.makeXpath(payload?.containerPattern, payload?.postSeasonPattern),
         ),
-        genres: this.getContent(genreContentXpath, 'text')?.join(', ') || null,
+        genres: this.getContent(genreContentXpath, 'text')?.join(',') || null,
         producers: this.getSingleContent<string>(
           document,
-          `${payload.containerPattern}/${payload.postProducerPattern}`,
+          this.makeXpath(
+            payload?.containerPattern,
+            payload?.postProducerPattern,
+          ),
         ),
         description: this.getContent(descriptionComponent, 'text')?.join('\n'),
         cover_url: this.getContent(coverContentXpath, 'value')?.join(', '),
@@ -242,6 +248,10 @@ export class HtmlScraperService {
     );
 
     return resHTML ? resHTML : { data: null };
+  }
+
+  private makeXpath(...rawXpath: string[]) {
+    return rawXpath.join('/');
   }
 
   private getContent(rawDocument: libxmljs.Node[], type: 'text' | 'value') {
