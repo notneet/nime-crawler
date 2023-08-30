@@ -1,4 +1,3 @@
-import { PrismaModule } from '@libs/commons/prisma/prisma.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ApiModule } from 'apps/api/src/api.module';
