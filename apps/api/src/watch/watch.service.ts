@@ -1,7 +1,6 @@
 import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
 import { Watch } from '@libs/commons/entities/watch.entity';
-import { EnvKey } from '@libs/commons/helper/constant';
 import {
   Injectable,
   InternalServerErrorException,
@@ -78,9 +77,12 @@ export class WatchService {
     }
   }
 
-  async findAll() {
+  async findAll(id: string) {
     try {
-      return this.conWatch.find();
+      return this.conWatch
+        .createQueryBuilder()
+        .from(`watch_${id}`, 'watch')
+        .getMany();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

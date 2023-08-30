@@ -1,18 +1,20 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseIntPipe,
-} from '@nestjs/common';
-import { WatchService } from './watch.service';
-import { WatchDto } from '@libs/commons/dto/watch.dto';
 import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
+import { WatchDto } from '@libs/commons/dto/watch.dto';
 import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { isEmpty } from 'class-validator';
+import { WatchService } from './watch.service';
 
 @Controller('watch')
 @Serialize(WatchDto)
@@ -28,8 +30,11 @@ export class WatchController {
   }
 
   @Get()
-  findAll() {
-    return this.watchService.findAll();
+  findAll(@Param('id') id: string) {
+    if (isEmpty(id))
+      throw new BadRequestException('id of media must be present');
+
+    return this.watchService.findAll(id);
   }
 
   @Get(':id')
