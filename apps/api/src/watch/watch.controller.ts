@@ -1,7 +1,5 @@
 import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
-import { WatchDto } from '@libs/commons/dto/watch.dto';
-import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 import {
   BadRequestException,
   Body,
@@ -14,13 +12,14 @@ import {
   Query,
 } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
+import { PageOptionsDto } from '../dtos/pagination.dto';
 import { WatchService } from './watch.service';
 
 @Controller({
   version: '1',
   path: 'watches',
 })
-@Serialize(WatchDto)
+// @Serialize(WatchDto)
 export class WatchController {
   constructor(private readonly watchService: WatchService) {}
 
@@ -33,10 +32,13 @@ export class WatchController {
   }
 
   @Get()
-  findAll(@Query('media_id') mediaId: string) {
+  async findAll(
+    @Query('media_id') mediaId: string,
+    @Query() pageOptDto: PageOptionsDto,
+  ) {
     this.handleMediaIdNotDefined(mediaId);
 
-    return this.watchService.findAll(mediaId);
+    return this.watchService.findAll(mediaId, pageOptDto);
   }
 
   @Get(':objectId')

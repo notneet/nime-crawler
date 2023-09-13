@@ -10,6 +10,7 @@ import {
 import { InjectEntityManager } from '@nestjs/typeorm';
 import 'moment-timezone';
 import { EntityManager } from 'typeorm';
+import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
 @Injectable()
 export class StreamService {
@@ -46,10 +47,30 @@ export class StreamService {
     } catch (error) {}
   }
 
-  async findAll(mediaId: string) {
+  async findAll(
+    mediaId: string,
+    pageOptDto: PageOptionsDto,
+  ): Promise<PageDto<Stream>> {
     const tableName = `stream_${mediaId}`;
     try {
-      return this.baseQuery(tableName).getRawMany();
+      const queryStreams = this.baseQuery(tableName)
+        .orderBy('q.updated_at', pageOptDto?.order)
+        .skip(pageOptDto?.skip)
+        .take(pageOptDto?.take);
+      const data = await queryStreams.getRawMany();
+      const itemCount = +(
+        await queryStreams.addSelect('COUNT(q.id)', 'streamsCount').getRawOne()
+      ).streamsCount;
+
+      const pageMetaDto = new PageMetaDto({
+        itemCount,
+        pageOptionsDto: pageOptDto,
+      });
+
+      return {
+        data,
+        meta: pageMetaDto,
+      };
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

@@ -1,7 +1,5 @@
 import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
-import { StreamDto } from '@libs/commons/dto/stream.dto';
 import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
-import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 import {
   BadRequestException,
   Body,
@@ -14,13 +12,14 @@ import {
   Query,
 } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
+import { PageOptionsDto } from '../dtos/pagination.dto';
 import { StreamService } from './stream.service';
 
 @Controller({
   version: '1',
   path: 'streams',
 })
-@Serialize(StreamDto)
+// @Serialize(StreamDto)
 export class StreamController {
   constructor(private readonly streamService: StreamService) {}
 
@@ -33,10 +32,13 @@ export class StreamController {
   }
 
   @Get()
-  findAll(@Query('media_id') mediaId: string) {
+  findAll(
+    @Query('media_id') mediaId: string,
+    @Query() pageOptDto: PageOptionsDto,
+  ) {
     this.handleMediaIdNotDefined(mediaId);
 
-    return this.streamService.findAll(mediaId);
+    return this.streamService.findAll(mediaId, pageOptDto);
   }
 
   @Get(':objectId')

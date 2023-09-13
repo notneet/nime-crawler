@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
+import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
 @Injectable()
 export class WatchService {
@@ -42,11 +43,31 @@ export class WatchService {
     } catch (error) {}
   }
 
-  async findAll(id: string) {
-    const tableName = `watch_${id}`;
+  async findAll(
+    mediaId: string,
+    pageOptDto: PageOptionsDto,
+  ): Promise<PageDto<Watch>> {
+    const tableName = `watch_${mediaId}`;
 
     try {
-      return this.baseQuery(tableName).getRawMany();
+      const queryWatches = this.baseQuery(tableName)
+        .orderBy('q.updated_at', pageOptDto?.order)
+        .skip(pageOptDto?.skip)
+        .take(pageOptDto?.take);
+      const data = await queryWatches.getRawMany();
+      const itemCount = +(
+        await queryWatches.addSelect('COUNT(q.id)', 'watchesCount').getRawOne()
+      ).watchesCount;
+
+      const pageMetaDto = new PageMetaDto({
+        itemCount,
+        pageOptionsDto: pageOptDto,
+      });
+
+      return {
+        data,
+        meta: pageMetaDto,
+      };
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
