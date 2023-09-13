@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { urlNormalize } from '../helper/url-normalize';
 
-@Entity({ name: 'stream_media_id' })
+@Entity({ name: 'stream_model' })
 export class Stream {
   @PrimaryGeneratedColumn()
   id: number;

@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { urlNormalize } from '../helper/url-normalize';
 
-@Entity({ name: 'watch_media_id' })
+@Entity({ name: 'watch_model' })
 export class Watch {
   @PrimaryGeneratedColumn()
   id: number;
