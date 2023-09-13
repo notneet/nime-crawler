@@ -59,14 +59,21 @@ export class WatchController {
     return this.watchService.findByUrl(mediaId, urlWatch);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWatchDto: UpdateWatchDto) {
-    return this.watchService.update(id, updateWatchDto);
+  @Patch(':objectId')
+  update(
+    @Query('media_id') mediaId: string,
+    @Param('objectId') objectId: string,
+    @Body() updateWatchDto: UpdateWatchDto,
+  ) {
+    return this.watchService.update(mediaId, objectId, updateWatchDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string, @Query('media_id') mediaId: string) {
-    return this.watchService.remove(mediaId, id);
+  @Delete(':objectId')
+  remove(
+    @Query('media_id') mediaId: string,
+    @Param('objectId') objectId: string,
+  ) {
+    return this.watchService.remove(mediaId, objectId);
   }
 
   private handleMediaIdNotDefined(mediaId?: string) {

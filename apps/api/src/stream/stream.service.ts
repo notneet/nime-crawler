@@ -2,102 +2,147 @@ import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
 import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
 import { Stream } from '@libs/commons/entities/stream.entity';
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import 'moment-timezone';
-import { Repository } from 'typeorm';
-import { WatchService } from '../watch/watch.service';
+import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class StreamService {
   constructor(
-    @InjectRepository(Stream)
-    private readonly conStream: Repository<Stream>,
-    private readonly watchService: WatchService,
+    @InjectEntityManager() protected readonly eManager: EntityManager,
   ) {}
 
-  async create(createStreamDto: CreateStreamDto) {
+  async saveToDB(createStreamDto: CreateStreamDto, mediaId: number) {
     try {
-      // let watch = await this.watchService.findByObjectId(
-      //   createStreamDto.watch_id,
-      // );
-      //
-      // if (!watch) return new NotFoundException('parent post not found');
-      // let stream = await this.findByUrl(createStreamDto.url);
-      //
-      // if (!stream) {
-      //   stream = this.conStream.create(createStreamDto);
-      //   return this.conStream.insert(stream);
-      // }
-      // Object.assign(stream, createStreamDto);
-      //
-      // return this.conStream.update({ id: stream.id }, stream);
+      const tableName = `stream_${mediaId}`;
+      let stream = await this.findByUrlWithMediaId(
+        createStreamDto.url,
+        mediaId,
+      );
+
+      if (!stream) {
+        stream = this.streamEtityMetadata.create(createStreamDto);
+        return this.streamEtityMetadata
+          .createQueryBuilder()
+          .insert()
+          .into(tableName)
+          .values(stream)
+          .execute();
+      }
+      Object.assign(stream, createStreamDto);
+      delete stream.updated_at;
+
+      return this.streamEtityMetadata
+        .createQueryBuilder()
+        .update(tableName)
+        .set(stream)
+        .where({ id: stream.id })
+        .execute();
+    } catch (error) {}
+  }
+
+  async findAll(mediaId: string) {
+    const tableName = `stream_${mediaId}`;
+    try {
+      return this.baseQuery(tableName).getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async findAll() {
+  async findByUrlWithMediaId(
+    urlStream: string,
+    mediaId: number,
+  ): Promise<Stream> {
     try {
-      return this.conStream.find();
+      const tableName = `stream_${mediaId}`;
+
+      return this.baseQuery(tableName)
+        .where({ url: urlStream } as Partial<Stream>)
+        .getRawOne();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async findByUrl(urlStream: string) {
+  async findByUrl(mediaId: string, urlStream: string) {
+    const tableName = `stream_${mediaId}`;
+
     try {
-      return this.conStream.findOne({
-        where: { url: urlStream },
-      });
+      return this.baseQuery(tableName)
+        .createQueryBuilder()
+        .where({ url: urlStream } as Partial<Stream>)
+        .getRawOne();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async findOne(id: number) {
-    try {
-      const stream = await this.conStream.findOne({ where: { id } });
-      if (!stream) throw new NotFoundException('data not found');
+  async findOne(mediaId: string, id: number) {
+    let stream: Stream;
+    const tableName = `stream_${mediaId}`;
 
-      return stream;
+    try {
+      stream = await this.baseQuery(tableName)
+        .createQueryBuilder()
+        .where({ id } as Partial<Stream>)
+        .getRawOne();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+
+    if (!stream) throw new NotFoundException('data not found');
+
+    return stream;
   }
 
-  async findByObjectId(id: string) {
-    try {
-      const stream = await this.conStream.findOne({ where: { object_id: id } });
-      if (!stream) throw new NotFoundException('data not found');
+  async findByObjectId(mediaId: string, objectId: string) {
+    const tableName = `stream_${mediaId}`;
+    let stream: Stream;
 
-      return stream;
+    try {
+      stream = await this.baseQuery(tableName)
+        .where({
+          object_id: objectId,
+        } as Partial<Stream>)
+        .getRawOne();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+
+    if (!stream) {
+      throw new NotFoundException('data not found');
+    }
+
+    return stream;
   }
 
-  async update(id: string, updateStreamDto: UpdateStreamDto) {
-    try {
-      const stream = await this.findByObjectId(id);
-      Object.assign(stream, updateStreamDto);
-
-      return this.conStream.update({ watch_id: id }, stream);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+  async create(createStreamDto: CreateStreamDto, mediaId?: string) {
+    throw new BadRequestException(`Mechanism is not provided`);
   }
 
-  async remove(id: string) {
-    try {
-      const stream = await this.findByObjectId(id);
+  async update(
+    mediaId: string,
+    objectId: string,
+    updateStreamDto: UpdateStreamDto,
+  ) {
+    throw new BadRequestException(`Mechanism is not provided`);
+  }
 
-      return this.conStream.remove(stream);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+  async remove(mediaId: string, objectId: string) {
+    throw new BadRequestException(`Mechanism is not provided`);
+  }
+
+  private baseQuery(tableName: string) {
+    return this.eManager.createQueryBuilder().from(tableName, 'q');
+  }
+
+  private get streamEtityMetadata() {
+    return this.eManager.connection.getRepository(Stream);
   }
 }

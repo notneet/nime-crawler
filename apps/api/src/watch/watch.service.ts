@@ -102,30 +102,36 @@ export class WatchService {
   }
 
   async findOne(mediaId: string, id: number) {
+    let watch: Watch;
     const tableName = `watch_${mediaId}`;
 
     try {
-      const watch = await this.baseQuery(tableName)
+      watch = await this.baseQuery(tableName)
         .createQueryBuilder()
         .where({ id } as Partial<Watch>)
         .getRawOne();
-      if (!watch) throw new NotFoundException('data not found');
-
-      return watch;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+
+    if (!watch) throw new NotFoundException('data not found');
+
+    return watch;
   }
 
   async create(createWatchDto: CreateWatchDto, mediaId?: string) {
     throw new BadRequestException(`Mechanism is not provided`);
   }
 
-  async update(id: string, updateWatchDto: UpdateWatchDto) {
+  async update(
+    mediaId: string,
+    objectId: string,
+    updateWatchDto: UpdateWatchDto,
+  ) {
     throw new BadRequestException(`Mechanism is not provided`);
   }
 
-  async remove(mediaId: string, id: string) {
+  async remove(mediaId: string, objectId: string) {
     throw new BadRequestException(`Mechanism is not provided`);
   }
 

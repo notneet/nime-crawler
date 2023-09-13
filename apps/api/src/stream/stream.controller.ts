@@ -1,45 +1,85 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
-import { StreamService } from './stream.service';
-import { StreamDto } from '@libs/commons/dto/stream.dto';
-import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
+import { StreamDto } from '@libs/commons/dto/stream.dto';
 import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
+import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { isEmpty } from 'class-validator';
+import { StreamService } from './stream.service';
 
-@Controller('stream')
+@Controller({
+  version: '1',
+  path: 'streams',
+})
 @Serialize(StreamDto)
 export class StreamController {
   constructor(private readonly streamService: StreamService) {}
 
-  @Post()
-  create(@Body() createStreamDto: CreateStreamDto) {
-    return this.streamService.create(createStreamDto);
+  @Post(':media_id')
+  create(
+    @Param('media_id') mediaId: string,
+    @Body() createStreamDto: CreateStreamDto,
+  ) {
+    return this.streamService.create(createStreamDto, mediaId);
   }
 
   @Get()
-  findAll() {
-    return this.streamService.findAll();
+  findAll(@Query('media_id') mediaId: string) {
+    this.handleMediaIdNotDefined(mediaId);
+
+    return this.streamService.findAll(mediaId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.streamService.findByObjectId(id);
+  @Get(':objectId')
+  findOne(
+    @Query('media_id') mediaId: string,
+    @Param('objectId') objectId: string,
+  ) {
+    this.handleMediaIdNotDefined(mediaId);
+
+    return this.streamService.findByObjectId(mediaId, objectId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateStreamDto: UpdateStreamDto) {
-    return this.streamService.update(id, updateStreamDto);
+  @Get('url/:urlStream')
+  findByUrl(
+    @Query('media_id') mediaId: string,
+    @Param('urlStream') urlStream: string,
+  ) {
+    this.handleMediaIdNotDefined(mediaId);
+
+    return this.streamService.findByUrl(mediaId, urlStream);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.streamService.remove(id);
+  @Patch(':objectId')
+  update(
+    @Query('media_id') mediaId: string,
+    @Param('objectId') objectId: string,
+    @Body() updateStreamDto: UpdateStreamDto,
+  ) {
+    return this.streamService.update(mediaId, objectId, updateStreamDto);
+  }
+
+  @Delete(':objectId')
+  remove(
+    @Query('media_id') mediaId: string,
+    @Param('objectId') objectId: string,
+  ) {
+    return this.streamService.remove(mediaId, objectId);
+  }
+
+  private handleMediaIdNotDefined(mediaId?: string) {
+    if (isEmpty(mediaId))
+      throw new BadRequestException(
+        `Query param "media_id" of media must be present`,
+      );
   }
 }
