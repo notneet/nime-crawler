@@ -1,15 +1,15 @@
+import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
+import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
+import { Stream } from '@libs/commons/entities/stream.entity';
 import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import 'moment-timezone';
 import { InjectRepository } from '@nestjs/typeorm';
+import 'moment-timezone';
 import { Repository } from 'typeorm';
-import { Stream } from '@libs/commons/entities/stream.entity';
-import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
 import { WatchService } from '../watch/watch.service';
-import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
 
 @Injectable()
 export class StreamService {
@@ -21,20 +21,20 @@ export class StreamService {
 
   async create(createStreamDto: CreateStreamDto) {
     try {
-      let watch = await this.watchService.findByObjectId(
-        createStreamDto.watch_id,
-      );
-
-      if (!watch) return new NotFoundException('parent post not found');
-      let stream = await this.findByUrl(createStreamDto.url);
-
-      if (!stream) {
-        stream = this.conStream.create(createStreamDto);
-        return this.conStream.insert(stream);
-      }
-      Object.assign(stream, createStreamDto);
-
-      return this.conStream.update({ id: stream.id }, stream);
+      // let watch = await this.watchService.findByObjectId(
+      //   createStreamDto.watch_id,
+      // );
+      //
+      // if (!watch) return new NotFoundException('parent post not found');
+      // let stream = await this.findByUrl(createStreamDto.url);
+      //
+      // if (!stream) {
+      //   stream = this.conStream.create(createStreamDto);
+      //   return this.conStream.insert(stream);
+      // }
+      // Object.assign(stream, createStreamDto);
+      //
+      // return this.conStream.update({ id: stream.id }, stream);
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

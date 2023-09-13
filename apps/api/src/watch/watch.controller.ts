@@ -9,37 +9,54 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
 import { WatchService } from './watch.service';
 
-@Controller('watch')
+@Controller({
+  version: '1',
+  path: 'watches',
+})
 @Serialize(WatchDto)
 export class WatchController {
   constructor(private readonly watchService: WatchService) {}
 
-  @Post(':id')
+  @Post(':media_id')
   create(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('media_id') mediaId: string,
     @Body() createWatchDto: CreateWatchDto,
   ) {
-    return this.watchService.create(createWatchDto, id);
+    return this.watchService.create(createWatchDto, mediaId);
   }
 
   @Get()
-  findAll(@Param('id') id: string) {
-    if (isEmpty(id))
-      throw new BadRequestException('id of media must be present');
+  findAll(@Query('media_id') mediaId: string) {
+    this.handleMediaIdNotDefined(mediaId);
 
-    return this.watchService.findAll(id);
+    return this.watchService.findAll(mediaId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.watchService.findByObjectId(id);
+  @Get(':objectId')
+  findOne(
+    @Query('media_id') mediaId: string,
+    @Param('objectId') objectId: string,
+  ) {
+    this.handleMediaIdNotDefined(mediaId);
+
+    return this.watchService.findByObjectId(mediaId, objectId);
+  }
+
+  @Get('url/:urlWatch')
+  findByUrl(
+    @Query('media_id') mediaId: string,
+    @Param('urlWatch') urlWatch: string,
+  ) {
+    this.handleMediaIdNotDefined(mediaId);
+
+    return this.watchService.findByUrl(mediaId, urlWatch);
   }
 
   @Patch(':id')
@@ -48,7 +65,14 @@ export class WatchController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.watchService.remove(id);
+  remove(@Param('id') id: string, @Query('media_id') mediaId: string) {
+    return this.watchService.remove(mediaId, id);
+  }
+
+  private handleMediaIdNotDefined(mediaId?: string) {
+    if (isEmpty(mediaId))
+      throw new BadRequestException(
+        `Query param "media_id" of media must be present`,
+      );
   }
 }

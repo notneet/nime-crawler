@@ -11,6 +11,8 @@ export enum EnvKey {
   RMQ_URL = 'RMQ_URL',
   PROXY_SERVER = 'PROXY_SERVER',
   SCRAPE_TYPE = 'SCRAPE_TYPE',
+  APP_NAME = 'APP_NAME',
+  V1_VERSION = 'V1_VERSION',
 }
 
 export enum DefKey {
