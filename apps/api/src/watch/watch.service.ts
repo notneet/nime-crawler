@@ -6,6 +6,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
@@ -69,7 +70,14 @@ export class WatchService {
         meta: pageMetaDto,
       };
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `media_id: ${mediaId} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
     }
   }
 
@@ -97,7 +105,14 @@ export class WatchService {
         .where({ url: urlWatch } as Partial<Watch>)
         .getRawOne();
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `media_id: ${mediaId} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
     }
   }
 
@@ -112,7 +127,14 @@ export class WatchService {
         } as Partial<Watch>)
         .getRawOne();
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `media_id: ${mediaId} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
     }
 
     if (!watch) {

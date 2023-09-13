@@ -6,6 +6,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import 'moment-timezone';
@@ -72,7 +73,14 @@ export class StreamService {
         meta: pageMetaDto,
       };
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `media_id: ${mediaId} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
     }
   }
 
@@ -100,7 +108,14 @@ export class StreamService {
         .where({ url: urlStream } as Partial<Stream>)
         .getRawOne();
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `media_id: ${mediaId} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
     }
   }
 
@@ -114,7 +129,14 @@ export class StreamService {
         .where({ id } as Partial<Stream>)
         .getRawOne();
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `media_id: ${mediaId} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
     }
 
     if (!stream) throw new NotFoundException('data not found');
@@ -133,7 +155,14 @@ export class StreamService {
         } as Partial<Stream>)
         .getRawOne();
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `media_id: ${mediaId} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
     }
 
     if (!stream) {
