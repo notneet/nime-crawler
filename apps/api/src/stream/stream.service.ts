@@ -53,14 +53,18 @@ export class StreamService {
     pageOptDto: PageOptionsDto,
   ): Promise<PageDto<Stream>> {
     const tableName = `stream_${mediaId}`;
+
     try {
-      const queryStreams = this.baseQuery(tableName)
+      const data = await this.baseQuery(tableName)
         .orderBy('q.updated_at', pageOptDto?.order)
         .skip(pageOptDto?.skip)
-        .take(pageOptDto?.take);
-      const data = await queryStreams.getRawMany();
+        .take(pageOptDto?.take)
+        .getRawMany();
       const itemCount = +(
-        await queryStreams.addSelect('COUNT(q.id)', 'streamsCount').getRawOne()
+        await this.baseQuery(tableName)
+          .orderBy('q.updated_at', pageOptDto?.order)
+          .addSelect('COUNT(q.id)', 'streamsCount')
+          .getRawOne()
       ).streamsCount;
 
       const pageMetaDto = new PageMetaDto({

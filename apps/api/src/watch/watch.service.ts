@@ -51,14 +51,17 @@ export class WatchService {
     const tableName = `watch_${mediaId}`;
 
     try {
-      const queryWatches = this.baseQuery(tableName)
+      const itemCount = +(
+        await this.baseQuery(tableName)
+          .orderBy('q.updated_at', pageOptDto?.order)
+          .addSelect('COUNT(q.id)', 'watchesCount')
+          .getRawOne()
+      ).watchesCount;
+      const data = await this.baseQuery(tableName)
         .orderBy('q.updated_at', pageOptDto?.order)
         .skip(pageOptDto?.skip)
-        .take(pageOptDto?.take);
-      const data = await queryWatches.getRawMany();
-      const itemCount = +(
-        await queryWatches.addSelect('COUNT(q.id)', 'watchesCount').getRawOne()
-      ).watchesCount;
+        .take(pageOptDto?.take)
+        .getRawMany();
 
       const pageMetaDto = new PageMetaDto({
         itemCount,
