@@ -1,60 +1,61 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 
 export class WatchDto {
   @Expose()
   id: number;
 
   @Expose()
-  object_id: string;
+  object_id: string | null;
+
+  @Expose()
+  media_id: number;
 
   @Expose()
   url: string;
 
   @Expose()
-  title: string;
+  title: string | null;
 
   @Expose()
-  title_jp: string;
+  title_jp: string | null;
 
   @Expose()
-  title_en: string;
+  title_en: string | null;
 
   @Expose()
-  type: string;
+  type: string | null;
 
   @Expose()
-  score: number;
+  @Type(() => Number)
+  score: number | null;
 
   @Expose()
-  status: string;
+  status: string | null;
 
   @Expose()
-  duration: number;
+  duration: number | null;
 
   @Expose()
-  total_episode: number;
+  total_episode: number | null;
 
   @Expose()
-  published: Date;
+  published: Date | null;
 
   @Expose()
-  published_ts: Date;
+  published_ts: Date | null;
 
   @Expose()
-  season: string;
+  season: string | null;
 
   @Expose()
-  genres: string;
+  genres: string | null;
 
   @Expose()
-  producers: string;
+  producers: string | null;
 
   @Expose()
-  description: string;
+  description: string | null;
 
   @Expose()
-  cover_url: string;
-
-  @Expose()
-  media_id: number;
+  cover_url: string | null;
 }

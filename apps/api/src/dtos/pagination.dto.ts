@@ -58,11 +58,11 @@ export class PageMetaDto {
 }
 
 export class PageDto<T> {
-  readonly data: T[];
+  readonly data: T;
 
-  readonly meta: PageMetaDto;
+  readonly meta?: PageMetaDto;
 
-  constructor(data: T[], meta: PageMetaDto) {
+  constructor(data: T, meta: PageMetaDto) {
     this.data = data;
     this.meta = meta;
   }

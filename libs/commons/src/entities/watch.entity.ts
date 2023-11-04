@@ -46,10 +46,10 @@ export class Watch {
   @Column({ type: 'datetime', default: '1970-01-01 00:00:00' })
   published: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp', default: null })
   published_ts: Date;
 
-  @Column({ length: 100 })
+  @Column({ length: 100, nullable: true })
   season: string;
 
   @Column({ length: 128 })

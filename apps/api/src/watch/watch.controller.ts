@@ -1,14 +1,11 @@
 import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
+import { TypedRoute } from '@nestia/core';
 import {
   BadRequestException,
   Body,
   Controller,
-  Delete,
-  Get,
   Param,
-  Patch,
-  Post,
   Query,
 } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
@@ -23,7 +20,7 @@ import { WatchService } from './watch.service';
 export class WatchController {
   constructor(private readonly watchService: WatchService) {}
 
-  @Post(':media_id')
+  @TypedRoute.Post(':media_id')
   create(
     @Param('media_id') mediaId: string,
     @Body() createWatchDto: CreateWatchDto,
@@ -31,7 +28,7 @@ export class WatchController {
     return this.watchService.create(createWatchDto, mediaId);
   }
 
-  @Get()
+  @TypedRoute.Get()
   async findAll(
     @Query('media_id') mediaId: string,
     @Query() pageOptDto: PageOptionsDto,
@@ -41,7 +38,7 @@ export class WatchController {
     return this.watchService.findAll(mediaId, pageOptDto);
   }
 
-  @Get(':objectId')
+  @TypedRoute.Get(':objectId')
   findOne(
     @Query('media_id') mediaId: string,
     @Param('objectId') objectId: string,
@@ -51,7 +48,7 @@ export class WatchController {
     return this.watchService.findByObjectId(mediaId, objectId);
   }
 
-  @Get('url/:urlWatch')
+  @TypedRoute.Get('url/:urlWatch')
   findByUrl(
     @Query('media_id') mediaId: string,
     @Param('urlWatch') urlWatch: string,
@@ -61,7 +58,7 @@ export class WatchController {
     return this.watchService.findByUrl(mediaId, urlWatch);
   }
 
-  @Patch(':objectId')
+  @TypedRoute.Patch(':objectId')
   update(
     @Query('media_id') mediaId: string,
     @Param('objectId') objectId: string,
@@ -70,7 +67,7 @@ export class WatchController {
     return this.watchService.update(mediaId, objectId, updateWatchDto);
   }
 
-  @Delete(':objectId')
+  @TypedRoute.Delete(':objectId')
   remove(
     @Query('media_id') mediaId: string,
     @Param('objectId') objectId: string,

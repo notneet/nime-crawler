@@ -1,5 +1,6 @@
 import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
+import { WatchDto } from '@libs/commons/dto/watch.dto';
 import { Watch } from '@libs/commons/entities/watch.entity';
 import {
   Injectable,
@@ -9,6 +10,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import { EntityManager } from 'typeorm';
 import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
@@ -47,21 +49,21 @@ export class WatchService {
   async findAll(
     mediaId: string,
     pageOptDto: PageOptionsDto,
-  ): Promise<PageDto<Watch>> {
+  ): Promise<PageDto<WatchDto[]>> {
     const tableName = `watch_${mediaId}`;
 
     try {
+      const data = await this.baseQuery(tableName)
+        .orderBy('q.updated_at', pageOptDto?.order)
+        .skip(pageOptDto?.skip)
+        .take(pageOptDto?.take)
+        .getRawMany();
       const itemCount = +(
         await this.baseQuery(tableName)
           .orderBy('q.updated_at', pageOptDto?.order)
           .addSelect('COUNT(q.id)', 'watchesCount')
           .getRawOne()
       ).watchesCount;
-      const data = await this.baseQuery(tableName)
-        .orderBy('q.updated_at', pageOptDto?.order)
-        .skip(pageOptDto?.skip)
-        .take(pageOptDto?.take)
-        .getRawMany();
 
       const pageMetaDto = new PageMetaDto({
         itemCount,
@@ -69,7 +71,7 @@ export class WatchService {
       });
 
       return {
-        data,
+        data: plainToInstance(WatchDto, data),
         meta: pageMetaDto,
       };
     } catch (error) {
@@ -81,21 +83,6 @@ export class WatchService {
         default:
           throw new InternalServerErrorException(error);
       }
-    }
-  }
-
-  async findByUrlWithMediaId(
-    urlWatch: string,
-    mediaId: number,
-  ): Promise<Watch | undefined> {
-    try {
-      const tableName = `watch_${mediaId}`;
-
-      return this.baseQuery(tableName)
-        .where({ url: urlWatch } as Partial<Watch>)
-        .getRawOne();
-    } catch (error) {
-      throw new InternalServerErrorException(error);
     }
   }
 
@@ -119,7 +106,10 @@ export class WatchService {
     }
   }
 
-  async findByObjectId(mediaId: string, objectId: string) {
+  async findByObjectId(
+    mediaId: string,
+    objectId: string,
+  ): Promise<PageDto<WatchDto>> {
     const tableName = `watch_${mediaId}`;
     let watch: Watch | undefined;
 
@@ -144,7 +134,9 @@ export class WatchService {
       throw new NotFoundException('data not found');
     }
 
-    return watch;
+    return {
+      data: plainToInstance(WatchDto, watch),
+    };
   }
 
   async findOne(mediaId: string, id: number) {
@@ -184,6 +176,21 @@ export class WatchService {
   /**
    *
    */
+
+  private async findByUrlWithMediaId(
+    urlWatch: string,
+    mediaId: number,
+  ): Promise<Watch | undefined> {
+    const tableName = `watch_${mediaId}`;
+
+    try {
+      return this.baseQuery(tableName)
+        .where({ url: urlWatch } as Partial<Watch>)
+        .getRawOne();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 
   private baseQuery(tableName: string) {
     return this.eManager.createQueryBuilder().from(tableName, 'q');

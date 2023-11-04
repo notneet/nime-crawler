@@ -1,14 +1,11 @@
 import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
 import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
+import { TypedRoute } from '@nestia/core';
 import {
   BadRequestException,
   Body,
   Controller,
-  Delete,
-  Get,
   Param,
-  Patch,
-  Post,
   Query,
 } from '@nestjs/common';
 import { isEmpty } from 'class-validator';
@@ -23,7 +20,7 @@ import { StreamService } from './stream.service';
 export class StreamController {
   constructor(private readonly streamService: StreamService) {}
 
-  @Post(':media_id')
+  @TypedRoute.Post(':media_id')
   create(
     @Param('media_id') mediaId: string,
     @Body() createStreamDto: CreateStreamDto,
@@ -31,7 +28,7 @@ export class StreamController {
     return this.streamService.create(createStreamDto, mediaId);
   }
 
-  @Get()
+  @TypedRoute.Get()
   findAll(
     @Query('media_id') mediaId: string,
     @Query() pageOptDto: PageOptionsDto,
@@ -41,7 +38,7 @@ export class StreamController {
     return this.streamService.findAll(mediaId, pageOptDto);
   }
 
-  @Get(':objectId')
+  @TypedRoute.Get(':objectId')
   findOne(
     @Query('media_id') mediaId: string,
     @Param('objectId') objectId: string,
@@ -51,7 +48,7 @@ export class StreamController {
     return this.streamService.findByObjectId(mediaId, objectId);
   }
 
-  @Get('url/:urlStream')
+  @TypedRoute.Get('url/:urlStream')
   findByUrl(
     @Query('media_id') mediaId: string,
     @Param('urlStream') urlStream: string,
@@ -61,7 +58,7 @@ export class StreamController {
     return this.streamService.findByUrl(mediaId, urlStream);
   }
 
-  @Patch(':objectId')
+  @TypedRoute.Patch(':objectId')
   update(
     @Query('media_id') mediaId: string,
     @Param('objectId') objectId: string,
@@ -70,7 +67,7 @@ export class StreamController {
     return this.streamService.update(mediaId, objectId, updateStreamDto);
   }
 
-  @Delete(':objectId')
+  @TypedRoute.Delete(':objectId')
   remove(
     @Query('media_id') mediaId: string,
     @Param('objectId') objectId: string,

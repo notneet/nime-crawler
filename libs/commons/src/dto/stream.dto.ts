@@ -2,32 +2,35 @@ import { Expose } from 'class-transformer';
 
 export class StreamDto {
   @Expose()
+  id: number;
+
+  @Expose()
   watch_id: string;
+
+  @Expose()
+  media_id: number;
 
   @Expose()
   object_id: string;
 
   @Expose()
-  author: string;
+  author: string | null;
 
   @Expose()
-  published: Date;
+  published: Date | null;
 
   @Expose()
-  published_ts: Date;
+  published_ts: Date | null;
 
   @Expose()
-  name: string;
+  name: string | null;
 
   @Expose()
-  url: string;
+  url: string | null;
 
   @Expose()
-  quality: string;
+  quality: string | null;
 
   @Expose()
-  file_size: string;
-
-  @Expose()
-  media_id: number;
+  file_size: string | null;
 }

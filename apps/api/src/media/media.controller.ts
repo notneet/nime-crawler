@@ -1,40 +1,34 @@
 import { CreateMediaDto } from '@libs/commons/dto/create/create-media.dto';
-import { MediaDto } from '@libs/commons/dto/media.dto';
 import { UpdateMediaDto } from '@libs/commons/dto/update/update-media.dto';
-import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { TypedRoute } from '@nestia/core';
+import { Body, Controller, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { PageOptionsDto } from '../dtos/pagination.dto';
 import { MediaService } from './media.service';
 
-@Controller('media')
-@Serialize(MediaDto)
+@Controller({
+  version: '1',
+  path: 'medias',
+})
+// @Serialize(MediaDto)
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
-  @Post()
+  @TypedRoute.Post()
   create(@Body() createMediaDto: CreateMediaDto) {
     return this.mediaService.create(createMediaDto);
   }
 
-  @Get()
-  findAll() {
-    return this.mediaService.findAll();
+  @TypedRoute.Get()
+  findAll(@Query() pageOptDto: PageOptionsDto) {
+    return this.mediaService.findAll(pageOptDto);
   }
 
-  @Get(':url')
+  @TypedRoute.Get(':url')
   findUrl(@Param('url') urlMedia: string) {
     return this.mediaService.findByUrl(urlMedia);
   }
 
-  @Patch(':url')
+  @TypedRoute.Patch(':url')
   update(
     @Param('url') urlMedia: string,
     @Body() updateMediaDto: UpdateMediaDto,
@@ -42,7 +36,7 @@ export class MediaController {
     return this.mediaService.update(urlMedia, updateMediaDto);
   }
 
-  @Delete(':id')
+  @TypedRoute.Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.mediaService.remove(id);
   }

@@ -1,4 +1,5 @@
 import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
+import { StreamDto } from '@libs/commons/dto/stream.dto';
 import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
 import { Stream } from '@libs/commons/entities/stream.entity';
 import {
@@ -9,6 +10,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import 'moment-timezone';
 import { EntityManager } from 'typeorm';
 import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
@@ -51,7 +53,7 @@ export class StreamService {
   async findAll(
     mediaId: string,
     pageOptDto: PageOptionsDto,
-  ): Promise<PageDto<Stream>> {
+  ): Promise<PageDto<StreamDto[]>> {
     const tableName = `stream_${mediaId}`;
 
     try {
@@ -73,7 +75,7 @@ export class StreamService {
       });
 
       return {
-        data,
+        data: plainToInstance(StreamDto, data),
         meta: pageMetaDto,
       };
     } catch (error) {
@@ -85,21 +87,6 @@ export class StreamService {
         default:
           throw new InternalServerErrorException(error);
       }
-    }
-  }
-
-  async findByUrlWithMediaId(
-    urlStream: string,
-    mediaId: number,
-  ): Promise<Stream | undefined> {
-    try {
-      const tableName = `stream_${mediaId}`;
-
-      return this.baseQuery(tableName)
-        .where({ url: urlStream } as Partial<Stream>)
-        .getRawOne();
-    } catch (error) {
-      throw new InternalServerErrorException(error);
     }
   }
 
@@ -148,7 +135,10 @@ export class StreamService {
     return stream;
   }
 
-  async findByObjectId(mediaId: string, objectId: string) {
+  async findByObjectId(
+    mediaId: string,
+    objectId: string,
+  ): Promise<PageDto<StreamDto>> {
     const tableName = `stream_${mediaId}`;
     let stream: Stream | undefined;
 
@@ -173,7 +163,9 @@ export class StreamService {
       throw new NotFoundException('data not found');
     }
 
-    return stream;
+    return {
+      data: plainToInstance(StreamDto, stream),
+    };
   }
 
   async create(createStreamDto: CreateStreamDto, mediaId?: string) {
@@ -195,6 +187,21 @@ export class StreamService {
   /**
    *
    */
+
+  private async findByUrlWithMediaId(
+    urlStream: string,
+    mediaId: number,
+  ): Promise<Stream | undefined> {
+    try {
+      const tableName = `stream_${mediaId}`;
+
+      return this.baseQuery(tableName)
+        .where({ url: urlStream } as Partial<Stream>)
+        .getRawOne();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 
   private baseQuery(tableName: string) {
     return this.eManager.createQueryBuilder().from(tableName, 'q');
