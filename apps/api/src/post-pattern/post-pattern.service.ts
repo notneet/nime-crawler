@@ -1,89 +1,175 @@
 import { CreatePostPatternDto } from '@libs/commons/dto/create/create-post-pattern.dto';
+import { PostPatternDto } from '@libs/commons/dto/post-pattern.dto';
 import { PostPattern } from '@libs/commons/entities/post-pattern.entity';
 import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { InjectEntityManager } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
+import { EntityManager, In } from 'typeorm';
+import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
 @Injectable()
 export class PostPatternService {
   constructor(
-    @InjectRepository(PostPattern)
-    private readonly conPostPattern: Repository<PostPattern>,
+    @InjectEntityManager() protected readonly eManager: EntityManager,
   ) {}
 
   async create(createPostPatternDto: CreatePostPatternDto) {
+    const tableName = `post_pattern`;
+
     try {
       let postPattern = await this.findByMediaId(createPostPatternDto.media_id);
 
       if (!postPattern) {
-        postPattern = this.conPostPattern.create(createPostPatternDto);
-        return this.conPostPattern.insert(postPattern);
+        postPattern =
+          this.postPatternEtityMetadata.create(createPostPatternDto);
+        return this.postPatternEtityMetadata
+          .createQueryBuilder()
+          .insert()
+          .into(tableName)
+          .values(postPattern)
+          .execute();
       }
 
       Object.assign(postPattern, createPostPatternDto);
-      return this.conPostPattern.update({ id: postPattern.id }, postPattern);
+      return this.postPatternEtityMetadata
+        .createQueryBuilder()
+        .update(tableName)
+        .set(postPattern)
+        .where({ id: postPattern.id })
+        .execute();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async findAll() {
+  async findAll(
+    pageOptDto: PageOptionsDto,
+  ): Promise<PageDto<PostPatternDto[]>> {
+    const tableName = `post_pattern`;
+
     try {
-      return this.conPostPattern.find();
+      const data = await this.baseQuery(tableName)
+        .orderBy('q.updated_at', pageOptDto?.order)
+        .skip(pageOptDto?.skip)
+        .take(pageOptDto?.take)
+        .getRawMany();
+      const itemCount = +(
+        await this.baseQuery(tableName)
+          .orderBy('q.updated_at', pageOptDto?.order)
+          .addSelect('COUNT(q.id)', 'postPatternCount')
+          .getRawOne()
+      ).postPatternCount;
+
+      const pageMetaDto = new PageMetaDto({
+        itemCount,
+        pageOptionsDto: pageOptDto,
+      });
+
+      return {
+        data: plainToInstance(PostPatternDto, data),
+        meta: pageMetaDto,
+      };
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `table ${tableName} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<PageDto<PostPatternDto>> {
+    const tableName = `post_pattern`;
+    let postPattern: PostPattern | undefined;
+
     try {
-      return this.conPostPattern.findOne({ where: { id } });
+      postPattern = await this.baseQuery(tableName)
+        .where({ id } as Partial<PostPattern>)
+        .getRawOne();
+
+      return {
+        data: plainToInstance(PostPatternDto, postPattern),
+      };
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `table ${tableName} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
     }
   }
 
   async findByMediaId(id: number) {
     try {
-      return this.conPostPattern.findOne({ where: { media_id: id } });
+      return this.postPatternEtityMetadata
+        .createQueryBuilder()
+        .where({ media_id: id })
+        .getRawOne();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async findByMediaIds(id: number[]) {
+  async findByMediaIds(id: number[]): Promise<PostPattern[]> {
     try {
-      return this.conPostPattern.find({ where: { media_id: In(id) } });
+      return this.postPatternEtityMetadata
+        .createQueryBuilder()
+        .where({ media_id: In(id) })
+        .getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
   async validate(id: number, nStatus: number) {
+    const tableName = `post_pattern`;
+    let postPattern: PostPattern | undefined;
+
     try {
       const isAvailable = await this.findOne(id);
 
-      if (!isAvailable) throw new NotFoundException('data not found');
-      isAvailable.n_status = nStatus;
+      if (!isAvailable?.data) throw new NotFoundException('data not found');
+      postPattern = isAvailable.data as PostPattern;
+      postPattern.n_status = nStatus;
 
-      return this.conPostPattern.save(isAvailable);
+      return this.postPatternEtityMetadata
+        .createQueryBuilder()
+        .update(tableName)
+        .set(postPattern)
+        .where({ id: postPattern.id })
+        .execute();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
   async update(id: number, updatePostPatternDto: Partial<PostPattern>) {
-    try {
-      const postPattern = await this.findOne(id);
+    let postPattern: PostPattern | undefined;
 
-      if (!postPattern) throw new NotFoundException('data not found');
+    try {
+      const isAvailable = await this.findOne(id);
+
+      if (!isAvailable?.data) throw new NotFoundException('data not found');
+      postPattern = isAvailable?.data as PostPattern;
       Object.assign(postPattern, updatePostPatternDto);
 
-      return this.conPostPattern.update({ id }, postPattern);
+      return this.postPatternEtityMetadata
+        .createQueryBuilder()
+        .update()
+        .set(postPattern)
+        .where({ id })
+        .execute();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -91,13 +177,29 @@ export class PostPatternService {
 
   async remove(id: number) {
     try {
-      const postPattern = await this.findOne(id);
+      const isAvailable = await this.findOne(id);
 
-      if (!postPattern) throw new NotFoundException('data not found');
+      if (!isAvailable?.data) throw new NotFoundException('data not found');
 
-      return this.conPostPattern.remove(postPattern);
+      return this.postPatternEtityMetadata
+        .createQueryBuilder()
+        .delete()
+        .where({ id })
+        .execute();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  /**
+   *
+   */
+
+  private baseQuery(tableName: string = `post_pattern`) {
+    return this.eManager.createQueryBuilder().from(tableName, 'q');
+  }
+
+  private get postPatternEtityMetadata() {
+    return this.eManager.connection.getRepository(PostPattern);
   }
 }

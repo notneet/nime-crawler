@@ -6,33 +6,43 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  NotImplementedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { isNotEmptyObject } from 'class-validator';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
 @Injectable()
 export class MediaService {
   constructor(
-    @InjectRepository(Media)
-    private readonly conMedia: Repository<Media>,
     @InjectEntityManager() protected readonly eManager: EntityManager,
   ) {}
 
   async create(createMediaDto: CreateMediaDto) {
     try {
+      const tableName = `media`;
       let media = await this.findByUrlMedia(createMediaDto.url);
 
       if (!isNotEmptyObject(media)) {
-        media = this.conMedia.create(createMediaDto);
-        return this.conMedia.insert(media);
+        media = this.mediaEtityMetadata.create(createMediaDto);
+        return this.mediaEtityMetadata
+          .createQueryBuilder()
+          .insert()
+          .into(tableName)
+          .values(media)
+          .execute();
       }
 
       Object.assign(media, createMediaDto);
-      return this.conMedia.update({ id: media.id }, media);
+      return this.mediaEtityMetadata
+        .createQueryBuilder()
+        .update(tableName)
+        .set(media)
+        .where({ id: media.id })
+        .execute();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -40,6 +50,7 @@ export class MediaService {
 
   async findAll(pageOptDto: PageOptionsDto): Promise<PageDto<MediaDto[]>> {
     const tableName = `media`;
+
     try {
       const data = await this.baseQuery(tableName)
         .orderBy('q.name', pageOptDto?.order)
@@ -49,9 +60,9 @@ export class MediaService {
       const itemCount = +(
         await this.baseQuery(tableName)
           .orderBy('q.name', pageOptDto?.order)
-          .addSelect('COUNT(q.id)', 'watchesCount')
+          .addSelect('COUNT(q.id)', 'mediasCount')
           .getRawOne()
-      ).watchesCount;
+      ).mediasCount;
 
       const pageMetaDto = new PageMetaDto({
         itemCount,
@@ -117,30 +128,11 @@ export class MediaService {
   }
 
   async update(urlMedia: string, updateMediaDto: UpdateMediaDto) {
-    try {
-      const media = await this.findByUrlMedia(urlMedia);
-
-      if (!isNotEmptyObject(media)) {
-        throw new NotFoundException('data not found');
-      }
-      Object.assign(media, updateMediaDto);
-
-      return this.conMedia.update({ url: urlMedia }, media);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    throw new NotImplementedException(`Mechanism is not provided`);
   }
 
   async remove(id: number) {
-    try {
-      const media = await this.findOne(id);
-
-      if (!media) throw new NotFoundException('data not found');
-
-      return this.conMedia.remove(media);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    throw new NotImplementedException(`Mechanism is not provided`);
   }
 
   /**
@@ -159,5 +151,9 @@ export class MediaService {
 
   private baseQuery(tableName: string) {
     return this.eManager.createQueryBuilder().from(tableName, 'q');
+  }
+
+  private get mediaEtityMetadata() {
+    return this.eManager.connection.getRepository(Media);
   }
 }

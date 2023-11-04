@@ -1,22 +1,25 @@
 import { CreatePostPatternDto } from '@libs/commons/dto/create/create-post-pattern.dto';
-import { PostPatternDto } from '@libs/commons/dto/post-pattern.dto';
 import { UpdatePostPatternDto } from '@libs/commons/dto/update/update-post-pattern.dto';
 import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
-import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
+import { TypedRoute } from '@nestia/core';
 import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
+import { PageOptionsDto } from '../dtos/pagination.dto';
 import { PostPatternService } from './post-pattern.service';
 
-@Controller('post-pattern')
-@Serialize(PostPatternDto)
+@Controller({
+  version: '1',
+  path: 'post-patterns',
+})
+// @Serialize(PostPatternDto)
 export class PostPatternController {
   constructor(private readonly postPatternService: PostPatternService) {}
 
@@ -27,12 +30,12 @@ export class PostPatternController {
     return this.postPatternService.create(createPostPatternDto);
   }
 
-  @Get()
-  findAll() {
-    return this.postPatternService.findAll();
+  @TypedRoute.Get()
+  findAll(@Query() pageOptDto: PageOptionsDto) {
+    return this.postPatternService.findAll(pageOptDto);
   }
 
-  @Get(':id')
+  @TypedRoute.Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.postPatternService.findOne(id);
   }

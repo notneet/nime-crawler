@@ -5,14 +5,14 @@ import {
   TimeUnit,
 } from '@libs/commons/helper/constant';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { PostPatternDetailService } from 'apps/api/src/post-pattern-detail/post-pattern-detail.service';
 import { PostPatternService } from 'apps/api/src/post-pattern/post-pattern.service';
 import { AnimeSourceService } from '../../api/src/anime-source/anime-source.service';
 import { MediaService } from '../../api/src/media/media.service';
-import { ClientProxy } from '@nestjs/microservices';
 
 interface BaseAnimePattern {
-  media_id: number;
+  media_id: number | null;
   pattern: string;
 }
 
@@ -26,18 +26,18 @@ interface IPostPatternDetail extends BaseAnimePattern {
 
 export interface ScrapeAnime {
   origin: string;
-  pageUrl: string;
-  nextPage?: string;
-  patternPost: IPostPattern;
-  patternPostDetail: IPostPatternDetail;
+  pageUrl: string | undefined;
+  nextPage?: string | null | undefined;
+  patternPost: IPostPattern | undefined;
+  patternPostDetail: IPostPatternDetail | undefined;
   description: string;
   timeout: number;
   langCode: string;
   countryCode: string;
   mediaId: number;
   numItterate: number;
-  maxItteratePost: number;
-  maxItteratePostDetail: number;
+  maxItteratePost: number | undefined;
+  maxItteratePostDetail: number | undefined;
   numRetry: number;
   numPage: number;
   engine: string;
@@ -81,7 +81,7 @@ export class CronIntervalService {
     const now = new Date();
 
     if (this.lastInterval.has(interval)) {
-      const lastRun = this.lastInterval.get(interval);
+      const lastRun = this.lastInterval.get(interval) || new Date();
       const diffTime = now.getTime() - lastRun.getTime();
 
       if (diffTime < interval * TimeUnit.MINUTE) {

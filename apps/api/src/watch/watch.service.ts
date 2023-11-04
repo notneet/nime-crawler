@@ -43,7 +43,9 @@ export class WatchService {
         .set(watch)
         .where({ id: watch.id })
         .execute();
-    } catch (error) {}
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   async findAll(
