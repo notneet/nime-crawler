@@ -11,7 +11,9 @@ describe('PostPatternDetailController', () => {
       providers: [PostPatternDetailService],
     }).compile();
 
-    controller = module.get<PostPatternDetailController>(PostPatternDetailController);
+    controller = module.get<PostPatternDetailController>(
+      PostPatternDetailController,
+    );
   });
 
   it('should be defined', () => {

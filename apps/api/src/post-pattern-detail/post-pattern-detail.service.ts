@@ -1,7 +1,6 @@
 import { CreatePostDetailPatternDto } from '@libs/commons/dto/create/create-post-detail-pattern.dto';
 import { UpdatePostDetailPatternDto } from '@libs/commons/dto/update/update-post-detail-patter.dto';
 import { PostDetailPattern } from '@libs/commons/entities/post-detail-pattern.entity';
-import { EnvKey } from '@libs/commons/helper/constant';
 import {
   HttpException,
   HttpStatus,
@@ -9,8 +8,8 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
-import { Connection, In, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class PostPatternDetailService {

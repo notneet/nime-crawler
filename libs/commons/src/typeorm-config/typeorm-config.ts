@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import { LoggerOptions } from 'typeorm';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
-import { EnvKey, SymMaxConLimit, SymDefaultConfig } from '../helper/constant';
+import { EnvKey, SymDefaultConfig, SymMaxConLimit } from '../helper/constant';
 
 @Injectable()
 export class TypeOrmConfig implements TypeOrmOptionsFactory {
@@ -22,7 +22,7 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
 
     connectionName = connectionName || this.defaultConfig;
     const config = {
-      type: 'mysql',
+      // type: 'mysql',
       cache: {
         type: 'redis',
         options: {
@@ -57,5 +57,8 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
         url: this.config.get(EnvKey.DATABASE_URL),
       };
     }
+
+    // Handle the case when connectionName is not 'default'
+    throw new Error(`Unknown connection name: ${connectionName}`);
   }
 }

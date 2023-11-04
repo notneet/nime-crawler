@@ -77,7 +77,7 @@
     }
   },
   "compilerOptions": {
-    "webpack": true,
+    "webpack": false,
     "tsConfigPath": "apps/nime-crawler/tsconfig.app.json"
   },
   "monorepo": true,

@@ -2,10 +2,10 @@ import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
 import { Watch } from '@libs/commons/entities/watch.entity';
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  NotImplementedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -87,7 +87,7 @@ export class WatchService {
   async findByUrlWithMediaId(
     urlWatch: string,
     mediaId: number,
-  ): Promise<Watch> {
+  ): Promise<Watch | undefined> {
     try {
       const tableName = `watch_${mediaId}`;
 
@@ -121,7 +121,7 @@ export class WatchService {
 
   async findByObjectId(mediaId: string, objectId: string) {
     const tableName = `watch_${mediaId}`;
-    let watch: Watch;
+    let watch: Watch | undefined;
 
     try {
       watch = await this.baseQuery(tableName)
@@ -148,7 +148,7 @@ export class WatchService {
   }
 
   async findOne(mediaId: string, id: number) {
-    let watch: Watch;
+    let watch: Watch | undefined;
     const tableName = `watch_${mediaId}`;
 
     try {
@@ -166,7 +166,7 @@ export class WatchService {
   }
 
   async create(createWatchDto: CreateWatchDto, mediaId?: string) {
-    throw new BadRequestException(`Mechanism is not provided`);
+    throw new NotImplementedException(`Mechanism is not provided`);
   }
 
   async update(
@@ -174,12 +174,16 @@ export class WatchService {
     objectId: string,
     updateWatchDto: UpdateWatchDto,
   ) {
-    throw new BadRequestException(`Mechanism is not provided`);
+    throw new NotImplementedException(`Mechanism is not provided`);
   }
 
   async remove(mediaId: string, objectId: string) {
-    throw new BadRequestException(`Mechanism is not provided`);
+    throw new NotImplementedException(`Mechanism is not provided`);
   }
+
+  /**
+   *
+   */
 
   private baseQuery(tableName: string) {
     return this.eManager.createQueryBuilder().from(tableName, 'q');

@@ -50,7 +50,7 @@ export class Stream {
   created_at: Date;
 
   @Column({ type: 'datetime' })
-  updated_at: Date;
+  updated_at?: Date;
 
   @BeforeInsert()
   @BeforeUpdate()

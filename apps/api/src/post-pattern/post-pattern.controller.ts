@@ -1,22 +1,19 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseIntPipe,
-  UsePipes,
-} from '@nestjs/common';
-import { PostPatternService } from './post-pattern.service';
-import { PatternValidationPipe } from '@libs/commons/pipes/pattern-validation.pipe';
-import { PostPatternDto } from '@libs/commons/dto/post-pattern.dto';
-import { ValidatePostPatternDto } from '@libs/commons/dto/update/validate-post-pattern.dto';
 import { CreatePostPatternDto } from '@libs/commons/dto/create/create-post-pattern.dto';
-import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
+import { PostPatternDto } from '@libs/commons/dto/post-pattern.dto';
 import { UpdatePostPatternDto } from '@libs/commons/dto/update/update-post-pattern.dto';
 import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
+import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { PostPatternService } from './post-pattern.service';
 
 @Controller('post-pattern')
 @Serialize(PostPatternDto)

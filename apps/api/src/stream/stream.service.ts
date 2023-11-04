@@ -2,10 +2,10 @@ import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
 import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
 import { Stream } from '@libs/commons/entities/stream.entity';
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  NotImplementedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -91,7 +91,7 @@ export class StreamService {
   async findByUrlWithMediaId(
     urlStream: string,
     mediaId: number,
-  ): Promise<Stream> {
+  ): Promise<Stream | undefined> {
     try {
       const tableName = `stream_${mediaId}`;
 
@@ -124,7 +124,7 @@ export class StreamService {
   }
 
   async findOne(mediaId: string, id: number) {
-    let stream: Stream;
+    let stream: Stream | undefined;
     const tableName = `stream_${mediaId}`;
 
     try {
@@ -150,7 +150,7 @@ export class StreamService {
 
   async findByObjectId(mediaId: string, objectId: string) {
     const tableName = `stream_${mediaId}`;
-    let stream: Stream;
+    let stream: Stream | undefined;
 
     try {
       stream = await this.baseQuery(tableName)
@@ -177,7 +177,7 @@ export class StreamService {
   }
 
   async create(createStreamDto: CreateStreamDto, mediaId?: string) {
-    throw new BadRequestException(`Mechanism is not provided`);
+    throw new NotImplementedException(`Mechanism is not provided`);
   }
 
   async update(
@@ -185,12 +185,16 @@ export class StreamService {
     objectId: string,
     updateStreamDto: UpdateStreamDto,
   ) {
-    throw new BadRequestException(`Mechanism is not provided`);
+    throw new NotImplementedException(`Mechanism is not provided`);
   }
 
   async remove(mediaId: string, objectId: string) {
-    throw new BadRequestException(`Mechanism is not provided`);
+    throw new NotImplementedException(`Mechanism is not provided`);
   }
+
+  /**
+   *
+   */
 
   private baseQuery(tableName: string) {
     return this.eManager.createQueryBuilder().from(tableName, 'q');

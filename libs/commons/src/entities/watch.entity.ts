@@ -65,7 +65,7 @@ export class Watch {
   created_at: Date;
 
   @Column({ type: 'datetime' })
-  updated_at: Date;
+  updated_at?: Date;
 
   @Column({ length: 100 })
   cover_url: string;

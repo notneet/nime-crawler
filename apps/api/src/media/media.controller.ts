@@ -3,14 +3,14 @@ import { MediaDto } from '@libs/commons/dto/media.dto';
 import { UpdateMediaDto } from '@libs/commons/dto/update/update-media.dto';
 import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
   ParseIntPipe,
+  Patch,
+  Post,
 } from '@nestjs/common';
 import { MediaService } from './media.service';
 

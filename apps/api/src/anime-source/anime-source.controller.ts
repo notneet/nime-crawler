@@ -1,19 +1,19 @@
 import { AnimeSourceDto } from '@libs/commons/dto/anime-souce.dto';
 import { CreateAnimeSourceDto } from '@libs/commons/dto/create/create-anime-source.dto';
 import { UpdateAnimeSourceDto } from '@libs/commons/dto/update/update-anime-source.dto';
+import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
 import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
   ParseIntPipe,
+  Patch,
+  Post,
 } from '@nestjs/common';
 import { AnimeSourceService } from './anime-source.service';
-import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
 
 @Controller('anime-source')
 @Serialize(AnimeSourceDto)

@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
-import { PostPatternDetailService } from './post-pattern-detail.service';
-import { PostPatternDetailController } from './post-pattern-detail.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { PostDetailPattern } from '@libs/commons/entities/post-detail-pattern.entity';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { PostPatternDetailController } from './post-pattern-detail.controller';
+import { PostPatternDetailService } from './post-pattern-detail.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([PostDetailPattern])],
