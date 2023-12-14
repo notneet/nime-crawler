@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import 'moment-timezone';
 import { EntityManager } from 'typeorm';
 import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
