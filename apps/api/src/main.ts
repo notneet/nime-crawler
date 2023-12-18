@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ApiModule } from './api.module';
 
 let port: number;
@@ -21,12 +22,12 @@ async function bootstrap() {
     : ['error', 'fatal', 'warn', 'verbose'];
   configModule.close();
 
-  const app = await NestFactory.create(ApiModule, { logger });
+  const app = await NestFactory.create<NestExpressApplication>(ApiModule, {
+    logger,
+  });
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
-  app.enableVersioning({
-    type: VersioningType.URI,
-  });
+  app.enableVersioning({ type: VersioningType.URI });
 
   await app.listen(port);
 }

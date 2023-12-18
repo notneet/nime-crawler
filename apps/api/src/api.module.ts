@@ -1,8 +1,9 @@
+import { GlobalExceptionFilter } from '@libs/commons/exceptions/global-exception.filter';
 import { TypeOrmConfig } from '@libs/commons/typeorm-config/typeorm-config';
 import { TypeOrmConfigModule } from '@libs/commons/typeorm-config/typeorm-config.module';
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AnimeSourceModule } from './anime-source/anime-source.module';
 import { ApiController } from './api.controller';
@@ -34,6 +35,10 @@ import { WatchModule } from './watch/watch.module';
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({ whitelist: true }),
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
     },
   ],
 })

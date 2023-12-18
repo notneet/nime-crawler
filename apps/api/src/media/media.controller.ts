@@ -1,5 +1,7 @@
 import { CreateMediaDto } from '@libs/commons/dto/create/create-media.dto';
+import { MediaDto } from '@libs/commons/dto/media.dto';
 import { UpdateMediaDto } from '@libs/commons/dto/update/update-media.dto';
+import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 import { TypedRoute } from '@nestia/core';
 import { Body, Controller, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { PageOptionsDto } from '../dtos/pagination.dto';
@@ -9,7 +11,7 @@ import { MediaService } from './media.service';
   version: '1',
   path: 'medias',
 })
-// @Serialize(MediaDto)
+@Serialize(MediaDto)
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 

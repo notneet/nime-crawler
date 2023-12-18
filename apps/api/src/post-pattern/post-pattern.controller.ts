@@ -2,16 +2,7 @@ import { CreatePostPatternDto } from '@libs/commons/dto/create/create-post-patte
 import { UpdatePostPatternDto } from '@libs/commons/dto/update/update-post-pattern.dto';
 import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
 import { TypedRoute } from '@nestia/core';
-import {
-  Body,
-  Controller,
-  Delete,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { PageOptionsDto } from '../dtos/pagination.dto';
 import { PostPatternService } from './post-pattern.service';
 
@@ -24,7 +15,7 @@ export class PostPatternController {
   constructor(private readonly postPatternService: PostPatternService) {}
 
   // pattern & pagination_pattern sould be formatted in JSON.stringify()
-  @Post()
+  @TypedRoute.Post()
   // @UsePipes(new PatternValidationPipe())
   create(@Body() createPostPatternDto: CreatePostPatternDto) {
     return this.postPatternService.create(createPostPatternDto);
@@ -40,7 +31,7 @@ export class PostPatternController {
     return this.postPatternService.findOne(id);
   }
 
-  @Post('validate/:id')
+  @TypedRoute.Post('validate/:id')
   validateSource(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: ValidatePatternDto,
@@ -48,7 +39,7 @@ export class PostPatternController {
     return this.postPatternService.validate(id, Number(body.n_status));
   }
 
-  @Patch(':id')
+  @TypedRoute.Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePostPatternDto: UpdatePostPatternDto,
@@ -56,7 +47,7 @@ export class PostPatternController {
     return this.postPatternService.update(id, updatePostPatternDto);
   }
 
-  @Delete(':id')
+  @TypedRoute.Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.postPatternService.remove(id);
   }

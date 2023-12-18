@@ -1,3 +1,4 @@
+import { AnimeSourceDto } from '@libs/commons/dto/anime-souce.dto';
 import { CreateAnimeSourceDto } from '@libs/commons/dto/create/create-anime-source.dto';
 import { UpdateAnimeSourceDto } from '@libs/commons/dto/update/update-anime-source.dto';
 import { AnimeSource } from '@libs/commons/entities/anime-source.entity';
@@ -7,7 +8,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
+import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
 @Injectable()
 export class AnimeSourceService {
@@ -32,9 +35,33 @@ export class AnimeSourceService {
     }
   }
 
-  async findAll() {
+  async findAll(
+    pageOptDto: PageOptionsDto,
+  ): Promise<PageDto<AnimeSourceDto[]>> {
     try {
-      return this.conAnimeSource.find();
+      const data = await this.conAnimeSource
+        .createQueryBuilder(`q`)
+        .orderBy('q.updated_at', pageOptDto.order)
+        .skip(pageOptDto?.skip)
+        .take(pageOptDto?.take)
+        .getMany();
+      const itemCount = +(
+        await this.conAnimeSource
+          .createQueryBuilder(`q`)
+          .orderBy('q.updated_at', pageOptDto?.order)
+          .addSelect('COUNT(q.id)', 'animeSourceCount')
+          .getRawOne()
+      )?.animeSourceCount;
+
+      const pageMetaDto = new PageMetaDto({
+        itemCount,
+        pageOptionsDto: pageOptDto,
+      });
+
+      return {
+        data: plainToInstance(AnimeSourceDto, data),
+        meta: pageMetaDto,
+      };
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -85,33 +112,46 @@ export class AnimeSourceService {
 
   async validate(id: number, nStatus: number) {
     try {
-      const isAvailable = await this.findOne(id);
-
+      const { data: isAvailable } = await this.findOne(id);
       if (!isAvailable) throw new NotFoundException('data not found');
       isAvailable.n_status = nStatus;
-
-      return this.conAnimeSource.save(isAvailable);
+      return this.conAnimeSource.save(
+        plainToInstance(AnimeSource, isAvailable),
+      );
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<PageDto<AnimeSourceDto>> {
+    let animeSource: AnimeSource | null;
     try {
-      return this.conAnimeSource.findOne({ where: { id } });
+      animeSource = await this.conAnimeSource
+        .createQueryBuilder(`q`)
+        .where({ id } as Partial<AnimeSource>)
+        .getOne();
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw error;
     }
+
+    if (!animeSource) {
+      throw new NotFoundException('data not found');
+    }
+
+    return {
+      data: plainToInstance(AnimeSourceDto, animeSource),
+    };
   }
 
   async update(id: number, updateAnimeSourceDto: UpdateAnimeSourceDto) {
     try {
-      const animeSource = await this.findOne(id);
-
+      const { data: animeSource } = await this.findOne(id);
       if (!animeSource) throw new NotFoundException('data not found');
       Object.assign(animeSource, updateAnimeSourceDto);
-
-      return this.conAnimeSource.update({ id }, animeSource);
+      return this.conAnimeSource.update(
+        { id },
+        plainToInstance(AnimeSource, animeSource),
+      );
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -119,11 +159,11 @@ export class AnimeSourceService {
 
   async remove(id: number) {
     try {
-      const animeSource = await this.findOne(id);
-
+      const { data: animeSource } = await this.findOne(id);
       if (!animeSource) throw new NotFoundException('data not found');
-
-      return this.conAnimeSource.remove(animeSource);
+      return this.conAnimeSource.remove(
+        plainToInstance(AnimeSource, animeSource),
+      );
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

@@ -26,14 +26,14 @@ export class AnimeSourceDto {
   max_itterate_detail: number;
 
   @Expose()
-  lang_code: string;
+  lang_code: string | null;
 
   @Expose()
-  country_code: string;
+  country_code: string | null;
 
   @Expose()
   last_modified: Date;
 
   @Expose()
-  last_crawled: Date;
+  last_crawled: Date | null;
 }

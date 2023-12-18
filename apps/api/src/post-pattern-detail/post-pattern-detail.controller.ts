@@ -3,19 +3,11 @@ import { PatternPostDetailDto } from '@libs/commons/dto/post-pattern-detail.dto'
 import { UpdatePostDetailPatternDto } from '@libs/commons/dto/update/update-post-detail-patter.dto';
 import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
 import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { TypedRoute } from '@nestia/core';
+import { Body, Controller, Param, ParseIntPipe } from '@nestjs/common';
 import { PostPatternDetailService } from './post-pattern-detail.service';
 
-@Controller('post-pattern-detail')
+@Controller({ version: '1', path: 'post-pattern-detail' })
 @Serialize(PatternPostDetailDto)
 export class PostPatternDetailController {
   constructor(
@@ -23,23 +15,23 @@ export class PostPatternDetailController {
   ) {}
 
   // pattern & pagination_pattern sould be formatted in JSON.stringify()
-  @Post()
+  @TypedRoute.Post()
   // @UsePipes(new PatternValidationPipe())
   create(@Body() createPostPatternDetailDto: CreatePostDetailPatternDto) {
     return this.postPatternDetailService.create(createPostPatternDetailDto);
   }
 
-  @Get()
+  @TypedRoute.Get()
   findAll() {
     return this.postPatternDetailService.findAll();
   }
 
-  @Get(':id')
+  @TypedRoute.Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.postPatternDetailService.findOne(id);
   }
 
-  @Post('validate/:id')
+  @TypedRoute.Post('validate/:id')
   validateSource(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: ValidatePatternDto,
@@ -47,7 +39,7 @@ export class PostPatternDetailController {
     return this.postPatternDetailService.validate(id, Number(body.n_status));
   }
 
-  @Patch(':id')
+  @TypedRoute.Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePostPatternDetailDto: UpdatePostDetailPatternDto,
@@ -55,7 +47,7 @@ export class PostPatternDetailController {
     return this.postPatternDetailService.update(id, updatePostPatternDetailDto);
   }
 
-  @Delete(':id')
+  @TypedRoute.Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.postPatternDetailService.remove(id);
   }
