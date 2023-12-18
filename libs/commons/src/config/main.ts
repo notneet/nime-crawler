@@ -10,7 +10,7 @@ export const queueConfig = (
   const conf: RmqOptions = {
     transport: Transport.RMQ,
     options: {
-      urls: config.get<string>(EnvKey.RMQ_URL).split('|'),
+      urls: config.get<string>(EnvKey.RMQ_URL)?.split('|'),
       noAck: false,
       queue,
       prefetchCount,
