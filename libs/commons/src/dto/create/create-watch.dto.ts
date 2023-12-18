@@ -16,65 +16,65 @@ export class CreateWatchDto {
 
   @IsString()
   @MaxLength(128)
-  title: string;
+  title: string | null | undefined;
 
   @IsString()
   @MaxLength(128)
-  title_jp: string;
+  title_jp: string | null | undefined;
 
   @IsString()
   @MaxLength(128)
-  title_en: string;
+  title_en: string | null | undefined;
 
   @IsString()
   @MaxLength(10)
-  type: string;
+  type: string | null | undefined;
 
   @IsDecimal()
-  score: number;
+  score: number | null | undefined;
 
   @IsString()
   @MaxLength(10)
-  status: string;
+  status: string | null | undefined;
 
   @IsNumber()
   @IsPositive()
-  duration: number;
+  duration: number | null | undefined;
 
   @IsNumber()
   @IsPositive()
-  total_episode: number;
+  total_episode: number | null | undefined;
 
   @IsDateString()
-  published: Date;
+  published: Date | null | undefined;
 
   @IsDateString()
-  published_ts: Date;
+  published_ts: Date | null | undefined;
 
   @IsString()
   @MaxLength(100)
-  season: string;
+  season: string | null | undefined;
 
   @IsString()
   @MaxLength(128)
-  genres: string;
+  genres: string | null | undefined;
 
   @IsString()
   @MaxLength(128)
-  producers: string;
+  producers: string | null | undefined;
 
   @IsString()
-  description: string;
+  description: string | null | undefined;
 
   @IsString()
-  cover_url: string;
+  cover_url: string | null | undefined;
 
   @IsNumber()
   media_id: number;
 
   @IsString()
-  object_id: string;
+  object_id: string | null | undefined;
 
   @IsNumber()
-  n_status: number;
+  n_status: number | null | undefined;
 }

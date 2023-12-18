@@ -26,7 +26,9 @@ export class WatchService {
       let watch = await this.findByUrlWithMediaId(createWatchDto.url, mediaId);
 
       if (!watch) {
-        watch = this.watchEtityMetadata.create(createWatchDto);
+        watch = this.watchEtityMetadata.create(
+          createWatchDto as unknown as Watch,
+        );
         return this.watchEtityMetadata
           .createQueryBuilder()
           .insert()

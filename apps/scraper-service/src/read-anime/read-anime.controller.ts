@@ -7,9 +7,9 @@ import {
 import { HtmlScraperService } from '@libs/commons/html-scraper/html-scraper.service';
 import { Controller, Inject, Logger, UseInterceptors } from '@nestjs/common';
 import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
+import { isEmpty, isNotEmpty } from 'class-validator';
 import { ScrapeAnime } from '../../../cron-interval/src/cron-interval.service';
 import { AcknolageMessageInterceptor } from '../interceptors/acknolage-message.interceptor';
-import { isEmpty, isNotEmpty } from 'class-validator';
 
 export interface ParsedPattern {
   key: string;
@@ -44,9 +44,11 @@ export class ReadAnimeController {
     if (isEmpty(data.pageUrl)) return;
 
     const { pageUrl, ...payload } = data;
-    const parsedPattern: ParsedPattern[] = JSON.parse(data.patternPost.pattern);
+    const parsedPattern: ParsedPattern[] = JSON.parse(
+      data.patternPost!.pattern,
+    );
     const parsedPaginationPattern: ParsedPattern[] = JSON.parse(
-      data.patternPost.pagination_pattern,
+      data.patternPost!.pagination_pattern,
     );
     const pContainer =
       parsedPattern.find((it) => it.key === NodeItem.CONTAINER)?.pattern ||
@@ -70,7 +72,7 @@ export class ReadAnimeController {
     }
 
     const [contents, urlNextPage] = await this.htmlScraper.post({
-      baseUrl: data.pageUrl,
+      baseUrl: data.pageUrl!,
       containerPattern: pContainer,
       valuePattern: tPattern,
       contentResultType: tResultType,

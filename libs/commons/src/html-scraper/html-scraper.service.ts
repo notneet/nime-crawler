@@ -1,13 +1,13 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { arrayNotEmpty, isNotEmpty } from 'class-validator';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import * as libxmljs from 'libxmljs2';
 import * as useragent from 'random-useragent';
 import { delay, lastValueFrom, map, retryWhen, take } from 'rxjs';
 import { EnvKey } from '../helper/constant';
-import * as libxmljs from 'libxmljs2';
 import { hashUUID } from '../helper/md5';
-import { arrayNotEmpty, isNotEmpty } from 'class-validator';
 
 interface ParsedPattern {
   key: string;
@@ -20,7 +20,7 @@ interface WebsitePayload {
   containerPattern: string;
   valuePattern: string;
   contentResultType: 'value' | 'text';
-  secondaryPattern?: string;
+  secondaryPattern?: string | null;
 }
 
 export interface WebsiteDetailPayload {
@@ -54,9 +54,9 @@ export interface AnimeDetail {
   status: string;
   duration: number;
   total_episode: number;
-  published: Date;
+  published: Date | null;
   season: string;
-  genres: string;
+  genres: string | null;
   producers: string;
   description: string;
   cover_url: string;
@@ -78,7 +78,7 @@ export class HtmlScraperService {
 
     if (typeof data !== 'string') {
       this.logger.error(`HTML result not found`);
-      return;
+      return [[''], ''];
     }
 
     return this.evalutePostWebsite({ rawHTML: data, ...payload });
@@ -100,10 +100,10 @@ export class HtmlScraperService {
   ): Promise<[string[], string]> {
     let document: libxmljs.Document;
     let content: string[] = [];
-    let paginationLink: string;
+    let paginationLink: string = '';
 
     try {
-      document = libxmljs.parseHtmlString(payload.rawHTML);
+      document = libxmljs.parseHtmlString(payload.rawHTML!);
 
       if (!document) {
         throw new Error('Document is empty');
@@ -131,7 +131,7 @@ export class HtmlScraperService {
     let document: libxmljs.Document;
 
     try {
-      document = libxmljs.parseHtmlString(payload.rawHTML);
+      document = libxmljs.parseHtmlString(payload.rawHTML!);
       if (!document) {
         throw new Error('Document is empty');
       }
@@ -224,7 +224,7 @@ export class HtmlScraperService {
 
   private async getHTML(url: string): Promise<{ data: string | null }> {
     let isUseProxy = false;
-    const proxyServer = this.config.get<string>(EnvKey.PROXY_SERVER, undefined);
+    const proxyServer = this.config.get<string>(EnvKey.PROXY_SERVER, '');
     const userAgent = useragent.getRandom((it) => {
       return (
         it.folder.startsWith('/Browsers - ') &&
@@ -283,7 +283,7 @@ export class HtmlScraperService {
     const regexDecimal = /[0-9]+(\.[0-9]+)?/g;
     const isFound = rawDocument.get(mixedPattern);
 
-    if (!isNotEmpty(isFound)) return null;
+    if (!isNotEmpty(isFound)) return null as T;
     if (returnType === 'number') {
       const extractedResult = isFound?.toString()?.replace(/^:?\s*/, '');
 
@@ -292,10 +292,10 @@ export class HtmlScraperService {
         !isNaN(Number(extractedResult)) &&
         extractedResult !== '-'
       ) {
-        return extractedResult?.match(regexDecimal)[0] as T;
+        return extractedResult?.match(regexDecimal)![0] as T;
       }
 
-      return null;
+      return null as T;
     } else {
       return isFound?.toString()?.replace(':', '')?.trim() as T;
     }

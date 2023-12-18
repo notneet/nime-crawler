@@ -1,14 +1,14 @@
 import { EventKey, NodeItem } from '@libs/commons/helper/constant';
-import { Controller, Logger, UseInterceptors } from '@nestjs/common';
-import { EventPattern, Payload } from '@nestjs/microservices';
-import { ScrapeAnime } from '../../../cron-interval/src/cron-interval.service';
-import { AcknolageMessageInterceptor } from '../interceptors/acknolage-message.interceptor';
-import { ParsedPattern } from '../read-anime/read-anime.controller';
 import {
   HtmlScraperService,
   WebsiteDetailPayload,
 } from '@libs/commons/html-scraper/html-scraper.service';
+import { Controller, Logger, UseInterceptors } from '@nestjs/common';
+import { EventPattern, Payload } from '@nestjs/microservices';
 import { WatchService } from 'apps/api/src/watch/watch.service';
+import { ScrapeAnime } from '../../../cron-interval/src/cron-interval.service';
+import { AcknolageMessageInterceptor } from '../interceptors/acknolage-message.interceptor';
+import { ParsedPattern } from '../read-anime/read-anime.controller';
 
 @Controller()
 @UseInterceptors(AcknolageMessageInterceptor)
@@ -38,7 +38,7 @@ export class ReadAnimePostController {
     const patterns: Record<string, string | null> = {};
 
     for (const key of Object.values(NodeItem)) {
-      const patternProperty = this.patternMappings[key];
+      const patternProperty = this.patternMappings[key]!;
       patterns[patternProperty] =
         this.getPattern(parsedPattern, key)?.pattern || null;
     }
@@ -58,25 +58,25 @@ export class ReadAnimePostController {
 
     await this.watchService.saveToDB(
       {
-        object_id: result.object_id,
-        cover_url: result.cover_url,
-        title: result.title,
-        title_jp: result.title_jp,
-        title_en: result.title_en,
-        type: result.type,
-        score: result.score,
-        status: result.status,
-        duration: result.duration,
-        total_episode: result.total_episode,
-        published: result.published,
-        published_ts: result.published ? new Date(result.published) : null,
-        season: result.season,
-        genres: result.genres,
-        producers: result.producers,
-        description: result.description,
-        url: data.pageUrl,
+        object_id: result!.object_id,
+        cover_url: result?.cover_url,
+        title: result?.title,
+        title_jp: result?.title_jp,
+        title_en: result?.title_en,
+        type: result?.type,
+        score: result?.score,
+        status: result?.status,
+        duration: result?.duration,
+        total_episode: result?.total_episode,
+        published: result?.published,
+        published_ts: result?.published ? new Date(result?.published) : null,
+        season: result?.season,
+        genres: result?.genres,
+        producers: result?.producers,
+        description: result?.description,
+        url: data.pageUrl!,
         media_id: data.mediaId,
-        n_status: result.n_status,
+        n_status: result?.n_status,
       },
       data.mediaId,
     );
