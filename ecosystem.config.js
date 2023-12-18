@@ -5,8 +5,8 @@ module.exports = {
     ...scraper.apps,
     {
       name: 'api',
-      script: 'dist/apps/api/main.js',
-      watch: ['./dist/apps/api'],
+      script: 'dist/apps/api/apps/api/src/main.js',
+      watch: ['./dist/apps/api/apps/api/src/'],
       autorestart: true,
       cron_restart: '0 * * * *',
       // interpreter: 'node@16.18.0',
