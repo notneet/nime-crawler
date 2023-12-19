@@ -147,15 +147,11 @@ export class WatchService {
     let watch: Watch | undefined;
     const tableName = `watch_${mediaId}`;
 
-    console.log(id, tableName);
-
     try {
       watch = await this.baseQuery(tableName)
         .createQueryBuilder()
         .where({ id } as Partial<Watch>)
         .getRawOne();
-
-      console.log(watch);
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
