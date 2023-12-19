@@ -1,4 +1,5 @@
 import { CreatePostDetailPatternDto } from '@libs/commons/dto/create/create-post-detail-pattern.dto';
+import { PatternPostDetailDto } from '@libs/commons/dto/post-pattern-detail.dto';
 import { UpdatePostDetailPatternDto } from '@libs/commons/dto/update/update-post-detail-patter.dto';
 import { PostDetailPattern } from '@libs/commons/entities/post-detail-pattern.entity';
 import {
@@ -8,8 +9,10 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
+import { EntityManager, In, Repository } from 'typeorm';
+import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
 @Injectable()
 export class PostPatternDetailService {
@@ -18,6 +21,7 @@ export class PostPatternDetailService {
   constructor(
     @InjectRepository(PostDetailPattern)
     private readonly conPostPatternDetail: Repository<PostDetailPattern>,
+    @InjectEntityManager() protected readonly eManager: EntityManager,
   ) {}
 
   async create(createPostPatternDetailDto: CreatePostDetailPatternDto) {
@@ -43,9 +47,32 @@ export class PostPatternDetailService {
     }
   }
 
-  async findAll() {
+  async findAll(
+    pageOptDto: PageOptionsDto,
+  ): Promise<PageDto<PatternPostDetailDto[]>> {
     try {
-      return this.conPostPatternDetail.find();
+      const data = await this.baseQuery
+        .orderBy('q.updated_at', pageOptDto?.order)
+        .skip(pageOptDto?.skip)
+        .take(pageOptDto?.take)
+        .getRawMany();
+      const itemCount =
+        +(
+          await this.baseQuery
+            .orderBy('q.updated_at', pageOptDto?.order)
+            .addSelect('COUNT(q.id)', 'postPatternDetailCount')
+            .getRawOne()
+        ).postPatternDetailCount || 0;
+
+      const pageMetaDto = new PageMetaDto({
+        itemCount,
+        pageOptionsDto: pageOptDto,
+      });
+
+      return {
+        data: plainToInstance(PatternPostDetailDto, data),
+        meta: pageMetaDto,
+      };
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -126,6 +153,12 @@ export class PostPatternDetailService {
   }
 
   private get baseQuery() {
-    return this.conPostPatternDetail.createQueryBuilder();
+    return this.eManager
+      .createQueryBuilder()
+      .from(this.postPatternDetailTableName, 'q');
+  }
+
+  private get postPatternEtityMetadata() {
+    return this.eManager.connection.getRepository(PostDetailPattern);
   }
 }

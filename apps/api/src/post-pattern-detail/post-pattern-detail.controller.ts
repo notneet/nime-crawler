@@ -4,7 +4,8 @@ import { UpdatePostDetailPatternDto } from '@libs/commons/dto/update/update-post
 import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
 import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 import { TypedRoute } from '@nestia/core';
-import { Body, Controller, Param, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { PageOptionsDto } from '../dtos/pagination.dto';
 import { PostPatternDetailService } from './post-pattern-detail.service';
 
 @Controller({ version: '1', path: 'post-pattern-detail' })
@@ -22,8 +23,8 @@ export class PostPatternDetailController {
   }
 
   @TypedRoute.Get()
-  findAll() {
-    return this.postPatternDetailService.findAll();
+  findAll(@Query() pageOptDto: PageOptionsDto) {
+    return this.postPatternDetailService.findAll(pageOptDto);
   }
 
   @TypedRoute.Get(':id')

@@ -14,6 +14,8 @@ import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
 @Injectable()
 export class PostPatternService {
+  private readonly postPatternTableName = 'post_pattern';
+
   constructor(
     @InjectEntityManager() protected readonly eManager: EntityManager,
   ) {}
@@ -50,20 +52,19 @@ export class PostPatternService {
   async findAll(
     pageOptDto: PageOptionsDto,
   ): Promise<PageDto<PostPatternDto[]>> {
-    const tableName = `post_pattern`;
-
     try {
-      const data = await this.baseQuery(tableName)
+      const data = await this.baseQuery
         .orderBy('q.updated_at', pageOptDto?.order)
         .skip(pageOptDto?.skip)
         .take(pageOptDto?.take)
         .getRawMany();
-      const itemCount = +(
-        await this.baseQuery(tableName)
-          .orderBy('q.updated_at', pageOptDto?.order)
-          .addSelect('COUNT(q.id)', 'postPatternCount')
-          .getRawOne()
-      ).postPatternCount;
+      const itemCount =
+        +(
+          await this.baseQuery
+            .orderBy('q.updated_at', pageOptDto?.order)
+            .addSelect('COUNT(q.id)', 'postPatternCount')
+            .getRawOne()
+        ).postPatternCount || 0;
 
       const pageMetaDto = new PageMetaDto({
         itemCount,
@@ -78,7 +79,7 @@ export class PostPatternService {
       switch (error.code) {
         case 'ER_NO_SUCH_TABLE':
           throw new UnprocessableEntityException(
-            `table ${tableName} not found`,
+            `table ${this.postPatternTableName} not found`,
           );
         default:
           throw new InternalServerErrorException(error);
@@ -87,11 +88,10 @@ export class PostPatternService {
   }
 
   async findOne(id: number): Promise<PageDto<PostPatternDto>> {
-    const tableName = `post_pattern`;
     let postPattern: PostPattern | undefined;
 
     try {
-      postPattern = await this.baseQuery(tableName)
+      postPattern = await this.baseQuery
         .where({ id } as Partial<PostPattern>)
         .getRawOne();
 
@@ -102,7 +102,7 @@ export class PostPatternService {
       switch (error.code) {
         case 'ER_NO_SUCH_TABLE':
           throw new UnprocessableEntityException(
-            `table ${tableName} not found`,
+            `table ${this.postPatternTableName} not found`,
           );
         default:
           throw new InternalServerErrorException(error);
@@ -195,8 +195,10 @@ export class PostPatternService {
    *
    */
 
-  private baseQuery(tableName: string = `post_pattern`) {
-    return this.eManager.createQueryBuilder().from(tableName, 'q');
+  private get baseQuery() {
+    return this.eManager
+      .createQueryBuilder()
+      .from(this.postPatternTableName, 'q');
   }
 
   private get postPatternEtityMetadata() {

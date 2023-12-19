@@ -1,7 +1,7 @@
 import { Expose } from 'class-transformer';
 
 export class PatternPostDetailDto {
-  type: 'post-detail';
+  type?: 'post-detail';
 
   @Expose()
   id: number;
