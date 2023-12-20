@@ -1,14 +1,42 @@
 import { EnvKey } from '@libs/commons/helper/constant';
-import { Injectable } from '@nestjs/common';
+import { Injectable, MethodNotAllowedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectSentry, SentryService } from '@travelerdev/nestjs-sentry';
 import * as fs from 'fs';
+import { DateTime } from 'luxon';
 import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
 
 @Injectable()
 export class ApiService {
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @InjectSentry() private readonly sentryClient: SentryService,
+  ) {
+    // sentryClient.instance().addBreadcrumb({
+    //   level: Severity.Debug,
+    //   message: 'How to use native breadcrumb',
+    //   data: { context: 'WhatEver' },
+    // });
+    // sentryClient.debug('AppService Debug', 'context');
+    // sentryClient.log('AppSevice Loaded', 'test', true); // creates log asBreadcrumb //
+  }
+
+  async testSentry(options: string) {
+    throw new MethodNotAllowedException()
+    if (options === 'error') {
+      this.sentryClient.error(
+        `Test Error Again ${DateTime.now().toUnixInteger()}`,
+      );
+    } else {
+      this.sentryClient.debug(
+        `Test Debug Again ${DateTime.now().toUnixInteger()}`,
+      );
+    }
+
+    return options;
+  }
 
   async getWelcome(): Promise<Record<string, any>> {
     return {

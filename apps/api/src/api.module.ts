@@ -1,10 +1,13 @@
 import { GlobalExceptionFilter } from '@libs/commons/exceptions/global-exception.filter';
+import { EnvKey } from '@libs/commons/helper/constant';
 import { TypeOrmConfig } from '@libs/commons/typeorm-config/typeorm-config';
 import { TypeOrmConfigModule } from '@libs/commons/typeorm-config/typeorm-config.module';
 import { Module, ValidationPipe } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import * as Sentry from '@sentry/node';
+import { SentryModule } from '@travelerdev/nestjs-sentry';
 import { AnimeSourceModule } from './anime-source/anime-source.module';
 import { ApiController } from './api.controller';
 import { ApiService } from './api.service';
@@ -21,6 +24,22 @@ import { WatchModule } from './watch/watch.module';
       // name: EnvKey.DATABASE_URL,
       imports: [TypeOrmConfigModule.register()],
       useExisting: TypeOrmConfig,
+    }),
+    SentryModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        return {
+          dsn: config.get<string>(EnvKey.SENTRY_DSN),
+          debug:
+            config.get<string>(EnvKey.APP_ENV) === 'development' ? true : false,
+          tracesSampleRate: 1.0,
+          integrations: [
+            // enable HTTP calls tracing
+            new Sentry.Integrations.Http({ tracing: true }),
+            // new ProfilingIntegration(),
+          ],
+        };
+      },
     }),
     MediaModule,
     AnimeSourceModule,

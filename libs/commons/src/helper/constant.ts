@@ -13,6 +13,8 @@ export enum EnvKey {
   SCRAPE_TYPE = 'SCRAPE_TYPE',
   APP_NAME = 'APP_NAME',
   V1_VERSION = 'V1_VERSION',
+  SENTRY_DSN = 'SENTRY_DSN',
+  APP_ENV = 'APP_ENV',
 }
 
 export enum DefKey {
