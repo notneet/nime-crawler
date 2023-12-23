@@ -3,7 +3,6 @@ import { Injectable, MethodNotAllowedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectSentry, SentryService } from '@travelerdev/nestjs-sentry';
 import * as fs from 'fs';
-import { DateTime } from 'luxon';
 import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
@@ -24,18 +23,18 @@ export class ApiService {
   }
 
   async testSentry(options: string) {
-    throw new MethodNotAllowedException()
-    if (options === 'error') {
-      this.sentryClient.error(
-        `Test Error Again ${DateTime.now().toUnixInteger()}`,
-      );
-    } else {
-      this.sentryClient.debug(
-        `Test Debug Again ${DateTime.now().toUnixInteger()}`,
-      );
-    }
+    // if (options === 'error') {
+    //   this.sentryClient.error(
+    //     `Test Error Again ${DateTime.now().toUnixInteger()}`,
+    //   );
+    // } else {
+    //   this.sentryClient.debug(
+    //     `Test Debug Again ${DateTime.now().toUnixInteger()}`,
+    //   );
+    // }
 
-    return options;
+    // return options;
+    throw new MethodNotAllowedException();
   }
 
   async getWelcome(): Promise<Record<string, any>> {
