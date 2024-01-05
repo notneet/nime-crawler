@@ -10,5 +10,5 @@ export class MediaDto {
   url: string;
 
   @Expose()
-  url_old: string;
+  url_old: string | null;
 }
