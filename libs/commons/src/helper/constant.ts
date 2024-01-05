@@ -15,6 +15,8 @@ export enum EnvKey {
   V1_VERSION = 'V1_VERSION',
   SENTRY_DSN = 'SENTRY_DSN',
   APP_ENV = 'APP_ENV',
+  RATE_LIMIT_SECOND = 'RATE_LIMIT_SECOND',
+  RATE_LIMIT_COUNT = 'RATE_LIMIT_COUNT',
 }
 
 export enum DefKey {
