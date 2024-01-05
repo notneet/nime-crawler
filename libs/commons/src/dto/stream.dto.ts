@@ -1,7 +1,8 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 
 export class StreamDto {
   @Expose()
+  @Type(() => Number)
   id: number;
 
   @Expose()

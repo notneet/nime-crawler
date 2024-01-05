@@ -1,4 +1,5 @@
 import { AnimeSource } from '@libs/commons/entities/anime-source.entity';
+import { Media } from '@libs/commons/entities/media.entity';
 import {
   EventKey,
   Q_ROUTING_QUEUE,
@@ -27,6 +28,7 @@ interface IPostPatternDetail extends BaseAnimePattern {
 export interface ScrapeAnime {
   origin: string;
   pageUrl: string | undefined;
+  oldOrigin: string | null | undefined;
   nextPage?: string | null | undefined;
   patternPost: IPostPattern | undefined;
   patternPostDetail: IPostPatternDetail | undefined;
@@ -45,6 +47,7 @@ export interface ScrapeAnime {
 
 type ScapperOpt = {
   pageUrl?: string;
+  oldOrigin: string | null | undefined;
   postPattern?: IPostPattern;
   postPatternDetail?: IPostPatternDetail;
   maxItteratePostPage?: number;
@@ -71,6 +74,9 @@ export class CronIntervalService {
   //   return this.animeSourceRepo.find();
   // }
 
+  /**
+   * Pass alt origin url as rmq payload. it will be consumed at scraper (done)
+   */
   async doJob() {
     for (const interval of await this.animeSourceService.findByIntervalsAndGroup()) {
       await this.createJobCrawling(interval);
@@ -106,6 +112,14 @@ export class CronIntervalService {
         );
 
       for (const animeSource of animeSources) {
+        let media: Media | null | undefined;
+
+        try {
+          media = await this.mediaService.findOne(animeSource?.media_id);
+        } catch (err) {
+          this.logger.error(err?.message + ` for ${animeSource?.url}`);
+        }
+
         const postPattern = patternPosts.find(
           (it) => it.media_id === animeSource.media_id,
         );
@@ -130,6 +144,7 @@ export class CronIntervalService {
         await this.emitToScrapper({
           ...animeSource,
           pageUrl: animeSource.url,
+          oldOrigin: media?.url_old,
           postPattern: postPatternPayload,
           postPatternDetail: postPatternDetailPayload,
           maxItteratePostPage: animeSource.max_itterate_post,
@@ -148,6 +163,7 @@ export class CronIntervalService {
     const data: ScrapeAnime = {
       origin: this.extractOrigin(opts.url),
       pageUrl: opts.pageUrl,
+      oldOrigin: opts?.oldOrigin,
       nextPage: null,
       patternPost: opts.postPattern,
       patternPostDetail: opts.postPatternDetail,

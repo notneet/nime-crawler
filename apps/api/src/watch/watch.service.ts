@@ -2,6 +2,7 @@ import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
 import { WatchDto } from '@libs/commons/dto/watch.dto';
 import { Watch } from '@libs/commons/entities/watch.entity';
+import { hashUUID } from '@libs/commons/helper/md5';
 import {
   Injectable,
   InternalServerErrorException,
@@ -20,10 +21,22 @@ export class WatchService {
     @InjectEntityManager() protected readonly eManager: EntityManager,
   ) {}
 
-  async saveToDB(createWatchDto: CreateWatchDto, mediaId: number) {
+  async saveToDB(
+    createWatchDto: CreateWatchDto,
+    mediaId: number,
+    oldOrigin?: string | null | undefined,
+  ) {
     try {
+      let watch: Watch | undefined;
       const tableName = `watch_${mediaId}`;
-      let watch = await this.findByUrlWithMediaId(createWatchDto.url, mediaId);
+
+      watch = await this.findByObjectIdWithMediaId(
+        [
+          String(this.makeOldObjectId(oldOrigin, createWatchDto?.url)),
+          String(createWatchDto?.object_id),
+        ],
+        mediaId,
+      );
 
       if (!watch) {
         watch = this.watchEtityMetadata.create(
@@ -39,6 +52,7 @@ export class WatchService {
       Object.assign(watch, createWatchDto);
       delete watch.updated_at;
 
+      console.log(watch);
       return this.watchEtityMetadata
         .createQueryBuilder()
         .update(tableName)
@@ -196,11 +210,41 @@ export class WatchService {
     }
   }
 
+  private async findByObjectIdWithMediaId(
+    objectId: string[],
+    mediaId: number,
+  ): Promise<Watch | undefined> {
+    const tableName = `watch_${mediaId}`;
+
+    try {
+      return this.baseQuery(tableName)
+        .where({ object_id: objectId[0] } as Partial<Watch>)
+        .orWhere({ object_id: objectId[1] } as Partial<Watch>)
+        .getRawOne();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
   private baseQuery(tableName: string) {
     return this.eManager.createQueryBuilder().from(tableName, 'q');
   }
 
   private get watchEtityMetadata() {
     return this.eManager.connection.getRepository(Watch);
+  }
+
+  private makeOldObjectId(
+    oldOrigin: string | null | undefined,
+    currentUrl: string,
+  ) {
+    if (!/^https?:\/\//.test(currentUrl)) return null;
+
+    const extractedUrl = new URL(currentUrl);
+    const { protocol, host, pathname } = extractedUrl;
+    const mixedOrigin = host !== oldOrigin ? oldOrigin : host;
+
+    console.log(`${protocol}//${mixedOrigin}${pathname}`);
+    return hashUUID(`${protocol}//${mixedOrigin}${pathname}`);
   }
 }

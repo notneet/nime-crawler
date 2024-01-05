@@ -7,10 +7,12 @@ export abstract class PipeRule<T = string> {
   @IsNotEmpty()
   @IsEnum(CleanerType)
   type: CleanerType | string;
+
   @Exclude({ toPlainOnly: true })
   baseUrl?: string;
 
   abstract exec(val: T): any;
+
   reverse(val: any) {
     return val;
   }

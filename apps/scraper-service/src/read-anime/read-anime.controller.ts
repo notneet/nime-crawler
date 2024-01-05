@@ -50,19 +50,29 @@ export class ReadAnimeController {
     const parsedPaginationPattern: ParsedPattern[] = JSON.parse(
       data.patternPost!.pagination_pattern,
     );
-    const pContainer =
-      parsedPattern.find((it) => it.key === NodeItem.CONTAINER)?.pattern ||
-      null;
-    const tPattern =
-      parsedPattern.find((it) => it.key === NodeItem.LINK_PATTERN)?.pattern ||
-      null;
+    const patterns: Record<string, string | null> = {};
+
+    for (const key of Object.values(NodeItem)) {
+      const patternProperty = this.patternMappings[key]!;
+      patterns[patternProperty] =
+        this.getPattern(parsedPattern, key)?.pattern || null;
+    }
+
+    const { pContainer, tPattern, pPagination } = patterns;
+
+    // const pContainer =
+    //   parsedPattern.find((it) => it.key === NodeItem.CONTAINER)?.pattern ||
+    //   null;
+    // const tPattern =
+    //   parsedPattern.find((it) => it.key === NodeItem.LINK_PATTERN)?.pattern ||
+    //   null;
     const tResultType =
       parsedPattern.find((it) => it.key === NodeItem.LINK_PATTERN)
         ?.result_type || null;
-    const pPagination =
-      parsedPaginationPattern.find(
-        (it) => it.key === NodeItem.PAGINATION_PATTERN,
-      )?.pattern || null;
+    // const pPagination =
+    //   parsedPaginationPattern.find(
+    //     (it) => it.key === NodeItem.PAGINATION_PATTERN,
+    //   )?.pattern || null;
 
     if (!pContainer || !tPattern) {
       return this.logger.error(`${data.pageUrl} haven't valid pattern`);
@@ -80,7 +90,7 @@ export class ReadAnimeController {
     });
 
     for (const urlPostDetail of contents) {
-      if (pageUrl !== null) {
+      if (isNotEmpty(pageUrl) && isNotEmpty(urlPostDetail)) {
         const newData = {
           pageUrl: urlPostDetail,
           ...payload,
@@ -94,6 +104,20 @@ export class ReadAnimeController {
     if (isNotEmpty(data?.pageUrl)) {
       this.emitNextPage(data);
     }
+  }
+
+  private getPattern(parsedPattern: ParsedPattern[], key: string) {
+    return parsedPattern?.find((it) => it.key === key);
+  }
+
+  private get patternMappings() {
+    const patternMappings: Partial<Record<NodeItem, string>> = {
+      [NodeItem.CONTAINER]: 'pContainer',
+      [NodeItem.LINK_PATTERN]: 'tPattern',
+      [NodeItem.PAGINATION_PATTERN]: 'pPagination',
+    };
+
+    return patternMappings;
   }
 
   private async emitPostDetail(data: ScrapeAnime) {

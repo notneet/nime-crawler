@@ -31,11 +31,11 @@ export class UpdateAnimeSourceDto {
 
   @IsString()
   @IsOptional()
-  lang_code: string;
+  lang_code: string | null;
 
   @IsString()
   @IsOptional()
-  country_code: string;
+  country_code: string | null;
 
   @IsDate()
   @IsOptional()
@@ -43,5 +43,5 @@ export class UpdateAnimeSourceDto {
 
   @IsDate()
   @IsOptional()
-  last_crawled: Date;
+  last_crawled: Date | null;
 }

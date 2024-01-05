@@ -74,6 +74,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/scraper-stream/tsconfig.app.json"
       }
+    },
+    "media-updater": {
+      "type": "application",
+      "root": "apps/media-updater",
+      "entryFile": "main",
+      "sourceRoot": "apps/media-updater/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/media-updater/tsconfig.app.json"
+      }
     }
   },
   "compilerOptions": {

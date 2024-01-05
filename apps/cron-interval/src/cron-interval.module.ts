@@ -7,12 +7,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule } from '@nestjs/microservices';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PostPatternDetailModule } from 'apps/api/src/post-pattern-detail/post-pattern-detail.module';
+import { PostPatternModule } from 'apps/api/src/post-pattern/post-pattern.module';
 import { AnimeSourceModule } from '../../api/src/anime-source/anime-source.module';
+import { MediaModule } from '../../api/src/media/media.module';
 import { CronIntervalController } from './cron-interval.controller';
 import { CronIntervalService } from './cron-interval.service';
-import { MediaModule } from '../../api/src/media/media.module';
-import { PostPatternModule } from 'apps/api/src/post-pattern/post-pattern.module';
-import { PostPatternDetailModule } from 'apps/api/src/post-pattern-detail/post-pattern-detail.module';
 
 @Module({
   imports: [

@@ -2,6 +2,7 @@ import { Expose, Type } from 'class-transformer';
 
 export class WatchDto {
   @Expose()
+  @Type(() => Number)
   id: number;
 
   @Expose()

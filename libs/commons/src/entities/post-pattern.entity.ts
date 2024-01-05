@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -5,6 +6,32 @@ import {
   Entity,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { FieldPipePattern } from './field-field-pattern';
+
+export enum ExistAnimePostKeys {
+  CONTAINER = 'CONTAINER',
+  LINK_PATTERN = 'LINK_PATTERN',
+}
+
+export class AnimeFieldMeta {
+  alternativePattern?: string[];
+  multiline?: boolean;
+  pagePattern?: {
+    url?: string;
+    text?: string;
+  };
+}
+
+export class AnimePostField extends FieldPipePattern {
+  key: ExistAnimePostKeys;
+
+  pattern: string;
+
+  result_type: string;
+
+  @Type(() => AnimeFieldMeta)
+  meta?: AnimeFieldMeta;
+}
 
 @Entity({ name: 'post_pattern' })
 export class PostPattern {

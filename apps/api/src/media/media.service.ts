@@ -12,7 +12,7 @@ import {
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { isNotEmptyObject } from 'class-validator';
-import { EntityManager } from 'typeorm';
+import { EntityManager, IsNull, Not } from 'typeorm';
 import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
 @Injectable()
@@ -85,6 +85,36 @@ export class MediaService {
     }
   }
 
+  async findMediaWithOldUrl(): Promise<PageDto<MediaDto[]>> {
+    const tableName = `media`;
+    let media: Media[] | undefined;
+
+    try {
+      media = await this.baseQuery(tableName)
+        .where({
+          url_old: Not(IsNull()) as any,
+        } as Partial<Media>)
+        .getRawMany();
+    } catch (error) {
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `table ${tableName} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
+    }
+
+    if (!media) {
+      throw new NotFoundException('data not found');
+    }
+
+    return {
+      data: plainToInstance(MediaDto, media),
+    };
+  }
+
   async findByUrl(urlMedia: string): Promise<PageDto<MediaDto>> {
     const tableName = `media`;
     let media: Media | undefined;
@@ -127,6 +157,36 @@ export class MediaService {
     }
   }
 
+  async findByOldUrl(oldUrlMedia: string): Promise<PageDto<MediaDto>> {
+    const tableName = `media`;
+    let media: Media | undefined;
+
+    try {
+      media = await this.baseQuery(tableName)
+        .where({
+          url_old: oldUrlMedia,
+        } as Partial<Media>)
+        .getRawOne();
+    } catch (error) {
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `table ${tableName} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
+    }
+
+    if (!media) {
+      throw new NotFoundException('data not found');
+    }
+
+    return {
+      data: plainToInstance(MediaDto, media),
+    };
+  }
+
   async update(urlMedia: string, updateMediaDto: UpdateMediaDto) {
     throw new NotImplementedException(`Mechanism is not provided`);
   }
@@ -135,11 +195,7 @@ export class MediaService {
     throw new NotImplementedException(`Mechanism is not provided`);
   }
 
-  /**
-   *
-   */
-
-  private async findOne(id: number): Promise<Media | null | undefined> {
+  async findOne(id: number): Promise<Media | null | undefined> {
     const tableName = `media`;
 
     try {
@@ -148,6 +204,10 @@ export class MediaService {
       throw new InternalServerErrorException(error);
     }
   }
+
+  /**
+   *
+   */
 
   private baseQuery(tableName: string) {
     return this.eManager.createQueryBuilder().from(tableName, 'q');

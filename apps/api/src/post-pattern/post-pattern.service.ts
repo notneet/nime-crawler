@@ -123,10 +123,9 @@ export class PostPatternService {
 
   async findByMediaIds(id: number[]): Promise<PostPattern[]> {
     try {
-      return this.postPatternEtityMetadata
-        .createQueryBuilder()
-        .where({ media_id: In(id) })
-        .getRawMany();
+      return this.postPatternEtityMetadata.find({
+        where: { media_id: In(id) },
+      });
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

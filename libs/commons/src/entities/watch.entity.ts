@@ -10,7 +10,7 @@ import { urlNormalize } from '../helper/url-normalize';
 
 @Entity({ name: 'watch_model' })
 export class Watch {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
   @Column({ length: 128 })
@@ -47,7 +47,7 @@ export class Watch {
   published: Date;
 
   @Column({ type: 'timestamp', default: null })
-  published_ts: Date;
+  published_ts: number;
 
   @Column({ length: 100, nullable: true })
   season: string;

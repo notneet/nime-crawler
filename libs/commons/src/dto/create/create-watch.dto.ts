@@ -48,8 +48,8 @@ export class CreateWatchDto {
   @IsDateString()
   published: Date | null | undefined;
 
-  @IsDateString()
-  published_ts: Date | null | undefined;
+  @IsNumber()
+  published_ts: number | null | undefined;
 
   @IsString()
   @MaxLength(100)
@@ -74,7 +74,4 @@ export class CreateWatchDto {
 
   @IsString()
   object_id: string | null | undefined;
-
-  @IsNumber()
-  n_status: number | null | undefined;
 }

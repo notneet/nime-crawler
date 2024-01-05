@@ -10,7 +10,7 @@ import { urlNormalize } from '../helper/url-normalize';
 
 @Entity({ name: 'stream_model' })
 export class Stream {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
   @Column({ length: 128 })

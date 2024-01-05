@@ -1,14 +1,14 @@
 import { EventKey, NodeItem } from '@libs/commons/helper/constant';
 import {
   HtmlScraperService,
-  WebsiteDetailPayload,
+  ParsedPattern,
 } from '@libs/commons/html-scraper/html-scraper.service';
 import { Controller, Logger, UseInterceptors } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { WatchService } from 'apps/api/src/watch/watch.service';
+import { DateTime } from 'luxon';
 import { ScrapeAnime } from '../../../cron-interval/src/cron-interval.service';
 import { AcknolageMessageInterceptor } from '../interceptors/acknolage-message.interceptor';
-import { ParsedPattern } from '../read-anime/read-anime.controller';
 
 @Controller()
 @UseInterceptors(AcknolageMessageInterceptor)
@@ -20,6 +20,13 @@ export class ReadAnimePostController {
     private readonly watchService: WatchService,
   ) {}
 
+  /**
+   * - will added new payload. e.g oldOrigin. (done)
+   * - before insert. make object_id use old pageUrl for find by object_id. then make new object use oldOrigin for replace old object_id
+   *
+   * how about find by object_id with a new value? sedangkan value lama sudah ter-replace dengan yang baru?
+   * mungkin bisa dengan cara ngirim param tambahan. jika current origin sama dengan media url lama. maka pake object_id lama. selain itu yang baru
+   */
   @EventPattern(EventKey.READ_ANIME_DETAIL)
   async handleReadAnimeDetail(@Payload() data: ScrapeAnime) {
     if (data.engine === 'html') {
@@ -28,7 +35,7 @@ export class ReadAnimePostController {
   }
 
   private async scrapeWithHTML(data: ScrapeAnime) {
-    const { pageUrl } = data || { pageUrl: null };
+    const { pageUrl, oldOrigin } = data || { pageUrl: null, oldOrigin: null };
     const parsedPattern: ParsedPattern[] = JSON.parse(
       data?.patternPostDetail?.pattern || '',
     );
@@ -50,15 +57,14 @@ export class ReadAnimePostController {
     }
 
     const result = await this.htmlScraper.detail({
-      baseUrl: pageUrl,
-      containerPattern,
-      contentResultType: 'text',
-      ...restPatterns,
-    } as WebsiteDetailPayload);
+      baseUrl: String(pageUrl),
+      oldOrigin,
+      parsedPattern,
+    });
 
     await this.watchService.saveToDB(
       {
-        object_id: result!.object_id,
+        object_id: result?.object_id,
         cover_url: result?.cover_url,
         title: result?.title,
         title_jp: result?.title_jp,
@@ -68,17 +74,17 @@ export class ReadAnimePostController {
         status: result?.status,
         duration: result?.duration,
         total_episode: result?.total_episode,
-        published: result?.published,
-        published_ts: result?.published ? new Date(result?.published) : null,
+        published: DateTime.fromSeconds(Number(result?.published)).toJSDate(),
+        published_ts: Number(result?.published),
         season: result?.season,
         genres: result?.genres,
         producers: result?.producers,
         description: result?.description,
         url: data.pageUrl!,
         media_id: data.mediaId,
-        n_status: result?.n_status,
       },
       data.mediaId,
+      oldOrigin,
     );
   }
 

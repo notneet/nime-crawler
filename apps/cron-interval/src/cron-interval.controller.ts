@@ -17,7 +17,7 @@ export class CronIntervalController implements OnModuleInit {
     await this.genPayload();
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async genPayload() {
     return this.cronIntervalService.doJob();
     // const res = await this.cronIntervalService.getAllAnimeResource();

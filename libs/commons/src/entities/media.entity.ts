@@ -10,4 +10,7 @@ export class Media {
 
   @Column()
   url: string;
+
+  @Column()
+  url_old: string;
 }

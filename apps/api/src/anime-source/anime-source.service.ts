@@ -75,6 +75,17 @@ export class AnimeSourceService {
     }
   }
 
+  async findByMediaId(id: number): Promise<PageDto<AnimeSourceDto[]>> {
+    const data = await this.conAnimeSource
+      .createQueryBuilder(`q`)
+      .where(`q.id = :id`, { id })
+      .getMany();
+
+    return {
+      data: plainToInstance(AnimeSourceDto, data),
+    };
+  }
+
   async findByNStatus(nStatus = 1) {
     try {
       return this.conAnimeSource.find({ where: { n_status: nStatus } });

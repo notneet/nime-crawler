@@ -18,8 +18,12 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@libs/commons": ["libs/commons/src"],
-      "@libs/commons/*": ["libs/commons/src/*"]
+      "@libs/commons": [
+        "libs/commons/src"
+      ],
+      "@libs/commons/*": [
+        "libs/commons/src/*"
+      ]
     },
     "plugins": [
       {

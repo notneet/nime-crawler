@@ -96,7 +96,9 @@ export class PostPatternDetailService {
 
   async findByMediaIds(id: number[]) {
     try {
-      return this.conPostPatternDetail.find({ where: { media_id: In(id) } });
+      return this.postPatternEtityMetadata.find({
+        where: { media_id: In(id) },
+      });
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -151,6 +153,10 @@ export class PostPatternDetailService {
       throw new InternalServerErrorException(error);
     }
   }
+
+  /**
+   *
+   */
 
   private get baseQuery() {
     return this.eManager

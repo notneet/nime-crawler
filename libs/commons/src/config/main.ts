@@ -11,7 +11,7 @@ export const queueConfig = (
     transport: Transport.RMQ,
     options: {
       urls: config.get<string>(EnvKey.RMQ_URL)?.split('|'),
-      noAck: false,
+      noAck: true, // must true, bug at nest v9?: https://github.com/nestjs/nest/issues/11966#issuecomment-1619622486
       queue,
       prefetchCount,
     },

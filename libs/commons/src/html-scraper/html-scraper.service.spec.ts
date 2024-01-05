@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { HtmlScraperService } from './html-scraper.service';
+import { HtmlScraperService } from './HtmlScraperService';
 
 describe('HtmlScraperService', () => {
   let service: HtmlScraperService;
