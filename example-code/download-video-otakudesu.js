@@ -21,7 +21,7 @@ const fs = require('fs');
  * (https://drive.usercontent.google.com/download?id=10-2lyJUd4UmCjXCGEDzriutP1FJKYkFV&export=download)
  * [GET] https://drive.usercontent.google.com/download?id=10-2lyJUd4UmCjXCGEDzriutP1FJKYkFV&export=download&confirm=t&uuid=024c2b01-6e9c-4422-bf6d-a3d0d41509e6
  *
- * for gdrive, we will use session cookie?
+ * for gdrive, we will use session cookie? (for handle exceed limit quota)
  */
 
 const url =
