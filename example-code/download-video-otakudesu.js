@@ -11,6 +11,8 @@ const fs = require('fs');
  * tested using mpv on linux
  */
 
+// this code is example of download from provider jwplayer
+
 const url =
   'https://desustream.me/beta/stream/?id=NlQyUm5INnhpSmFDemR2YWg0K3htUT09';
 
