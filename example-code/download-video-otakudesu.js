@@ -13,7 +13,15 @@ const fs = require('fs');
  * this code is example of download from provider jwplayer
  * baseUrl: https://otakudesu.cam/episode/slf-episode-14-sub-indo/
  *
- * maybe for donwload batch file. we can use pdrain (https://desudrive.com/link/?id=eXRoOHNYVG9UdnVZK3l6V3czeHJDN0tDTHJhUmdKNnBqaXh4SklubzN3TXM=) or G-Drive (https://drive.usercontent.google.com/download?id=10-2lyJUd4UmCjXCGEDzriutP1FJKYkFV&export=download)
+ * maybe for donwload batch file. we can use:
+ * - pdrain
+ * (https://desudrive.com/link/?id=eXRoOHNYVG9UdnVZK3l6V3czeHJDN0tDTHJhUmdKNnBqaXh4SklubzN3TXM=)
+ *
+ * - G-Drive
+ * (https://drive.usercontent.google.com/download?id=10-2lyJUd4UmCjXCGEDzriutP1FJKYkFV&export=download)
+ * [GET] https://drive.usercontent.google.com/download?id=10-2lyJUd4UmCjXCGEDzriutP1FJKYkFV&export=download&confirm=t&uuid=024c2b01-6e9c-4422-bf6d-a3d0d41509e6
+ *
+ * for gdrive, we will use session cookie?
  */
 
 const url =
