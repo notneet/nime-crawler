@@ -9,9 +9,10 @@ const fs = require('fs');
  * - pdrain (use api) (https://pixeldrain.com/api/file/orCdN41p)
  *
  * tested using mpv on linux
+ *
+ * this code is example of download from provider jwplayer
+ * baseUrl: https://otakudesu.cam/episode/slf-episode-14-sub-indo/
  */
-
-// this code is example of download from provider jwplayer
 
 const url =
   'https://desustream.me/beta/stream/?id=NlQyUm5INnhpSmFDemR2YWg0K3htUT09';
