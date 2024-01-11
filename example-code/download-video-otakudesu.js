@@ -2,6 +2,15 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
 
+/**
+ * List provider can be crawl:
+ * - default video/ondesu (jwplayer)
+ * - odstream (jwplayer)
+ * - pdrain (use api) (https://pixeldrain.com/api/file/orCdN41p)
+ *
+ * tested using mpv on linux
+ */
+
 const url =
   'https://desustream.me/beta/stream/?id=NlQyUm5INnhpSmFDemR2YWg0K3htUT09';
 
