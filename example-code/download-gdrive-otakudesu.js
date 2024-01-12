@@ -17,24 +17,41 @@ const fs = require('fs');
 
 const url =
   'https://drive.usercontent.google.com/download?id=1eUMrsALwTNldKJC8K2waG_OTrf69XHfo&export=download';
+const urlVideo =
+  'https://drive.google.com/file/d/1TaMbh0pot3jFbUFyGcBvtL0GDFNSxOup/edit';
 
 const downloadFromGDrive = async () => {
   try {
-    const response = await axios.get(url);
+    const response = await axios.get(urlVideo); // change to variable "url" for test download batch file
     const html = response.data;
     const $ = cheerio.load(html);
     const urlDownload = new URL(
       'https://drive.usercontent.google.com/download',
     );
 
-    // Get value of each item. and append into download url
-    urlDownload.searchParams.append('id', $(`input[name='id']`).val());
-    urlDownload.searchParams.append('uuid', $(`input[name='uuid']`).val());
-    urlDownload.searchParams.append('export', $(`input[name='export']`).val());
-    urlDownload.searchParams.append(
-      'confirm',
-      $(`input[name='confirm']`).val(),
-    );
+    if ($(`input[name='uuid']`).val()) {
+      /** Page drive.usercontent.google.com */
+      // Get value of each item. and append into download url
+      urlDownload.searchParams.append('id', $(`input[name='id']`).val());
+      urlDownload.searchParams.append('uuid', $(`input[name='uuid']`).val());
+      urlDownload.searchParams.append(
+        'export',
+        $(`input[name='export']`).val(),
+      );
+      urlDownload.searchParams.append(
+        'confirm',
+        $(`input[name='confirm']`).val(),
+      );
+    } else {
+      /** Page drive.google.com */
+      const urlVideoSplited = urlVideo.split('/');
+
+      urlDownload.searchParams.append(
+        'id',
+        urlVideoSplited[urlVideoSplited.length - 2],
+      );
+      urlDownload.searchParams.append('export', 'download');
+    }
 
     // Download the file
     const fileResponse = await axios({
