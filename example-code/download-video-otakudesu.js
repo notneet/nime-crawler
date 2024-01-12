@@ -20,9 +20,8 @@ const fs = require('fs');
  * - G-Drive
  * (https://drive.usercontent.google.com/download?id=10-2lyJUd4UmCjXCGEDzriutP1FJKYkFV&export=download)
  * [GET] https://drive.usercontent.google.com/download?id=10-2lyJUd4UmCjXCGEDzriutP1FJKYkFV&export=download&confirm=t&uuid=024c2b01-6e9c-4422-bf6d-a3d0d41509e6
- * [GET] 
-https://drive.usercontent.google.com/download?id=1nvYe_GbUe3yyGPj24yjLhhX50NXB4p94&export=download&confirm=t&uuid=5e3075ae-1d4f-4d14-88e7-43c055f84e75 (!! Example Quota Exceeded)
- *
+ * [GET] https://drive.usercontent.google.com/download?id=1nvYe_GbUe3yyGPj24yjLhhX50NXB4p94&export=download&confirm=t&uuid=5e3075ae-1d4f-4d14-88e7-43c055f84e75 (!! Example Quota Exceeded)
+ * [GET] https://drive.usercontent.google.com/uc?id=1TaMbh0pot3jFbUFyGcBvtL0GDFNSxOup&export=download (!! Example download vid)
  * for gdrive, we will use session cookie? (for handle exceed limit quota)
  * - after login, we can use (https://editthiscookie.com/) for import/export cookie
  */
@@ -58,7 +57,7 @@ const downloadFile = async () => {
 
     // Check for quota exceeded response
     if (
-      response.status === 403 &&
+      response.status &&
       response.data.toLocaleLowerCase().includes('quota exceeded')
     ) {
       throw new Error(
@@ -66,11 +65,11 @@ const downloadFile = async () => {
       );
     }
 
-    const destination = 'file.mp4';
     const fileStream = fs.createWriteStream(destination);
     videoResponse.data.pipe(fileStream);
 
     return new Promise((resolve, reject) => {
+      fileStream.on('ready', () => console.log('Processing download...'));
       fileStream.on('finish', resolve);
       fileStream.on('error', reject);
     });
@@ -82,7 +81,9 @@ const downloadFile = async () => {
 downloadFile()
   .then(() => {
     console.log('File downloaded successfully!');
+    process.exit(0);
   })
   .catch((error) => {
     console.error('Error:', error.message);
+    process.exit(1);
   });
