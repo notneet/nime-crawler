@@ -20,8 +20,11 @@ const fs = require('fs');
  * - G-Drive
  * (https://drive.usercontent.google.com/download?id=10-2lyJUd4UmCjXCGEDzriutP1FJKYkFV&export=download)
  * [GET] https://drive.usercontent.google.com/download?id=10-2lyJUd4UmCjXCGEDzriutP1FJKYkFV&export=download&confirm=t&uuid=024c2b01-6e9c-4422-bf6d-a3d0d41509e6
+ * [GET] 
+https://drive.usercontent.google.com/download?id=1nvYe_GbUe3yyGPj24yjLhhX50NXB4p94&export=download&confirm=t&uuid=5e3075ae-1d4f-4d14-88e7-43c055f84e75 (!! Example Quota Exceeded)
  *
  * for gdrive, we will use session cookie? (for handle exceed limit quota)
+ * - after login, we can use (https://editthiscookie.com/) for import/export cookie
  */
 
 const url =
@@ -37,11 +40,9 @@ const downloadFile = async () => {
 
     // Find the element containing the video source
     const videoSource = $('script[type="text/javascript"]').first().html();
-    console.log(videoSource);
 
     // Extract the video file URL using a regular expression
     const match = /'file':'([^']+)'/gm.exec(videoSource);
-    console.log(match, 'lkqmwekqmlkwemklqwe');
     const videoFileUrl = match && match[1];
 
     if (!videoFileUrl) {
@@ -54,6 +55,16 @@ const downloadFile = async () => {
       url: videoFileUrl,
       responseType: 'stream',
     });
+
+    // Check for quota exceeded response
+    if (
+      response.status === 403 &&
+      response.data.toLocaleLowerCase().includes('quota exceeded')
+    ) {
+      throw new Error(
+        'Quota Exceeded: Unable to download the file due to quota limitations.',
+      );
+    }
 
     const destination = 'file.mp4';
     const fileStream = fs.createWriteStream(destination);
