@@ -1,13 +1,7 @@
 import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-} from '@nestjs/common';
-import { ApiExcludeController } from '@nestjs/swagger';
+import { TypedRoute } from '@nestia/core';
+import { BadRequestException, Body, Controller, Query } from '@nestjs/common';
+import { ApiExcludeController, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { isEmpty } from 'class-validator';
 import { PublicEndpoint } from '../auth/decorators/public-endpoint.decorator';
 import { PageOptionsDto } from '../dtos/pagination.dto';
@@ -21,7 +15,8 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
+  @ApiExcludeEndpoint()
+  @TypedRoute.Post()
   @PublicEndpoint()
   async create(
     @Query('app_code') appCode: string,
@@ -33,7 +28,8 @@ export class UsersController {
     return this.usersService.create(createUserDto, appCode);
   }
 
-  @Get()
+  @ApiExcludeEndpoint()
+  @TypedRoute.Get()
   async findAll(@Query() pageOptDto: PageOptionsDto) {
     return this.usersService.findAll(pageOptDto);
   }

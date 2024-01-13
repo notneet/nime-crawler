@@ -1,5 +1,6 @@
-import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
-import { ApiExcludeController } from '@nestjs/swagger';
+import { TypedRoute } from '@nestia/core';
+import { Body, Controller, UnauthorizedException } from '@nestjs/common';
+import { ApiExcludeController, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { isEmpty } from 'class-validator';
 import { Users } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
@@ -15,7 +16,8 @@ export class AuthController {
     private readonly usersService: UsersService,
   ) {}
 
-  @Post('login')
+  @ApiExcludeEndpoint()
+  @TypedRoute.Post('login')
   @PublicEndpoint()
   async signIn(@Body() body: AuthDto) {
     const user = await this.usersService.findByUsername(body.username);
