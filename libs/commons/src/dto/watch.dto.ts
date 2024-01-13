@@ -62,6 +62,7 @@ export class WatchDto {
   published: Date | null;
 
   @ApiProperty({ example: 1238734800, nullable: true })
+  @Type(() => Number)
   @Expose()
   published_ts: number | null;
 
