@@ -5,9 +5,11 @@ import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dt
 import { Serialize } from '@libs/commons/interceptors/serialize.interceptor';
 import { TypedRoute } from '@nestia/core';
 import { Body, Controller, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { PageOptionsDto } from '../dtos/pagination.dto';
 import { PostPatternDetailService } from './post-pattern-detail.service';
 
+@ApiExcludeController()
 @Controller({ version: '1', path: 'post-pattern-details' })
 @Serialize(PatternPostDetailDto)
 export class PostPatternDetailController {

@@ -3,9 +3,11 @@ import { UpdatePostPatternDto } from '@libs/commons/dto/update/update-post-patte
 import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
 import { TypedRoute } from '@nestia/core';
 import { Body, Controller, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { PageOptionsDto } from '../dtos/pagination.dto';
 import { PostPatternService } from './post-pattern.service';
 
+@ApiExcludeController()
 @Controller({
   version: '1',
   path: 'post-patterns',

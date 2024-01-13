@@ -7,6 +7,7 @@ import {
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiModule } from './api.module';
 
 let port: number;
@@ -28,6 +29,19 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.enableVersioning({ type: VersioningType.URI });
+
+  const swaggerOpt = new DocumentBuilder()
+    .setTitle('Nime Crawler API')
+    .setDescription('Simple documentation of Nime Crawler API')
+    .setVersion('1.0.0')
+    .addTag('Root', 'About This API')
+    .addTag('Medias', 'Examples of data media')
+    .addTag('Watches', 'Examples of data watch')
+    .addTag('Streams', 'Examples of data stream (!Under Dev)')
+    .addBearerAuth()
+    .build();
+  const swaggerDoc = SwaggerModule.createDocument(app, swaggerOpt);
+  SwaggerModule.setup('docs', app, swaggerDoc);
 
   await app.listen(port);
 }

@@ -1,5 +1,7 @@
 import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
+import { ExampleWatchDtoResponse } from '@libs/commons/dto/example/watch-example.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
+import { WatchDto } from '@libs/commons/dto/watch.dto';
 import { TypedRoute } from '@nestia/core';
 import {
   BadRequestException,
@@ -8,10 +10,12 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
+import { ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { isEmpty } from 'class-validator';
 import { PageOptionsDto } from '../dtos/pagination.dto';
 import { WatchService } from './watch.service';
 
+@ApiTags('Watches')
 @Controller({
   version: '1',
   path: 'watches',
@@ -20,6 +24,7 @@ import { WatchService } from './watch.service';
 export class WatchController {
   constructor(private readonly watchService: WatchService) {}
 
+  @ApiExcludeEndpoint()
   @TypedRoute.Post(':media_id')
   create(
     @Param('media_id') mediaId: string,
@@ -28,6 +33,7 @@ export class WatchController {
     return this.watchService.create(createWatchDto, mediaId);
   }
 
+  @ApiOkResponse({ type: ExampleWatchDtoResponse })
   @TypedRoute.Get()
   async findAll(
     @Query('media_id') mediaId: string,
@@ -38,6 +44,7 @@ export class WatchController {
     return this.watchService.findAll(mediaId, pageOptDto);
   }
 
+  @ApiOkResponse({ type: WatchDto })
   @TypedRoute.Get(':objectId')
   findOne(
     @Query('media_id') mediaId: string,
@@ -48,16 +55,18 @@ export class WatchController {
     return this.watchService.findByObjectId(mediaId, objectId);
   }
 
-  @TypedRoute.Get('url/:urlWatch')
+  @ApiOkResponse({ type: WatchDto })
+  @TypedRoute.Get('url/:url_watch')
   findByUrl(
     @Query('media_id') mediaId: string,
-    @Param('urlWatch') urlWatch: string,
+    @Param('url_watch') urlWatch: string,
   ) {
     this.handleMediaIdNotDefined(mediaId);
 
     return this.watchService.findByUrl(mediaId, urlWatch);
   }
 
+  @ApiExcludeEndpoint()
   @TypedRoute.Patch(':objectId')
   update(
     @Query('media_id') mediaId: string,
@@ -67,6 +76,7 @@ export class WatchController {
     return this.watchService.update(mediaId, objectId, updateWatchDto);
   }
 
+  @ApiExcludeEndpoint()
   @TypedRoute.Delete(':objectId')
   remove(
     @Query('media_id') mediaId: string,

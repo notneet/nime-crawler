@@ -1,4 +1,6 @@
 import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
+import { ExampleStreamDtoResponse } from '@libs/commons/dto/example/stream-example.dto';
+import { StreamDto } from '@libs/commons/dto/stream.dto';
 import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
 import { TypedRoute } from '@nestia/core';
 import {
@@ -8,10 +10,12 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
+import { ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { isEmpty } from 'class-validator';
 import { PageOptionsDto } from '../dtos/pagination.dto';
 import { StreamService } from './stream.service';
 
+@ApiTags('Streams')
 @Controller({
   version: '1',
   path: 'streams',
@@ -20,6 +24,7 @@ import { StreamService } from './stream.service';
 export class StreamController {
   constructor(private readonly streamService: StreamService) {}
 
+  @ApiExcludeEndpoint()
   @TypedRoute.Post(':media_id')
   create(
     @Param('media_id') mediaId: string,
@@ -28,6 +33,7 @@ export class StreamController {
     return this.streamService.create(createStreamDto, mediaId);
   }
 
+  @ApiOkResponse({ type: ExampleStreamDtoResponse })
   @TypedRoute.Get()
   findAll(
     @Query('media_id') mediaId: string,
@@ -38,6 +44,7 @@ export class StreamController {
     return this.streamService.findAll(mediaId, pageOptDto);
   }
 
+  @ApiOkResponse({ type: StreamDto })
   @TypedRoute.Get(':objectId')
   findOne(
     @Query('media_id') mediaId: string,
@@ -48,16 +55,18 @@ export class StreamController {
     return this.streamService.findByObjectId(mediaId, objectId);
   }
 
-  @TypedRoute.Get('url/:urlStream')
+  @ApiOkResponse({ type: StreamDto })
+  @TypedRoute.Get('url/:url_stream')
   findByUrl(
     @Query('media_id') mediaId: string,
-    @Param('urlStream') urlStream: string,
+    @Param('url_stream') urlStream: string,
   ) {
     this.handleMediaIdNotDefined(mediaId);
 
     return this.streamService.findByUrl(mediaId, urlStream);
   }
 
+  @ApiExcludeEndpoint()
   @TypedRoute.Patch(':objectId')
   update(
     @Query('media_id') mediaId: string,
@@ -67,6 +76,7 @@ export class StreamController {
     return this.streamService.update(mediaId, objectId, updateStreamDto);
   }
 
+  @ApiExcludeEndpoint()
   @TypedRoute.Delete(':objectId')
   remove(
     @Query('media_id') mediaId: string,

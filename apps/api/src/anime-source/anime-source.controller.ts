@@ -3,9 +3,11 @@ import { UpdateAnimeSourceDto } from '@libs/commons/dto/update/update-anime-sour
 import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
 import { TypedRoute } from '@nestia/core';
 import { Body, Controller, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { PageOptionsDto } from '../dtos/pagination.dto';
 import { AnimeSourceService } from './anime-source.service';
 
+@ApiExcludeController()
 @Controller({
   version: '1',
   path: 'anime-sources',
