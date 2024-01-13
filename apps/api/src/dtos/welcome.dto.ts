@@ -29,6 +29,9 @@ export class AppInfoDto {
   @ApiProperty({ example: '0.0.1' })
   app_version: string;
 
+  @ApiProperty({ example: 'https://github.com/notneet/nime-crawler' })
+  repo: string;
+
   @ApiProperty({ type: MaintainerDto, isArray: true })
   maintainer: MaintainerDto[];
 }

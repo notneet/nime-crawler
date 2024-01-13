@@ -41,6 +41,7 @@ export class ApiService {
     return {
       app_name: this.config.get(EnvKey.APP_NAME),
       app_version: this.config.get(EnvKey.V1_VERSION),
+      repo: this.config.get(EnvKey.GIT_REPOSITORY),
       maintaner: await this.mappingMaintaners(),
     };
   }
