@@ -1,4 +1,5 @@
 import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { isEmpty } from 'class-validator';
 import { Users } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
@@ -6,6 +7,7 @@ import { AuthService } from './auth.service';
 import { PublicEndpoint } from './decorators/public-endpoint.decorator';
 import { AuthDto } from './dto/auth.dto';
 
+@ApiExcludeController()
 @Controller('auth')
 export class AuthController {
   constructor(

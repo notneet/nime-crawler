@@ -7,6 +7,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { isEmpty } from 'class-validator';
 import { PublicEndpoint } from '../auth/decorators/public-endpoint.decorator';
 import { PageOptionsDto } from '../dtos/pagination.dto';
@@ -14,10 +15,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UsersDto } from './dto/users.dto';
 import { UsersService } from './users.service';
 
-@Controller({
-  version: '1',
-  path: 'users',
-})
+@ApiExcludeController()
+@Controller('users')
 @Serialize(UsersDto)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
