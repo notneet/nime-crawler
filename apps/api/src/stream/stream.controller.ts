@@ -1,3 +1,4 @@
+import { AllowedUserRoles } from '@libs/commons/decorators/allowed-role.decorator';
 import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
 import { ExampleStreamDtoResponse } from '@libs/commons/dto/example/stream-example.dto';
 import { StreamDto } from '@libs/commons/dto/stream.dto';
@@ -12,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { isEmpty } from 'class-validator';
+import { PublicEndpoint } from '../auth/decorators/public-endpoint.decorator';
 import { PageOptionsDto } from '../dtos/pagination.dto';
 import { StreamService } from './stream.service';
 
@@ -25,6 +27,7 @@ export class StreamController {
   constructor(private readonly streamService: StreamService) {}
 
   @ApiExcludeEndpoint()
+  @AllowedUserRoles(['admin'])
   @TypedRoute.Post(':media_id')
   create(
     @Param('media_id') mediaId: string,
@@ -34,6 +37,7 @@ export class StreamController {
   }
 
   @ApiOkResponse({ type: ExampleStreamDtoResponse })
+  @PublicEndpoint()
   @TypedRoute.Get()
   findAll(
     @Query('media_id') mediaId: string,
@@ -45,6 +49,7 @@ export class StreamController {
   }
 
   @ApiOkResponse({ type: StreamDto })
+  @PublicEndpoint()
   @TypedRoute.Get(':objectId')
   findOne(
     @Query('media_id') mediaId: string,
@@ -56,6 +61,7 @@ export class StreamController {
   }
 
   @ApiOkResponse({ type: StreamDto })
+  @PublicEndpoint()
   @TypedRoute.Get('url/:url_stream')
   findByUrl(
     @Query('media_id') mediaId: string,
@@ -67,6 +73,7 @@ export class StreamController {
   }
 
   @ApiExcludeEndpoint()
+  @AllowedUserRoles(['admin'])
   @TypedRoute.Patch(':objectId')
   update(
     @Query('media_id') mediaId: string,
@@ -77,6 +84,7 @@ export class StreamController {
   }
 
   @ApiExcludeEndpoint()
+  @AllowedUserRoles(['admin'])
   @TypedRoute.Delete(':objectId')
   remove(
     @Query('media_id') mediaId: string,

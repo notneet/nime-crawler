@@ -1,3 +1,4 @@
+import { AllowedUserRoles } from '@libs/commons/decorators/allowed-role.decorator';
 import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
 import { ExampleWatchDtoResponse } from '@libs/commons/dto/example/watch-example.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
@@ -12,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { isEmpty } from 'class-validator';
+import { PublicEndpoint } from '../auth/decorators/public-endpoint.decorator';
 import { PageOptionsDto } from '../dtos/pagination.dto';
 import { WatchService } from './watch.service';
 
@@ -25,6 +27,7 @@ export class WatchController {
   constructor(private readonly watchService: WatchService) {}
 
   @ApiExcludeEndpoint()
+  @AllowedUserRoles(['admin'])
   @TypedRoute.Post(':media_id')
   create(
     @Param('media_id') mediaId: string,
@@ -34,6 +37,7 @@ export class WatchController {
   }
 
   @ApiOkResponse({ type: ExampleWatchDtoResponse })
+  @PublicEndpoint()
   @TypedRoute.Get()
   async findAll(
     @Query('media_id') mediaId: string,
@@ -45,6 +49,7 @@ export class WatchController {
   }
 
   @ApiOkResponse({ type: WatchDto })
+  @PublicEndpoint()
   @TypedRoute.Get(':objectId')
   findOne(
     @Query('media_id') mediaId: string,
@@ -56,6 +61,7 @@ export class WatchController {
   }
 
   @ApiOkResponse({ type: WatchDto })
+  @PublicEndpoint()
   @TypedRoute.Get('url/:url_watch')
   findByUrl(
     @Query('media_id') mediaId: string,
@@ -67,6 +73,7 @@ export class WatchController {
   }
 
   @ApiExcludeEndpoint()
+  @AllowedUserRoles(['admin'])
   @TypedRoute.Patch(':objectId')
   update(
     @Query('media_id') mediaId: string,
@@ -77,6 +84,7 @@ export class WatchController {
   }
 
   @ApiExcludeEndpoint()
+  @AllowedUserRoles(['admin'])
   @TypedRoute.Delete(':objectId')
   remove(
     @Query('media_id') mediaId: string,

@@ -9,9 +9,11 @@ import {
 import { ApiExcludeEndpoint, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { ApiService } from './api.service';
+import { PublicEndpoint } from './auth/decorators/public-endpoint.decorator';
 import { AppInfoDto } from './dtos/welcome.dto';
 
 @ApiTags('Root')
+@PublicEndpoint()
 @Controller()
 export class ApiController {
   constructor(private readonly appService: ApiService) {}

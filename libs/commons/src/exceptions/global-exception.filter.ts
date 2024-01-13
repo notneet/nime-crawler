@@ -2,7 +2,6 @@ import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
-  HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { AxiosError } from 'axios';
@@ -14,9 +13,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = context.getResponse();
     const request = context.getRequest();
     const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+      exception.response.statusCode ||
+      exception.response.response.statusCode ||
+      HttpStatus.INTERNAL_SERVER_ERROR;
 
     // Log the exception (you can use your preferred logging library here)
     // console.error(exception);
@@ -44,7 +43,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       default:
         response.status(status).json({
           statusCode: status,
-          message: exception.message || 'Internal server error',
+          message:
+            exception.response.message ||
+            exception.message ||
+            'Internal server error',
         });
         return;
     }

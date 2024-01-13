@@ -12,10 +12,14 @@ import { SentryModule } from '@travelerdev/nestjs-sentry';
 import { AnimeSourceModule } from './anime-source/anime-source.module';
 import { ApiController } from './api.controller';
 import { ApiService } from './api.service';
+import { AuthModule } from './auth/auth.module';
+import { AccessTokenGuard } from './auth/guards/access-token.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 import { MediaModule } from './media/media.module';
 import { PostPatternDetailModule } from './post-pattern-detail/post-pattern-detail.module';
 import { PostPatternModule } from './post-pattern/post-pattern.module';
 import { StreamModule } from './stream/stream.module';
+import { UsersModule } from './users/users.module';
 import { WatchModule } from './watch/watch.module';
 
 @Module({
@@ -61,10 +65,20 @@ import { WatchModule } from './watch/watch.module';
     PostPatternDetailModule,
     WatchModule,
     StreamModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [ApiController],
   providers: [
     ApiService,
+    {
+      provide: APP_GUARD,
+      useClass: AccessTokenGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
