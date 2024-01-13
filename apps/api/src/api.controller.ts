@@ -4,8 +4,10 @@ import {
   Controller,
   HttpStatus,
   Param,
+  Req,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { ApiService } from './api.service';
 import { AppInfoDto } from './dtos/welcome.dto';
 
@@ -20,8 +22,8 @@ export class ApiController {
     type: AppInfoDto,
   })
   @TypedRoute.Get()
-  async getHello(): Promise<Record<string, any>> {
-    return this.appService.getWelcome();
+  async getHello(@Req() req: Request): Promise<Record<string, any>> {
+    return this.appService.getWelcome(req);
   }
 
   @ApiExcludeEndpoint()

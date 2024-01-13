@@ -32,6 +32,9 @@ export class AppInfoDto {
   @ApiProperty({ example: 'https://github.com/notneet/nime-crawler' })
   repo: string;
 
+  @ApiProperty({ example: '{{baseurl}}/docs' })
+  url_docs: string;
+
   @ApiProperty({ type: MaintainerDto, isArray: true })
   maintainer: MaintainerDto[];
 }

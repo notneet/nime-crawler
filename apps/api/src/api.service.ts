@@ -2,6 +2,7 @@ import { EnvKey } from '@libs/commons/helper/constant';
 import { Injectable, MethodNotAllowedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectSentry, SentryService } from '@travelerdev/nestjs-sentry';
+import { Request } from 'express';
 import * as fs from 'fs';
 import { promisify } from 'util';
 
@@ -37,11 +38,12 @@ export class ApiService {
     throw new MethodNotAllowedException();
   }
 
-  async getWelcome(): Promise<Record<string, any>> {
+  async getWelcome(req: Request): Promise<Record<string, any>> {
     return {
       app_name: this.config.get(EnvKey.APP_NAME),
       app_version: this.config.get(EnvKey.V1_VERSION),
       repo: this.config.get(EnvKey.GIT_REPOSITORY),
+      url_docs: `${req.protocol}://${req.get('host')}/docs`,
       maintaner: await this.mappingMaintaners(),
     };
   }
