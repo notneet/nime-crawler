@@ -15,4 +15,5 @@ export enum CleanerType {
   PARSE_AS_URL = 'parse-as-url',
   EXTRACT_URL_PARAMS = 'extract-url-params',
   MEDIA_FILTER = 'media-filter',
+  MONTH_ID_TRANSLATOR = 'month-id-translator',
 }

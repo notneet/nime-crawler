@@ -1,3 +1,4 @@
+import { EventKey, Q_ANIME_SOURCE_STREAM } from '@libs/commons/helper/constant';
 import {
   Controller,
   Get,
@@ -5,11 +6,10 @@ import {
   OnModuleInit,
   UseInterceptors,
 } from '@nestjs/common';
-import { ScraperStreamService } from './scraper-stream.service';
+import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AcknolageMessageInterceptor } from './interceptors/acknolage-message.interceptor';
-import { EventKey, Q_ANIME_SOURCE_STREAM } from '@libs/commons/helper/constant';
-import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
+import { ScraperStreamService } from './scraper-stream.service';
 
 @Controller()
 @UseInterceptors(AcknolageMessageInterceptor)
@@ -22,7 +22,7 @@ export class ScraperStreamController implements OnModuleInit {
 
   @EventPattern(EventKey.READ_ANIME_STREAM)
   async handleAnimeStream(@Payload() data: string) {
-    console.log(data);
+    // console.log(data);
   }
 
   async onModuleInit() {

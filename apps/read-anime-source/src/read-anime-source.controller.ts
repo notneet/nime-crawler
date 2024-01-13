@@ -1,12 +1,6 @@
 import { EventKey } from '@libs/commons/helper/constant';
-import {
-  Controller,
-  Get,
-  Logger,
-  RequestMapping,
-  UseInterceptors,
-} from '@nestjs/common';
-import { EventPattern, Payload } from '@nestjs/microservices';
+import { Controller, Get, Logger, UseInterceptors } from '@nestjs/common';
+import { EventPattern } from '@nestjs/microservices';
 import { AcknolageMessageInterceptor } from './interceptors/acknolage-message.interceptor';
 import { ReadAnimeSourceService } from './read-anime-source.service';
 
@@ -30,7 +24,6 @@ export class ReadAnimeSourceController {
 
   @EventPattern(EventKey.READ_ANIME_SOURCE)
   async handleBookCreatedEvent(data: string) {
-    console.log(data);
     const payload: RMQPayload = JSON.parse(data);
     return this.logger.log(payload.date);
   }

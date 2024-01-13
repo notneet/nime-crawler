@@ -26,8 +26,8 @@ export class WatchService {
     mediaId: number,
     oldOrigin?: string | null | undefined,
   ) {
+    let watch: Watch | undefined;
     try {
-      let watch: Watch | undefined;
       const tableName = `watch_${mediaId}`;
 
       watch = await this.findByObjectIdWithMediaId(
@@ -52,7 +52,6 @@ export class WatchService {
       Object.assign(watch, createWatchDto);
       delete watch.updated_at;
 
-      console.log(watch);
       return this.watchEtityMetadata
         .createQueryBuilder()
         .update(tableName)
@@ -244,7 +243,6 @@ export class WatchService {
     const { protocol, host, pathname } = extractedUrl;
     const mixedOrigin = host !== oldOrigin ? oldOrigin : host;
 
-    console.log(`${protocol}//${mixedOrigin}${pathname}`);
     return hashUUID(`${protocol}//${mixedOrigin}${pathname}`);
   }
 }

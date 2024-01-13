@@ -48,21 +48,21 @@ export interface WebsiteDetailPayload {
 
 export interface AnimeDetail {
   object_id: string;
-  title: string;
-  title_jp: string;
-  title_en: string;
-  type: string;
-  score: number;
-  status: string;
-  duration: number;
-  total_episode: number;
-  published: Date | null;
-  season: string;
-  genres: string | null;
-  producers: string;
-  description: string;
-  cover_url: string;
-  episode_urls: string[];
+  POST_TITLE: string;
+  POST_TITLE_JP: string;
+  POST_TITLE_EN: string;
+  POST_TYPE: string;
+  POST_SCORE: number;
+  POST_STATUS: string;
+  POST_DURATION: number;
+  POST_TOTAL_EPISODE: number;
+  PUBLISHED_DATE: Date | null;
+  POST_SEASON: string;
+  POST_GENRES: string | null;
+  POST_PRODUCERS: string;
+  POST_DESCRIPTION: string;
+  POST_COVER: string;
+  EPISODE_PATTERN: string[];
 }
 
 @Injectable()
@@ -92,12 +92,17 @@ export class HtmlScraperService {
       this.logger.error(`HTML result not found`);
       return;
     }
-
-    return this.pipeData(
+    const rawRes = await this.evalutePostDetailWebsite({
+      rawHTML: data,
+      ...payload,
+    });
+    const pipedData = this.pipeData(
       await this.evalutePostDetailWebsite({ rawHTML: data, ...payload }),
       payload?.parsedPattern,
       payload?.baseUrl,
     ) as AnimeDetail;
+
+    return pipedData;
   }
 
   private async evalutePostWebsite(
@@ -174,7 +179,7 @@ export class HtmlScraperService {
         object_id: hashUUID(
           this.replaceUrl(payload?.baseUrl, String(payload?.oldOrigin)),
         ),
-        title: this.getSingleContent<string>(
+        POST_TITLE: this.getSingleContent<string>(
           document,
           // this.makeXpath(payload?.containerPattern, payload?.titlePattern),
           this.makeXpathNew<ExistAnimeDetailKeys>(
@@ -182,7 +187,7 @@ export class HtmlScraperService {
             payload?.parsedPattern,
           ),
         ),
-        title_jp: this.getSingleContent<string>(
+        POST_TITLE_JP: this.getSingleContent<string>(
           document,
           // this.makeXpath(payload?.containerPattern, payload?.titleJpPattern),
           this.makeXpathNew<ExistAnimeDetailKeys>(
@@ -190,7 +195,7 @@ export class HtmlScraperService {
             payload?.parsedPattern,
           ),
         ),
-        title_en: this.getSingleContent<string>(
+        POST_TITLE_EN: this.getSingleContent<string>(
           document,
           // this.makeXpath(payload?.containerPattern, payload?.titleEnPattern),
           this.makeXpathNew<ExistAnimeDetailKeys>(
@@ -198,7 +203,7 @@ export class HtmlScraperService {
             payload?.parsedPattern,
           ),
         ),
-        type: this.getSingleContent<string>(
+        POST_TYPE: this.getSingleContent<string>(
           document,
           // this.makeXpath(payload?.containerPattern, payload?.postTypePattern),
           this.makeXpathNew<ExistAnimeDetailKeys>(
@@ -206,16 +211,18 @@ export class HtmlScraperService {
             payload?.parsedPattern,
           ),
         ),
-        score: this.getSingleContent<number>(
-          document,
-          // this.makeXpath(payload?.containerPattern, payload?.postScorePattern),
-          this.makeXpathNew<ExistAnimeDetailKeys>(
-            ExistAnimeDetailKeys.POST_SCORE,
-            payload?.parsedPattern,
-          ),
-          'number',
+        POST_SCORE: Number(
+          this.getSingleContent<number>(
+            document,
+            // this.makeXpath(payload?.containerPattern, payload?.postScorePattern),
+            this.makeXpathNew<ExistAnimeDetailKeys>(
+              ExistAnimeDetailKeys.POST_SCORE,
+              payload?.parsedPattern,
+            ),
+            'number',
+          ) || 0,
         ),
-        status: this.getSingleContent<string>(
+        POST_STATUS: this.getSingleContent<string>(
           document,
           // this.makeXpath(payload?.containerPattern, payload?.postStatusPattern),
           this.makeXpathNew<ExistAnimeDetailKeys>(
@@ -223,41 +230,31 @@ export class HtmlScraperService {
             payload?.parsedPattern,
           ),
         ),
-        duration: Number(
+        POST_DURATION:
           this.getSingleContent<number>(
             document,
-            // this.makeXpath(
-            //   payload?.containerPattern,
-            //   payload?.postDurationPattern,
-            // ),
             this.makeXpathNew<ExistAnimeDetailKeys>(
               ExistAnimeDetailKeys.POST_DURATION,
               payload?.parsedPattern,
             ),
-          )
-            ?.toString()
-            ?.replace(/\D/g, ''),
-        ),
-        total_episode: Number(
+          ) || 0,
+        POST_TOTAL_EPISODE:
           this.getSingleContent<number>(
             document,
             // this.makeXpath(payload?.containerPattern, payload?.postEpsPattern),
             this.makeXpathNew<ExistAnimeDetailKeys>(
-              ExistAnimeDetailKeys.EPISODE_PATTERN,
+              ExistAnimeDetailKeys.POST_TOTAL_EPISODE,
               payload?.parsedPattern,
             ),
-          )
-            ?.toString()
-            ?.replace(/\D/g, ''),
-        ),
-        published: this.getSingleContent<string>(
+          ) || 0,
+        PUBLISHED_DATE: this.getSingleContent<string>(
           document,
           this.makeXpathNew<ExistAnimeDetailKeys>(
             ExistAnimeDetailKeys.PUBLISHED_DATE,
             payload?.parsedPattern,
           ),
         ) as any,
-        season: this.getSingleContent<string>(
+        POST_SEASON: this.getSingleContent<string>(
           document,
           // this.makeXpath(payload?.containerPattern, payload?.postSeasonPattern),
           this.makeXpathNew<ExistAnimeDetailKeys>(
@@ -265,13 +262,10 @@ export class HtmlScraperService {
             payload?.parsedPattern,
           ),
         ),
-        genres: this.getContent(genreContentXpath, 'text')?.join(',') || null,
-        producers: this.getSingleContent<string>(
+        POST_GENRES:
+          this.getContent(genreContentXpath, 'text')?.join(',') || null,
+        POST_PRODUCERS: this.getSingleContent<string>(
           document,
-          // this.makeXpath(
-          //   payload?.containerPattern,
-          //   payload?.postProducerPattern,
-          // ),
           this.makeXpathNew<ExistAnimeDetailKeys>(
             ExistAnimeDetailKeys.POST_PRODUCERS,
             payload?.parsedPattern,
@@ -279,9 +273,11 @@ export class HtmlScraperService {
         )
           ?.split(', ')
           ?.join(','),
-        description: this.getContent(descriptionComponent, 'text')?.join('\n'),
-        cover_url: this.getContent(coverContentXpath, 'value')?.join(', '),
-        episode_urls: this.getContent(listEpsContentXpath, 'value'),
+        POST_DESCRIPTION: this.getContent(descriptionComponent, 'text')?.join(
+          '\n',
+        ),
+        POST_COVER: this.getContent(coverContentXpath, 'value')?.join(','),
+        EPISODE_PATTERN: this.getContent(listEpsContentXpath, 'value'),
       };
 
       return data;
@@ -422,28 +418,28 @@ export class HtmlScraperService {
     url: string,
   ) {
     const patterns = plainToInstance(FieldPipePattern, plainPattern);
-    for (const key in rawData) {
-      const dataVal = rawData[key];
 
-      patterns?.forEach((pattern: AnimePostField | AnimeDetailField) => {
-        if (dataVal && arrayNotEmpty(pattern?.pipes)) {
-          const resPipe = pattern?.pipes?.reduce((pipeVal, pipe) => {
-            pipe.baseUrl = url;
+    patterns?.forEach((pattern: AnimePostField | AnimeDetailField) => {
+      const dataVal = rawData[pattern.key];
 
-            if (typeof pipeVal === 'number') {
-              pipeVal = pipeVal.toString();
-            }
-            if (typeof pipe.exec === 'function') {
-              return pipe.exec(pipeVal);
-            }
+      if (isNotEmpty(dataVal) && arrayNotEmpty(pattern?.pipes)) {
+        const resPipe = pattern?.pipes?.reduce((pipeVal, pipe) => {
+          pipe.baseUrl = url;
 
-            return pipeVal;
-          }, dataVal);
+          if (typeof pipeVal === 'number') {
+            pipeVal = pipeVal.toString();
+          }
 
-          rawData[key] = resPipe;
-        }
-      });
-    }
+          if (typeof pipe.exec === 'function') {
+            return pipe.exec(pipeVal);
+          }
+
+          return pipeVal;
+        }, dataVal);
+
+        rawData[pattern.key] = resPipe;
+      }
+    });
 
     return rawData;
   }

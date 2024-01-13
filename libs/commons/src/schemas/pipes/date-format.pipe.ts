@@ -9,14 +9,14 @@ export class DateFormatPipe extends PipeRule {
 
   @IsString()
   @IsOptional()
-  format: string = 'yyyy-MM-dd HH:mm:ss';
+  format: string = 'YYYY-MM-dd hh:mm:ss';
 
   @IsString()
   @IsOptional()
   timezone?: string = 'Asia/Jakarta';
 
   exec(val: string) {
-    if (isArray(val)) return val;
+    if (isArray(val) || val?.search(/^https?:\/\//) === 0) return val;
 
     const parsedDate = parseDate(val, { instant: new Date(val) });
 
@@ -25,9 +25,7 @@ export class DateFormatPipe extends PipeRule {
     }
 
     const luxonDate = DateTime.fromJSDate(parsedDate, {
-      zone: String(val).toLocaleLowerCase().endsWith('z')
-        ? 'utc'
-        : this.timezone,
+      zone: this.timezone,
     });
 
     return luxonDate.toSeconds();
