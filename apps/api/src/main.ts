@@ -27,6 +27,7 @@ async function bootstrap() {
     logger,
   });
 
+  app.enableCors({ origin: '*' });
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.enableVersioning({ type: VersioningType.URI });
 
