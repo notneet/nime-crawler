@@ -16,7 +16,7 @@ export const queueConfig = (
       prefetchCount,
     },
   };
-  if (config.get(EnvKey.NODE_ENV, 'prod') == 'log') {
+  if (config.get(EnvKey.APP_ENV, 'prod') == 'log') {
     console.log(conf);
   }
 
