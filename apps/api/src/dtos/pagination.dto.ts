@@ -12,6 +12,10 @@ export class PageOptionsDto {
   @IsOptional()
   readonly search?: string;
 
+  @ApiPropertyOptional({ example: 'title' })
+  @IsOptional()
+  readonly searchBy?: string;
+
   @ApiPropertyOptional({ enum: Order, example: Order.ASC })
   @IsEnum(Order)
   @IsOptional()

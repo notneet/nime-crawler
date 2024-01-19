@@ -13,7 +13,7 @@ import {
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { isNotEmpty } from 'class-validator';
-import { EntityManager, Like } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
 @Injectable()
@@ -71,13 +71,21 @@ export class WatchService {
     const tableName = `watch_${mediaId}`;
 
     try {
-      const data = await this.baseQuery(tableName, pageOptDto?.search)
+      const data = await this.baseQuery(
+        tableName,
+        pageOptDto?.searchBy,
+        pageOptDto?.search,
+      )
         .orderBy('q.updated_at', pageOptDto?.order)
         .skip(pageOptDto?.skip)
         .take(pageOptDto?.take)
         .getRawMany();
       const itemCount = +(
-        await this.baseQuery(tableName, pageOptDto?.search)
+        await this.baseQuery(
+          tableName,
+          pageOptDto?.searchBy,
+          pageOptDto?.search,
+        )
           .orderBy('q.updated_at', pageOptDto?.order)
           .addSelect('COUNT(q.id)', 'watchesCount')
           .getRawOne()
@@ -226,9 +234,14 @@ export class WatchService {
     }
   }
 
-  private baseQuery(tableName: string, search?: string) {
+  private baseQuery(
+    tableName: string,
+    field: string = 'title',
+    search?: string,
+  ) {
     const query = this.eManager.createQueryBuilder().from(tableName, 'q');
-    if (isNotEmpty(search)) return query.where({ title: Like(`%${search}%`) });
+    if (isNotEmpty(search))
+      return query.where(`${field} LIKE '%${search}%'`, { field, search });
 
     return query;
   }
