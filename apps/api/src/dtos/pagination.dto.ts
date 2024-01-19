@@ -8,6 +8,10 @@ export enum Order {
 }
 
 export class PageOptionsDto {
+  @ApiPropertyOptional({ example: 'K-' })
+  @IsOptional()
+  readonly search?: string;
+
   @ApiPropertyOptional({ enum: Order, example: Order.ASC })
   @IsEnum(Order)
   @IsOptional()

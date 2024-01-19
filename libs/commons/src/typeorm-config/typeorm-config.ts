@@ -16,7 +16,7 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
   createTypeOrmOptions(connectionName?: string) {
     const logging: LoggerOptions = ['error'];
 
-    if (this.config.get(EnvKey.NODE_ENV, 'prod') == 'log') {
+    if (this.config.get(EnvKey.APP_ENV, 'production') == 'logging') {
       logging.push('warn', 'query');
     }
 
@@ -43,7 +43,7 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
       ...this.getConnectionConfig(connectionName),
     } as MysqlConnectionOptions;
 
-    if (this.config.get(EnvKey.NODE_ENV, 'prod') == 'log') {
+    if (this.config.get(EnvKey.APP_ENV, 'production') == 'logging') {
       Logger.debug(config, connectionName);
     }
 

@@ -6,7 +6,6 @@ export const Q_ANIME_SOURCE_STREAM = Symbol('Q_anime_source_stream');
 export const Q_ROUTING_QUEUE = Symbol('Q_routing_queue');
 
 export enum EnvKey {
-  NODE_ENV = 'NODE_ENV',
   DATABASE_URL = 'DATABASE_URL',
   RMQ_URL = 'RMQ_URL',
   PROXY_SERVER = 'PROXY_SERVER',

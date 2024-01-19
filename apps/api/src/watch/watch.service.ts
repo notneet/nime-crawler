@@ -12,7 +12,8 @@ import {
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { EntityManager } from 'typeorm';
+import { isNotEmpty } from 'class-validator';
+import { EntityManager, Like } from 'typeorm';
 import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
 @Injectable()
@@ -70,13 +71,13 @@ export class WatchService {
     const tableName = `watch_${mediaId}`;
 
     try {
-      const data = await this.baseQuery(tableName)
+      const data = await this.baseQuery(tableName, pageOptDto?.search)
         .orderBy('q.updated_at', pageOptDto?.order)
         .skip(pageOptDto?.skip)
         .take(pageOptDto?.take)
         .getRawMany();
       const itemCount = +(
-        await this.baseQuery(tableName)
+        await this.baseQuery(tableName, pageOptDto?.search)
           .orderBy('q.updated_at', pageOptDto?.order)
           .addSelect('COUNT(q.id)', 'watchesCount')
           .getRawOne()
@@ -225,8 +226,11 @@ export class WatchService {
     }
   }
 
-  private baseQuery(tableName: string) {
-    return this.eManager.createQueryBuilder().from(tableName, 'q');
+  private baseQuery(tableName: string, search?: string) {
+    const query = this.eManager.createQueryBuilder().from(tableName, 'q');
+    if (isNotEmpty(search)) return query.where({ title: Like(`%${search}%`) });
+
+    return query;
   }
 
   private get watchEtityMetadata() {
