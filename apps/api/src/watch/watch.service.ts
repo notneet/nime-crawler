@@ -1,5 +1,6 @@
 import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
+import { SearchWatchDto } from '@libs/commons/dto/watch-search.dto';
 import { WatchDto } from '@libs/commons/dto/watch.dto';
 import { Watch } from '@libs/commons/entities/watch.entity';
 import { hashUUID } from '@libs/commons/helper/md5';
@@ -67,6 +68,7 @@ export class WatchService {
   async findAll(
     mediaId: string,
     pageOptDto: PageOptionsDto,
+    searchWatch: SearchWatchDto,
   ): Promise<PageDto<WatchDto[]>> {
     const tableName = `watch_${mediaId}`;
 
@@ -76,6 +78,7 @@ export class WatchService {
         pageOptDto?.searchBy,
         pageOptDto?.search,
       )
+        .andWhere(`q.title_en LIKE '%${searchWatch?.title}%'`)
         .orderBy('q.updated_at', pageOptDto?.order)
         .skip(pageOptDto?.skip)
         .take(pageOptDto?.take)
@@ -86,6 +89,7 @@ export class WatchService {
           pageOptDto?.searchBy,
           pageOptDto?.search,
         )
+          .andWhere(`q.title_en LIKE '%${searchWatch?.title}%'`)
           .orderBy('q.updated_at', pageOptDto?.order)
           .addSelect('COUNT(q.id)', 'watchesCount')
           .getRawOne()

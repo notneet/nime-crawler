@@ -2,6 +2,7 @@ import { AllowedUserRoles } from '@libs/commons/decorators/allowed-role.decorato
 import { CreateWatchDto } from '@libs/commons/dto/create/create-watch.dto';
 import { ExampleWatchDtoResponse } from '@libs/commons/dto/example/watch-example.dto';
 import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
+import { SearchWatchDto } from '@libs/commons/dto/watch-search.dto';
 import { WatchDto } from '@libs/commons/dto/watch.dto';
 import { TypedRoute } from '@nestia/core';
 import {
@@ -42,10 +43,11 @@ export class WatchController {
   async findAll(
     @Query('media_id') mediaId: string,
     @Query() pageOptDto: PageOptionsDto,
+    @Query() searchWatch: SearchWatchDto,
   ) {
     this.handleMediaIdNotDefined(mediaId);
 
-    return this.watchService.findAll(mediaId, pageOptDto);
+    return this.watchService.findAll(mediaId, pageOptDto, searchWatch);
   }
 
   @ApiOkResponse({ type: WatchDto })
