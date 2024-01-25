@@ -1,4 +1,8 @@
-import { Injectable, PreconditionFailedException } from '@nestjs/common';
+import {
+  Injectable,
+  PreconditionFailedException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { isEmpty } from 'class-validator';
@@ -30,6 +34,31 @@ export class AuthService {
         name: user?.name,
         username: user?.username,
         role: user?.role,
+      },
+      expiresIn: this.jwtExpires,
+      accessToken: jwtToken,
+    };
+  }
+
+  async googleLogin(user: any) {
+    if (!user) {
+      throw new UnauthorizedException('No user from google');
+    }
+    const payload = {
+      email: user.email,
+      user_id: user.providerAccountId,
+      picture: user.picture,
+      accessToken: user.accessToken,
+      refreshToken: user.refreshToken,
+    };
+
+    const jwtToken = jwt.sign(payload, this.jwtSecret, {
+      expiresIn: this.jwtExpires,
+    });
+
+    return {
+      user: {
+        ...payload,
       },
       expiresIn: this.jwtExpires,
       accessToken: jwtToken,
