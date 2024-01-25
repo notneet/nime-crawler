@@ -1,0 +1,64 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { TypeOrmOptionsFactory } from '@nestjs/typeorm';
+import { LoggerOptions } from 'typeorm';
+import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
+import { EnvKey, SymDefaultConfig, SymMaxConLimit } from '../helper/constant';
+
+@Injectable()
+export class TypeOrmConfig implements TypeOrmOptionsFactory {
+  constructor(
+    private readonly config: ConfigService,
+    @Inject(SymMaxConLimit) private readonly maxConLimit: number,
+    @Inject(SymDefaultConfig) private readonly defaultConfig: string,
+  ) {}
+
+  createTypeOrmOptions(connectionName?: string) {
+    const logging: LoggerOptions = ['error'];
+
+    if (this.config.get(EnvKey.APP_ENV, 'production') == 'logging') {
+      logging.push('warn', 'query');
+    }
+
+    connectionName = connectionName || this.defaultConfig;
+    const config = {
+      // type: 'mysql',
+      cache: {
+        type: 'redis',
+        options: {
+          host: 'localhost',
+          port: 6379,
+        },
+      },
+      logging: logging,
+      charset: 'utf8mb4_unicode_ci',
+      extra: {
+        charset: 'utf8mb4_unicode_ci',
+        connectionLimit: this.maxConLimit,
+      },
+      keepConnectionAlive: false,
+      autoLoadEntities: true,
+      // synchronize: false,
+      name: connectionName,
+      ...this.getConnectionConfig(connectionName),
+    } as MysqlConnectionOptions;
+
+    if (this.config.get(EnvKey.APP_ENV, 'production') == 'logging') {
+      Logger.debug(config, connectionName);
+    }
+
+    return config;
+  }
+
+  getConnectionConfig(connectionName: string): MysqlConnectionOptions {
+    if (connectionName === 'default') {
+      return {
+        type: 'mariadb',
+        url: this.config.get(EnvKey.DATABASE_URL),
+      };
+    }
+
+    // Handle the case when connectionName is not 'default'
+    throw new Error(`Unknown connection name: ${connectionName}`);
+  }
+}
