@@ -72,6 +72,8 @@ export class WatchService {
   ): Promise<PageDto<WatchDto[]>> {
     const tableName = `watch_${mediaId}`;
 
+    const orderBy = searchWatch?.random ? `RAND()` : `q.${pageOptDto?.sortBy}`;
+
     try {
       const data = await this.baseQuery(
         tableName,
@@ -79,7 +81,7 @@ export class WatchService {
         pageOptDto?.search,
       )
         .andWhere(`q.title_en LIKE '%${searchWatch?.title}%'`)
-        .orderBy('q.updated_at', pageOptDto?.order)
+        .orderBy(orderBy, pageOptDto?.order)
         .skip(pageOptDto?.skip)
         .take(pageOptDto?.take)
         .getRawMany();
@@ -90,7 +92,7 @@ export class WatchService {
           pageOptDto?.search,
         )
           .andWhere(`q.title_en LIKE '%${searchWatch?.title}%'`)
-          .orderBy('q.updated_at', pageOptDto?.order)
+          .orderBy(orderBy, pageOptDto?.order)
           .addSelect('COUNT(q.id)', 'watchesCount')
           .getRawOne()
       ).watchesCount;

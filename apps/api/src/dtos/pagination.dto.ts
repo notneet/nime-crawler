@@ -16,6 +16,10 @@ export class PageOptionsDto {
   @IsOptional()
   readonly searchBy?: string;
 
+  @ApiPropertyOptional({ example: 'rating', default: 'updated_at' })
+  @IsOptional()
+  readonly sortBy?: string = 'updated_at';
+
   @ApiPropertyOptional({ enum: Order, example: Order.ASC })
   @IsEnum(Order)
   @IsOptional()
