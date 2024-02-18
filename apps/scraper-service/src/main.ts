@@ -16,8 +16,10 @@ async function bootstrap() {
 
   if (scrapeType === 'post') {
     queueName = DefKey.Q_ANIME_SOURCE;
-  } else {
+  } else if (scrapeType === 'detail') {
     queueName = DefKey.Q_ANIME_SOURCE_DETAIL;
+  } else {
+    queueName = DefKey.Q_ANIME_SOURCE_STREAM;
   }
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
@@ -26,6 +28,7 @@ async function bootstrap() {
       configService,
       configService.get<string>(queueName, queueName),
       5,
+      false,
     ),
   );
   await configModule.close();

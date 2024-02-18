@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfigModule } from '@libs/commons/typeorm-config/typeorm-config.module';
 import { TypeOrmConfig } from '@libs/commons/typeorm-config/typeorm-config';
+import { ReadAnimeEpisodeModule } from './read-anime-episode/read-anime-episode.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TypeOrmConfig } from '@libs/commons/typeorm-config/typeorm-config';
     }),
     ReadAnimeModule,
     ReadAnimePostModule,
+    ReadAnimeEpisodeModule,
   ],
   // controllers: [ScraperServiceController],
   // providers: [ScraperServiceService],

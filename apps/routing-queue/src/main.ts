@@ -16,6 +16,7 @@ async function bootstrap() {
       configService,
       configService.get<string>(DefKey.Q_ROUTING_QUEUE, DefKey.Q_ROUTING_QUEUE),
       5,
+      false,
     ),
   );
 

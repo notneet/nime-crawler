@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AxiosError } from 'axios';
 import { plainToInstance } from 'class-transformer';
 import { arrayNotEmpty, isEmpty, isNotEmpty } from 'class-validator';
 import { HttpsProxyAgent } from 'https-proxy-agent';
@@ -21,6 +22,7 @@ import {
 } from '../entities/post-pattern.entity';
 import { EnvKey, TimeUnit } from '../helper/constant';
 import { hashUUID } from '../helper/md5';
+import { SystemMonitorService } from '../system-monitor/system-monitor.service';
 
 export interface ParsedPattern {
   key: string;
@@ -46,6 +48,8 @@ export interface WebsiteDetailPayload {
   parsedPattern: ParsedPattern[];
 }
 
+export interface WebsiteEpisodePayload extends WebsiteDetailPayload {}
+
 export interface AnimeDetail {
   object_id: string;
   POST_TITLE: string;
@@ -65,12 +69,18 @@ export interface AnimeDetail {
   EPISODE_PATTERN: string[];
 }
 
+export interface AnimeEpisode {
+  object_id: string;
+  STREAM_URL: string;
+}
+
 @Injectable()
 export class HtmlScraperService {
   private readonly logger = new Logger(HtmlScraperService.name);
 
   constructor(
     private readonly htmlService: HttpService,
+    private readonly systemMonitService: SystemMonitorService,
     private readonly config: ConfigService,
   ) {}
 
@@ -92,17 +102,23 @@ export class HtmlScraperService {
       this.logger.error(`HTML result not found`);
       return;
     }
-    const rawRes = await this.evalutePostDetailWebsite({
-      rawHTML: data,
-      ...payload,
-    });
-    const pipedData = this.pipeData(
+
+    return this.pipeData(
       await this.evalutePostDetailWebsite({ rawHTML: data, ...payload }),
       payload?.parsedPattern,
       payload?.baseUrl,
     ) as AnimeDetail;
+  }
 
-    return pipedData;
+  async episode(payload: WebsiteEpisodePayload) {
+    const { data } = await this.getHTML(payload.baseUrl);
+
+    if (typeof data !== 'string') {
+      this.logger.error(`HTML result not found`);
+      return;
+    }
+
+    return this.evaluteEpisodeWebsite({ rawHTML: data, ...payload });
   }
 
   private async evalutePostWebsite(
@@ -286,6 +302,37 @@ export class HtmlScraperService {
     }
   }
 
+  private async evaluteEpisodeWebsite(payload: WebsiteDetailPayload) {
+    let document: libxmljs.Document;
+
+    console.log(payload.rawHTML);
+
+    try {
+      document = libxmljs.parseHtmlString(payload.rawHTML!);
+      if (!document) {
+        throw new Error('Document is empty');
+      }
+
+      const data: AnimeEpisode = {
+        object_id: hashUUID(
+          this.replaceUrl(payload?.baseUrl, String(payload?.oldOrigin)),
+        ),
+        STREAM_URL: this.getSingleContent<string>(
+          document,
+          // this.makeXpath(payload?.containerPattern, payload?.titlePattern),
+          this.makeXpathNew<ExistAnimeDetailKeys>(
+            ExistAnimeDetailKeys.POST_TITLE,
+            payload?.parsedPattern,
+          ),
+        ),
+      };
+
+      return data;
+    } catch (error) {
+      throw new Error('Fail parse the html result');
+    }
+  }
+
   private async getHTML(url: string): Promise<{ data: string | null }> {
     let isUseProxy = false;
     const proxyServer = this.config.get<string>(EnvKey.PROXY_SERVER, '');
@@ -308,10 +355,15 @@ export class HtmlScraperService {
             count: 5,
             delay: 3 * TimeUnit.SECOND,
           }),
-          catchError((error) => {
+          catchError((error: AxiosError) => {
             if (error.code === 'CERT_HAS_EXPIRED') {
-              this.logger.warn(
-                `${new URL(url).origin} has invalid certificate`,
+              const htmlResponseMessage = `${new URL(url).origin} has invalid certificate`;
+              this.logger.warn(htmlResponseMessage);
+              this.systemMonitService.sendAlert(
+                'warning',
+                htmlResponseMessage,
+                error?.stack,
+                error?.code,
               );
 
               return of({ data: null });

@@ -1,11 +1,16 @@
-import { EventKey, NodeItem } from '@libs/commons/helper/constant';
+import {
+  EventKey,
+  NodeItem,
+  Q_ANIME_SOURCE_STREAM,
+} from '@libs/commons/helper/constant';
 import {
   HtmlScraperService,
   ParsedPattern,
 } from '@libs/commons/html-scraper/html-scraper.service';
-import { Controller, Logger, UseInterceptors } from '@nestjs/common';
-import { EventPattern, Payload } from '@nestjs/microservices';
+import { Controller, Inject, Logger, UseInterceptors } from '@nestjs/common';
+import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
 import { WatchService } from 'apps/api/src/watch/watch.service';
+import { arrayNotEmpty } from 'class-validator';
 import { DateTime } from 'luxon';
 import { ScrapeAnime } from '../../../cron-interval/src/cron-interval.service';
 import { AcknolageMessageInterceptor } from '../interceptors/acknolage-message.interceptor';
@@ -18,6 +23,8 @@ export class ReadAnimePostController {
   constructor(
     private readonly htmlScraper: HtmlScraperService,
     private readonly watchService: WatchService,
+    @Inject(Q_ANIME_SOURCE_STREAM)
+    private readonly clientPostStream: ClientProxy,
   ) {}
 
   /**
@@ -62,6 +69,8 @@ export class ReadAnimePostController {
       parsedPattern,
     });
 
+    console.log(result);
+
     await this.watchService.saveToDB(
       {
         object_id: result?.object_id,
@@ -88,6 +97,21 @@ export class ReadAnimePostController {
       data.mediaId,
       oldOrigin,
     );
+
+    this.sendToQueueStream(data, result?.EPISODE_PATTERN);
+  }
+
+  private sendToQueueStream(
+    data: ScrapeAnime,
+    urlEpisodes: string[] | undefined,
+  ) {
+    if (!arrayNotEmpty(urlEpisodes)) return;
+
+    for (const urlEpisode of urlEpisodes!) {
+      data.pageUrl = urlEpisode;
+
+      this.clientPostStream.emit(EventKey.READ_ANIME_STREAM, data);
+    }
   }
 
   private getPattern(parsedPattern: ParsedPattern[], key: string) {

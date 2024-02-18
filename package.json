@@ -20,6 +20,7 @@
     "start:dev:routing-queue": "nest start --watch routing-queue",
     "start:dev:scraper-service:post": "SCRAPE_TYPE=post nest start --watch scraper-service",
     "start:dev:scraper-service:detail": "SCRAPE_TYPE=detail nest start --watch scraper-service",
+    "start:dev:scraper-service:episode": "SCRAPE_TYPE=episode nest start --watch scraper-service",
     "start:dev:scraper-stream": "nest start --watch scraper-stream",
     "build:api": "nest build api",
     "build:cron-interval": "nest build cron-interval",

@@ -4,10 +4,11 @@ import { PrismaModule } from './prisma/prisma.module';
 import { TypeormConfigModule } from './typeorm-config/typeorm-config.module';
 import { HtmlScraperModule } from './html-scraper/html-scraper.module';
 import { GdDownloaderModule } from './gd-downloader/gd-downloader.module';
+import { SystemMonitorModule } from './system-monitor/system-monitor.module';
 
 @Module({
   providers: [CommonsService],
   exports: [CommonsService],
-  imports: [PrismaModule, TypeormConfigModule, HtmlScraperModule, GdDownloaderModule],
+  imports: [PrismaModule, TypeormConfigModule, HtmlScraperModule, GdDownloaderModule, SystemMonitorModule],
 })
 export class CommonsModule {}

@@ -6,9 +6,9 @@ import {
 import { RabbitMQCtx } from '@libs/commons/types/rabbitmq-context';
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ClientProxy, Ctx, EventPattern, Payload } from '@nestjs/microservices';
-import { RoutingQueueService } from './routing-queue.service';
 import { Channel, Message } from 'amqplib';
 import { isEmpty } from 'class-validator';
+import { RoutingQueueService } from './routing-queue.service';
 
 @Controller()
 export class RoutingQueueController {
@@ -24,6 +24,14 @@ export class RoutingQueueController {
     @Ctx() context: RabbitMQCtx,
   ) {
     return this.handleRouting(context, data, DefKey.Q_ANIME_SOURCE);
+  }
+
+  @EventPattern(EventKey.READ_ANIME_STREAM)
+  async sendToReadAnimeStream(
+    @Payload() data: any,
+    @Ctx() context: RabbitMQCtx,
+  ) {
+    return this.handleRouting(context, data, DefKey.Q_ANIME_SOURCE_STREAM);
   }
 
   handleRouting(ctx: RabbitMQCtx, payload: any, sendToQueue: string) {
