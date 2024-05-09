@@ -101,7 +101,7 @@ export class WatchDto {
 
   @Expose()
   @Type(() => StreamGroupQuality)
-  streams: StreamGroupQuality | null | undefined;
+  streams: StreamGroupQuality | StreamGroupQuality[] | null | undefined;
 }
 
 export class StreamGroupQuality {
