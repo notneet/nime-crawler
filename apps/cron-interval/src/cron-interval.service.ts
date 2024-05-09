@@ -175,6 +175,7 @@ export class CronIntervalService {
         });
       }
       await new Promise((res) => setTimeout(res, 300));
+      this.lastInterval.set(interval, now);
     } while (true);
 
     return;
