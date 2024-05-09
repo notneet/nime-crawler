@@ -18,6 +18,10 @@ export enum EnvKey {
   APP_CODE = 'APP_CODE',
   RATE_LIMIT_SECOND = 'RATE_LIMIT_SECOND',
   RATE_LIMIT_COUNT = 'RATE_LIMIT_COUNT',
+  OBS_ENDPOINT_URL = 'OBS_ENDPOINT_URL',
+  BUCKET_NAME = 'BUCKET_NAME',
+  ACCESS_KEY = 'ACCESS_KEY',
+  SECRET_KEY = 'SECRET_KEY',
 }
 
 export enum DefKey {
@@ -71,4 +75,8 @@ export enum NodeItem {
   EPISODE_CONTAINER = 'EPISODE_CONTAINER',
   EPISODE_PROVIDER = 'EPISODE_PROVIDER',
   EPISODE_HASH = 'EPISODE_HASH', // can be episode embed url
+}
+
+export enum Otakudesu {
+  endpointEpisodeExtractor = '/wp-admin/admin-ajax.php',
 }

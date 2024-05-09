@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
+import { StreamDto } from './stream.dto';
 
 export class WatchDto {
   @ApiProperty({ example: 445 })
@@ -97,4 +98,22 @@ export class WatchDto {
   })
   @Expose()
   cover_url: string | null;
+
+  @Expose()
+  @Type(() => StreamGroupQuality)
+  streams: StreamGroupQuality | null | undefined;
+}
+
+export class StreamGroupQuality {
+  @Expose()
+  @Type(() => StreamDto)
+  '360': StreamDto[] | null | undefined;
+
+  @Expose()
+  @Type(() => StreamDto)
+  '480': StreamDto[] | null | undefined;
+
+  @Expose()
+  @Type(() => StreamDto)
+  '720': StreamDto[] | null | undefined;
 }

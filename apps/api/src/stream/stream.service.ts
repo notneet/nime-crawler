@@ -1,7 +1,12 @@
 import { CreateStreamDto } from '@libs/commons/dto/create/create-stream.dto';
 import { StreamDto } from '@libs/commons/dto/stream.dto';
 import { UpdateStreamDto } from '@libs/commons/dto/update/update-stream.dto';
+import { Media } from '@libs/commons/entities/media.entity';
 import { Stream } from '@libs/commons/entities/stream.entity';
+import { Otakudesu } from '@libs/commons/helper/constant';
+import { OtakudesuHelper } from '@libs/commons/helper/otakudesu';
+import { ObscloudhostService } from '@libs/commons/obscloudhost/obscloudhost.service';
+import { HttpService } from '@nestjs/axios';
 import {
   Injectable,
   InternalServerErrorException,
@@ -11,6 +16,9 @@ import {
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
+import { arrayNotEmpty, isEmpty } from 'class-validator';
+import { Response } from 'express';
+import { lastValueFrom, map } from 'rxjs';
 import { EntityManager } from 'typeorm';
 import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 
@@ -18,6 +26,8 @@ import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
 export class StreamService {
   constructor(
     @InjectEntityManager() protected readonly eManager: EntityManager,
+    private readonly httpService: HttpService,
+    private readonly obsCloudhostService: ObscloudhostService,
   ) {}
 
   async saveToDB(createStreamDto: CreateStreamDto, mediaId: number) {
@@ -167,6 +177,34 @@ export class StreamService {
     };
   }
 
+  async findByWatchId(watchId: string, mediaId: string): Promise<Stream[]> {
+    const tableName = `stream_${mediaId}`;
+    let stream: Stream[] | undefined;
+
+    try {
+      stream = await this.baseQuery(tableName)
+        .where({
+          watch_id: watchId,
+        } as Partial<Stream>)
+        .getRawMany();
+    } catch (error) {
+      switch (error.code) {
+        case 'ER_NO_SUCH_TABLE':
+          throw new UnprocessableEntityException(
+            `media_id: ${mediaId} not found`,
+          );
+        default:
+          throw new InternalServerErrorException(error);
+      }
+    }
+
+    if (!stream) {
+      throw new NotFoundException('data not found');
+    }
+
+    return stream;
+  }
+
   async create(createStreamDto: CreateStreamDto, mediaId?: string) {
     throw new NotImplementedException(`Mechanism is not provided`);
   }
@@ -183,9 +221,72 @@ export class StreamService {
     throw new NotImplementedException(`Mechanism is not provided`);
   }
 
+  async extractEpisode(
+    mediaId: string,
+    hash: string,
+  ): Promise<{ url: string }> {
+    const media = await this.baseQuery(`media`)
+      .where({ id: mediaId })
+      .getRawOne<Media>();
+
+    if (isEmpty(media))
+      throw new UnprocessableEntityException('media not found');
+
+    const body = JSON.parse(atob(hash));
+    body.nonce = '9269ac80b2';
+    body.action = '2a3505c93b0035d3f455df82bf976b84';
+
+    const res = await lastValueFrom(
+      this.httpService
+        .post(
+          `https://${media?.url}${Otakudesu.endpointEpisodeExtractor}`,
+          body,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          },
+        )
+        .pipe(map((data) => data)),
+    );
+    const helper = new OtakudesuHelper();
+
+    console.log(atob(res.data.data));
+
+    return { url: await helper.extractUrlStream(atob(res.data.data)) };
+  }
+
+  async getSubs(urlSub: string, res: Response) {
+    const obj = await this.obsCloudhostService.getFile(urlSub);
+
+    obj?.on('data', (chunk) => {
+      res.write(chunk);
+    });
+
+    obj?.on('end', () => {
+      res.end();
+    });
+
+    return obj;
+  }
+
   /**
    *
    */
+
+  groupEpisodesByQuality(rawList: Stream[]) {
+    if (!arrayNotEmpty(rawList)) return rawList || [];
+    return rawList?.reduce((acc, video) => {
+      const { quality } = video;
+
+      if (!acc[quality]) {
+        acc[quality] = [];
+      }
+      acc[quality].push(video);
+
+      return acc;
+    }, {});
+  }
 
   private async findByUrlWithMediaId(
     urlStream: string,
@@ -208,5 +309,9 @@ export class StreamService {
 
   private get streamEtityMetadata() {
     return this.eManager.connection.getRepository(Stream);
+  }
+
+  private get mediaEntityMetadata() {
+    return this.eManager.connection.getRepository(Media);
   }
 }

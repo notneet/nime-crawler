@@ -10,9 +10,11 @@ import {
   Controller,
   Param,
   Query,
+  Res,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { isEmpty } from 'class-validator';
+import { Response } from 'express';
 import { PublicEndpoint } from '../auth/decorators/public-endpoint.decorator';
 import { PageOptionsDto } from '../dtos/pagination.dto';
 import { StreamService } from './stream.service';
@@ -48,6 +50,12 @@ export class StreamController {
     return this.streamService.findAll(mediaId, pageOptDto);
   }
 
+  @TypedRoute.Get('subs')
+  @PublicEndpoint()
+  getSubs(@Query('path') pathSubs: string, @Res() res: Response) {
+    return this.streamService.getSubs(pathSubs, res);
+  }
+
   @ApiOkResponse({ type: StreamDto })
   @PublicEndpoint()
   @TypedRoute.Get(':objectId')
@@ -58,6 +66,15 @@ export class StreamController {
     this.handleMediaIdNotDefined(mediaId);
 
     return this.streamService.findByObjectId(mediaId, objectId);
+  }
+
+  @TypedRoute.Get('extract/:hash')
+  @PublicEndpoint()
+  extractEpisode(
+    @Query('media_id') mediaId: string,
+    @Param('hash') hash: string,
+  ) {
+    return this.streamService.extractEpisode(mediaId, hash);
   }
 
   @ApiOkResponse({ type: StreamDto })

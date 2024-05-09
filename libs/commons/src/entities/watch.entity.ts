@@ -4,9 +4,12 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  JoinColumn,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { urlNormalize } from '../helper/url-normalize';
+import { Stream } from './stream.entity';
 
 @Entity({ name: 'watch_model' })
 export class Watch {
@@ -80,4 +83,8 @@ export class Watch {
       .update(urlNormalize(this.url))
       .digest('hex');
   }
+
+  @OneToMany(() => Stream, (stream) => stream.watch)
+  @JoinColumn({ name: 'object_id' })
+  streams: Stream[];
 }

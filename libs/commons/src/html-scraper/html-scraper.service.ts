@@ -17,11 +17,17 @@ import {
   ExistAnimeDetailKeys,
 } from '../entities/post-detail-pattern.entity';
 import {
+  AnimeEpisodeField,
+  ExistAnimeEpisodeKeys,
+} from '../entities/post-episode-pattern.entity';
+import {
   AnimePostField,
   ExistAnimePostKeys,
 } from '../entities/post-pattern.entity';
 import { EnvKey, TimeUnit } from '../helper/constant';
 import { hashUUID } from '../helper/md5';
+import { mappingStreamProviderByQuality } from '../helper/otakudesu-episode-mapping';
+import { StringHelperService } from '../string-helper/string-helper.service';
 import { SystemMonitorService } from '../system-monitor/system-monitor.service';
 
 export interface ParsedPattern {
@@ -71,7 +77,8 @@ export interface AnimeDetail {
 
 export interface AnimeEpisode {
   object_id: string;
-  STREAM_URL: string;
+  EPISODE_PROVIDER: string[] | string;
+  EPISODE_HASH: string[] | string;
 }
 
 @Injectable()
@@ -81,6 +88,7 @@ export class HtmlScraperService {
   constructor(
     private readonly htmlService: HttpService,
     private readonly systemMonitService: SystemMonitorService,
+    private readonly stringHelperService: StringHelperService,
     private readonly config: ConfigService,
   ) {}
 
@@ -110,15 +118,20 @@ export class HtmlScraperService {
     ) as AnimeDetail;
   }
 
-  async episode(payload: WebsiteEpisodePayload) {
+  async episode(
+    payload: WebsiteEpisodePayload,
+  ): Promise<[AnimeEpisode[], AnimeEpisode[], AnimeEpisode[]]> {
     const { data } = await this.getHTML(payload.baseUrl);
 
     if (typeof data !== 'string') {
       this.logger.error(`HTML result not found`);
-      return;
+      return [[], [], []];
     }
 
-    return this.evaluteEpisodeWebsite({ rawHTML: data, ...payload });
+    return this.evaluteEpisodeWebsite({
+      rawHTML: data,
+      ...payload,
+    });
   }
 
   private async evalutePostWebsite(
@@ -192,8 +205,9 @@ export class HtmlScraperService {
       );
 
       const data: AnimeDetail = {
-        object_id: hashUUID(
-          this.replaceUrl(payload?.baseUrl, String(payload?.oldOrigin)),
+        object_id: this.stringHelperService.createUUID(
+          payload?.baseUrl,
+          payload?.oldOrigin,
         ),
         POST_TITLE: this.getSingleContent<string>(
           document,
@@ -302,10 +316,10 @@ export class HtmlScraperService {
     }
   }
 
-  private async evaluteEpisodeWebsite(payload: WebsiteDetailPayload) {
+  private async evaluteEpisodeWebsite(
+    payload: WebsiteEpisodePayload,
+  ): Promise<[AnimeEpisode[], AnimeEpisode[], AnimeEpisode[]]> {
     let document: libxmljs.Document;
-
-    console.log(payload.rawHTML);
 
     try {
       document = libxmljs.parseHtmlString(payload.rawHTML!);
@@ -313,21 +327,27 @@ export class HtmlScraperService {
         throw new Error('Document is empty');
       }
 
-      const data: AnimeEpisode = {
+      const listProviderContentXpath = document.find(
+        this.makeXpathNew<ExistAnimeEpisodeKeys>(
+          ExistAnimeEpisodeKeys.EPISODE_PROVIDER,
+          payload?.parsedPattern,
+        ),
+      );
+      const listHashContentXpath = document.find(
+        this.makeXpathNew<ExistAnimeEpisodeKeys>(
+          ExistAnimeEpisodeKeys.EPISODE_HASH,
+          payload?.parsedPattern,
+        ),
+      );
+      const rawContent: AnimeEpisode = {
         object_id: hashUUID(
           this.replaceUrl(payload?.baseUrl, String(payload?.oldOrigin)),
         ),
-        STREAM_URL: this.getSingleContent<string>(
-          document,
-          // this.makeXpath(payload?.containerPattern, payload?.titlePattern),
-          this.makeXpathNew<ExistAnimeDetailKeys>(
-            ExistAnimeDetailKeys.POST_TITLE,
-            payload?.parsedPattern,
-          ),
-        ),
+        EPISODE_PROVIDER: this.getContent(listProviderContentXpath, 'text'),
+        EPISODE_HASH: this.getContent(listHashContentXpath, 'value'),
       };
 
-      return data;
+      return mappingStreamProviderByQuality(rawContent);
     } catch (error) {
       throw new Error('Fail parse the html result');
     }
@@ -386,7 +406,8 @@ export class HtmlScraperService {
     const containerPattern = rawPattern?.find(
       (pattern) =>
         pattern.key === ExistAnimePostKeys.CONTAINER ||
-        pattern.key === ExistAnimeDetailKeys.POST_CONTAINER,
+        pattern.key === ExistAnimeDetailKeys.POST_CONTAINER ||
+        pattern.key === ExistAnimeEpisodeKeys.EPISODE_CONTAINER,
     )?.pattern;
     const contentPattern = rawPattern?.find(
       (pattern) => pattern?.key === fieldName,
@@ -471,27 +492,29 @@ export class HtmlScraperService {
   ) {
     const patterns = plainToInstance(FieldPipePattern, plainPattern);
 
-    patterns?.forEach((pattern: AnimePostField | AnimeDetailField) => {
-      const dataVal = rawData[pattern.key];
+    patterns?.forEach(
+      (pattern: AnimePostField | AnimeDetailField | AnimeEpisodeField) => {
+        const dataVal = rawData[pattern.key];
 
-      if (isNotEmpty(dataVal) && arrayNotEmpty(pattern?.pipes)) {
-        const resPipe = pattern?.pipes?.reduce((pipeVal, pipe) => {
-          pipe.baseUrl = url;
+        if (isNotEmpty(dataVal) && arrayNotEmpty(pattern?.pipes)) {
+          const resPipe = pattern?.pipes?.reduce((pipeVal, pipe) => {
+            pipe.baseUrl = url;
 
-          if (typeof pipeVal === 'number') {
-            pipeVal = pipeVal.toString();
-          }
+            if (typeof pipeVal === 'number') {
+              pipeVal = pipeVal.toString();
+            }
 
-          if (typeof pipe.exec === 'function') {
-            return pipe.exec(pipeVal);
-          }
+            if (typeof pipe.exec === 'function') {
+              return pipe.exec(pipeVal);
+            }
 
-          return pipeVal;
-        }, dataVal);
+            return pipeVal;
+          }, dataVal);
 
-        rawData[pattern.key] = resPipe;
-      }
-    });
+          rawData[pattern.key] = resPipe;
+        }
+      },
+    );
 
     return rawData;
   }

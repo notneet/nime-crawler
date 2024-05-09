@@ -1,5 +1,6 @@
 import {
   IsDateString,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsString,
@@ -23,6 +24,13 @@ export class CreateStreamDto {
 
   @IsNumber()
   num_episode: number;
+
+  @IsString()
+  object_id: string;
+
+  @IsString()
+  @IsEnum(['video', 'batch'])
+  type: string;
 
   @IsString()
   @MaxLength(100)

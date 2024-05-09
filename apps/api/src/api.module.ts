@@ -21,6 +21,7 @@ import { PostPatternModule } from './post-pattern/post-pattern.module';
 import { StreamModule } from './stream/stream.module';
 import { UsersModule } from './users/users.module';
 import { WatchModule } from './watch/watch.module';
+import { PostPatternEpisodeModule } from './post-pattern-episode/post-pattern-episode.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { WatchModule } from './watch/watch.module';
     StreamModule,
     AuthModule,
     UsersModule,
+    PostPatternEpisodeModule,
   ],
   controllers: [ApiController],
   providers: [
