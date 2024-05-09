@@ -1,4 +1,4 @@
-import { queueConfig } from '@libs/commons/config/main';
+import { RMQAckRequired, queueConfig } from '@libs/commons/config/main';
 import { DefKey, EnvKey } from '@libs/commons/helper/constant';
 import { Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -27,8 +27,8 @@ async function bootstrap() {
     queueConfig(
       configService,
       configService.get<string>(queueName, queueName),
-      5,
-      false,
+      configService.get<number>(EnvKey.CONSUMER_PREFETCH_COUNT, 15),
+      RMQAckRequired.NO_ACK,
     ),
   );
   await configModule.close();

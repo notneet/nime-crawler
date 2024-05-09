@@ -1,8 +1,8 @@
 import { queueConfig } from '@libs/commons/config/main';
-import { DefKey } from '@libs/commons/helper/constant';
+import { DefKey, EnvKey } from '@libs/commons/helper/constant';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { MicroserviceOptions } from '@nestjs/microservices';
 import { ReadAnimeSourceModule } from './read-anime-source.module';
 
 async function bootstrap() {
@@ -15,7 +15,7 @@ async function bootstrap() {
     queueConfig(
       configService,
       configService.get<string>(DefKey.Q_ANIME_SOURCE, DefKey.Q_ANIME_SOURCE),
-      5,
+      configService.get<number>(EnvKey.CONSUMER_PREFETCH_COUNT, 5),
     ),
   );
   await configModule.close();

@@ -1,11 +1,11 @@
+import { queueConfig } from '@libs/commons/config/main';
+import { DefKey, Q_ANIME_SOURCE_STREAM } from '@libs/commons/helper/constant';
 import { Module } from '@nestjs/common';
-import { ScraperStreamController } from './scraper-stream.controller';
-import { ScraperStreamService } from './scraper-stream.service';
-import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule } from '@nestjs/microservices';
-import { DefKey, Q_ANIME_SOURCE_STREAM } from '@libs/commons/helper/constant';
-import { queueConfig } from '@libs/commons/config/main';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ScraperStreamController } from './scraper-stream.controller';
+import { ScraperStreamService } from './scraper-stream.service';
 
 @Module({
   imports: [
