@@ -7,6 +7,7 @@ import {
 import { HtmlScraperService } from '@libs/commons/html-scraper/html-scraper.service';
 import { Controller, Inject, Logger, UseInterceptors } from '@nestjs/common';
 import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
+import { WatchService } from 'apps/api/src/watch/watch.service';
 import { isEmpty, isNotEmpty } from 'class-validator';
 import { ScrapeAnime } from '../../../cron-interval/src/cron-interval.service';
 import { AcknolageMessageInterceptor } from '../interceptors/acknolage-message.interceptor';
@@ -27,6 +28,7 @@ export class ReadAnimeController {
     @Inject(Q_ANIME_SOURCE) private readonly clientPost: ClientProxy,
     @Inject(Q_ANIME_SOURCE_DETAIL)
     private readonly clientPostDetail: ClientProxy,
+    private readonly watchService: WatchService,
   ) {}
 
   @EventPattern(EventKey.READ_ANIME_SOURCE)
@@ -91,6 +93,14 @@ export class ReadAnimeController {
 
     for (const urlPostDetail of contents) {
       if (isNotEmpty(pageUrl) && isNotEmpty(urlPostDetail)) {
+        // const postDetailData = await this.watchService.findByUrl(
+        //   String(payload?.mediaId),
+        //   urlPostDetail,
+        // );
+
+        // if(String(postDetailData?.status||'').toLowerCase())
+        // console.log(postDetailData, 'postDetailData');
+
         const newData = {
           pageUrl: urlPostDetail,
           ...payload,

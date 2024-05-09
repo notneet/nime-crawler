@@ -69,7 +69,7 @@ export class ReadAnimePostController {
       parsedPattern,
     });
 
-    console.log(result);
+    // console.log(result);
 
     await this.watchService.saveToDB(
       {

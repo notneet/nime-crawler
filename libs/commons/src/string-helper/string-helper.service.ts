@@ -12,6 +12,12 @@ export class StringHelperService {
     return hashUUID(this.replaceUrl(baseUrl, String(oldOrigin)));
   }
 
+  convertStringBoolean(rawData: string): boolean {
+    return isNaN(Number(rawData))
+      ? String(rawData) === 'true'
+      : Number(rawData) === 1;
+  }
+
   private replaceUrl(currentPageUrl: string, oldOrigin?: string) {
     if (isEmpty(oldOrigin)) return currentPageUrl;
 

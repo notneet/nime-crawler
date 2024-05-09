@@ -24,6 +24,8 @@ export enum EnvKey {
   BUCKET_NAME = 'BUCKET_NAME',
   ACCESS_KEY = 'ACCESS_KEY',
   SECRET_KEY = 'SECRET_KEY',
+  USE_FAST = 'USE_FAST',
+  SLEEP_TIME_SECOND = 'SLEEP_TIME_SECOND',
 }
 
 export enum DefKey {

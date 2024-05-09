@@ -137,7 +137,7 @@ export class WatchService {
       return this.baseQuery(tableName)
         .createQueryBuilder()
         .where({ url: urlWatch } as Partial<Watch>)
-        .getRawOne();
+        .getRawOne<Watch>();
     } catch (error) {
       switch (error.code) {
         case 'ER_NO_SUCH_TABLE':

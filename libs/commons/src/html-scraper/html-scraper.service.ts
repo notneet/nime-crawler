@@ -399,6 +399,19 @@ export class HtmlScraperService {
         ),
     );
 
+    const fastCrawl = this.stringHelperService.convertStringBoolean(
+      this.config.get<string>(EnvKey.USE_FAST, 'false'),
+    );
+    const waitSecondTime =
+      this.config.get<number>(EnvKey.SLEEP_TIME_SECOND, 6) * TimeUnit.SECOND;
+    const randomWaitTime =
+      Math.floor(Math.random() * (waitSecondTime - 3 + 1)) + 3;
+
+    if (!Boolean(fastCrawl)) {
+      this.logger.debug(`Sleep ${randomWaitTime} second after load...`);
+      await new Promise((resolve) => setTimeout(resolve, randomWaitTime));
+    }
+
     return resHTML ? resHTML : { data: null };
   }
 
