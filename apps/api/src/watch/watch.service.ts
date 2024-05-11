@@ -54,7 +54,7 @@ export class WatchService {
           .execute();
       }
       Object.assign(watch, createWatchDto);
-      delete watch.updated_at;
+      watch.updated_at = new Date();
 
       return this.watchEtityMetadata
         .createQueryBuilder()

@@ -363,7 +363,16 @@ export class HtmlScraperService {
         Number(it.browserMajor) > 50
       );
     });
-    this.logger.debug(`load ${url} with ua: ${userAgent}`);
+    const fastCrawl = this.stringHelperService.convertStringBoolean(
+      this.config.get<string>(EnvKey.USE_FAST, 'false'),
+    );
+    const waitSecondTime =
+      this.config.get<number>(EnvKey.SLEEP_TIME_SECOND, 6) * TimeUnit.SECOND;
+    const randomWaitTime =
+      Math.floor(Math.random() * (waitSecondTime - 3 + 1)) + 3;
+    this.logger.debug(
+      `load ${url} with ua: ${userAgent}; sleep ${randomWaitTime} sec...`,
+    );
     const resHTML = await lastValueFrom(
       this.htmlService
         .get(url, {
@@ -399,16 +408,7 @@ export class HtmlScraperService {
         ),
     );
 
-    const fastCrawl = this.stringHelperService.convertStringBoolean(
-      this.config.get<string>(EnvKey.USE_FAST, 'false'),
-    );
-    const waitSecondTime =
-      this.config.get<number>(EnvKey.SLEEP_TIME_SECOND, 6) * TimeUnit.SECOND;
-    const randomWaitTime =
-      Math.floor(Math.random() * (waitSecondTime - 3 + 1)) + 3;
-
     if (!Boolean(fastCrawl)) {
-      this.logger.debug(`Sleep ${randomWaitTime} second after load...`);
       await new Promise((resolve) => setTimeout(resolve, randomWaitTime));
     }
 
