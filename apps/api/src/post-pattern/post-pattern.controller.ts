@@ -1,3 +1,4 @@
+import { AllowedUserRoles } from '@libs/commons/decorators/allowed-role.decorator';
 import { CreatePostPatternDto } from '@libs/commons/dto/create/create-post-pattern.dto';
 import { UpdatePostPatternDto } from '@libs/commons/dto/update/update-post-pattern.dto';
 import { ValidatePatternDto } from '@libs/commons/dto/update/validate-pattern.dto';
@@ -18,6 +19,7 @@ export class PostPatternController {
 
   // pattern & pagination_pattern sould be formatted in JSON.stringify()
   @TypedRoute.Post()
+  @AllowedUserRoles(['admin'])
   // @UsePipes(new PatternValidationPipe())
   create(@Body() createPostPatternDto: CreatePostPatternDto) {
     return this.postPatternService.create(createPostPatternDto);
@@ -34,6 +36,7 @@ export class PostPatternController {
   }
 
   @TypedRoute.Post('validate/:id')
+  @AllowedUserRoles(['admin'])
   validateSource(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: ValidatePatternDto,
@@ -42,6 +45,7 @@ export class PostPatternController {
   }
 
   @TypedRoute.Patch(':id')
+  @AllowedUserRoles(['admin'])
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePostPatternDto: UpdatePostPatternDto,

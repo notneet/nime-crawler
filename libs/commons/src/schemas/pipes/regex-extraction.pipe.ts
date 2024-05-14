@@ -11,12 +11,12 @@ export class RegexExtractionPipe extends PipeRule {
 
   @IsString({ each: true })
   @IsNotEmpty()
-  flag: string;
+  scope: string;
 
   exec(val: string) {
     if (isArray(val)) return val;
 
-    const flag = Array.isArray(this.flag) ? this.flag.join(',') : this.flag;
+    const flag = Array.isArray(this.scope) ? this.scope.join(',') : this.scope;
     const match = val?.match(new RegExp(this.regex, flag));
 
     return (match || []).shift();

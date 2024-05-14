@@ -11,14 +11,16 @@ export class RegexReplacePipe extends PipeRule {
 
   @IsString({ each: true })
   @IsNotEmpty()
-  flag: string;
+  scope: string;
 
   @IsString()
   textReplacement: string;
 
   exec(val: string) {
     if (typeof val === 'string') {
-      const flag = Array.isArray(this.flag) ? this.flag.join(',') : this.flag;
+      const flag = Array.isArray(this.scope)
+        ? this.scope.join(',')
+        : this.scope;
       const result = val.replace(
         new RegExp(this.regex, flag),
         this.textReplacement,

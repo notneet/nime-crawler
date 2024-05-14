@@ -31,6 +31,8 @@ export class AuthController {
 
     if (!isPassValid) this.genUnauthException();
 
+    console.log(this.authService.createToken(user as Users));
+
     return this.authService.createToken(user as Users);
   }
 

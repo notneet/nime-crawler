@@ -81,6 +81,11 @@ export enum NodeItem {
   EPISODE_HASH = 'EPISODE_HASH', // can be episode embed url
 }
 
+export enum ResultType {
+  TEXT = 'text',
+  VALUE = 'value',
+}
+
 export enum Otakudesu {
   endpointEpisodeExtractor = '/wp-admin/admin-ajax.php',
 }
