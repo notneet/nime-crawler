@@ -9,9 +9,14 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { PostPatternEpisodeService } from './post-pattern-episode.service';
 
-@Controller('post-pattern-episode')
+@ApiExcludeController()
+@Controller({
+  version: '1',
+  path: 'post-pattern-episodes',
+})
 export class PostPatternEpisodeController {
   constructor(
     private readonly postPatternEpisodeService: PostPatternEpisodeService,
