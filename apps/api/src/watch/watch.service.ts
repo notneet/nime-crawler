@@ -112,8 +112,6 @@ export class WatchService {
         pageOptionsDto: pageOptDto,
       });
 
-      console.log(dataAnimes, 'dataAnimes');
-
       return {
         data: plainToInstance(WatchDto, dataAnimes),
         meta: pageMetaDto,
