@@ -16,7 +16,7 @@ async function bootstrap() {
     queueConfig(
       configService,
       configService.get<string>(DefKey.Q_ROUTING_QUEUE, DefKey.Q_ROUTING_QUEUE),
-      configService.get<number>(EnvKey.CONSUMER_PREFETCH_COUNT, 200),
+      +configService.get<number>(EnvKey.CONSUMER_PREFETCH_COUNT, 200),
       RMQAckRequired.NO_ACK,
     ),
   );
