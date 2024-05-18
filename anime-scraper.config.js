@@ -2,16 +2,16 @@ module.exports = {
   apps: [
     {
       name: 'media-updater',
-      script: 'dist/apps/media-updater/main.js',
-      watch: ['./dist/apps/media-updater'],
+      script: 'dist/apps/media-updater/apps/media-updater/src/main.js',
+      watch: ['./dist/apps/media-updater/apps/media-updater/src'],
       autorestart: true,
       cron_restart: '0 * * * *',
       // interpreter: 'node@16.18.0',
     },
     {
       name: 'scraper-service-post',
-      script: 'dist/apps/scraper-service/main.js',
-      watch: ['./dist/apps/scraper-service'],
+      script: 'dist/apps/scraper-service/apps/scraper-service/src/main.js',
+      watch: ['./dist/apps/scraper-service/apps/scraper-service/src'],
       autorestart: true,
       cron_restart: '0 * * * *',
       // interpreter: 'node@16.18.0',
@@ -22,8 +22,8 @@ module.exports = {
     },
     {
       name: 'scraper-service-detail',
-      script: 'dist/apps/scraper-service/main.js',
-      watch: ['./dist/apps/scraper-service'],
+      script: 'dist/apps/scraper-service/apps/scraper-service/src/main.js',
+      watch: ['./dist/apps/scraper-service/apps/scraper-service/src'],
       autorestart: true,
       cron_restart: '0 * * * *',
       // interpreter: 'node@16.18.0',
@@ -34,8 +34,8 @@ module.exports = {
     },
     {
       name: 'scraper-service-episode',
-      script: 'dist/apps/scraper-service/main.js',
-      watch: ['./dist/apps/scraper-service'],
+      script: 'dist/apps/scraper-service/apps/scraper-service/src/main.js',
+      watch: ['./dist/apps/scraper-service/apps/scraper-service/src'],
       autorestart: true,
       cron_restart: '0 * * * *',
       // interpreter: 'node@16.18.0',
