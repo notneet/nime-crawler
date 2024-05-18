@@ -21,7 +21,8 @@ export class StreamDto {
   published: Date | null;
 
   @Expose()
-  published_ts: Date | null;
+  @Type(() => Number)
+  published_ts: number | null;
 
   @Expose()
   name: string | null;
@@ -38,4 +39,7 @@ export class StreamDto {
   @Expose()
   @Type(() => Number)
   num_episode: number;
+
+  @Expose()
+  type: string;
 }
