@@ -34,4 +34,8 @@ export class StreamDto {
 
   @Expose()
   file_size: string | null;
+
+  @Expose()
+  @Type(() => Number)
+  num_episode: number;
 }

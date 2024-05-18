@@ -10,6 +10,8 @@ export enum EnvKey {
   RMQ_URL = 'RMQ_URL',
   PROXY_SERVER = 'PROXY_SERVER',
   SCRAPE_TYPE = 'SCRAPE_TYPE',
+  CONSUMER_PREFETCH_COUNT = 'CONSUMER_PREFETCH_COUNT',
+  PRODUCER_PREFETCH_COUNT = 'PRODUCER_PREFETCH_COUNT',
   APP_NAME = 'APP_NAME',
   GIT_REPOSITORY = 'GIT_REPOSITORY',
   V1_VERSION = 'V1_VERSION',
@@ -18,6 +20,12 @@ export enum EnvKey {
   APP_CODE = 'APP_CODE',
   RATE_LIMIT_SECOND = 'RATE_LIMIT_SECOND',
   RATE_LIMIT_COUNT = 'RATE_LIMIT_COUNT',
+  OBS_ENDPOINT_URL = 'OBS_ENDPOINT_URL',
+  BUCKET_NAME = 'BUCKET_NAME',
+  ACCESS_KEY = 'ACCESS_KEY',
+  SECRET_KEY = 'SECRET_KEY',
+  USE_FAST = 'USE_FAST',
+  SLEEP_TIME_SECOND = 'SLEEP_TIME_SECOND',
 }
 
 export enum DefKey {
@@ -66,4 +74,18 @@ export enum NodeItem {
   POST_DESCRIPTION = 'POST_DESCRIPTION',
   POST_COVER = 'POST_COVER',
   EPISODE_PATTERN = 'EPISODE_PATTERN',
+
+  // Pattern Episode //
+  EPISODE_CONTAINER = 'EPISODE_CONTAINER',
+  EPISODE_PROVIDER = 'EPISODE_PROVIDER',
+  EPISODE_HASH = 'EPISODE_HASH', // can be episode embed url
+}
+
+export enum ResultType {
+  TEXT = 'text',
+  VALUE = 'value',
+}
+
+export enum Otakudesu {
+  endpointEpisodeExtractor = '/wp-admin/admin-ajax.php',
 }

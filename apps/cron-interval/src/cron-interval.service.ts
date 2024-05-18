@@ -7,10 +7,11 @@ import {
 } from '@libs/commons/helper/constant';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { AnimeSourceService } from 'apps/api/src/anime-source/anime-source.service';
+import { MediaService } from 'apps/api/src/media/media.service';
 import { PostPatternDetailService } from 'apps/api/src/post-pattern-detail/post-pattern-detail.service';
+import { PostPatternEpisodeService } from 'apps/api/src/post-pattern-episode/post-pattern-episode.service';
 import { PostPatternService } from 'apps/api/src/post-pattern/post-pattern.service';
-import { AnimeSourceService } from '../../api/src/anime-source/anime-source.service';
-import { MediaService } from '../../api/src/media/media.service';
 
 interface BaseAnimePattern {
   media_id: number | null;
@@ -25,6 +26,10 @@ interface IPostPatternDetail extends BaseAnimePattern {
   pagination_pattern: string;
 }
 
+interface IPostPatternEpisode extends BaseAnimePattern {
+  watchId?: string | null;
+}
+
 export interface ScrapeAnime {
   origin: string;
   pageUrl: string | undefined;
@@ -32,6 +37,7 @@ export interface ScrapeAnime {
   nextPage?: string | null | undefined;
   patternPost: IPostPattern | undefined;
   patternPostDetail: IPostPatternDetail | undefined;
+  patternPostEpisode: IPostPatternEpisode | undefined;
   description: string;
   timeout: number;
   langCode: string;
@@ -50,6 +56,7 @@ type ScapperOpt = {
   oldOrigin: string | null | undefined;
   postPattern?: IPostPattern;
   postPatternDetail?: IPostPatternDetail;
+  postPatternEpisode?: IPostPatternEpisode;
   maxItteratePostPage?: number;
   maxItteratePostDetailPage?: number;
   description: string;
@@ -68,6 +75,7 @@ export class CronIntervalService {
     private readonly animeSourceService: AnimeSourceService,
     private readonly postPatternService: PostPatternService,
     private readonly postPatternDetailService: PostPatternDetailService,
+    private readonly postPatternEpisodeService: PostPatternEpisodeService,
   ) {}
 
   // getAllAnimeResource() {
@@ -110,6 +118,10 @@ export class CronIntervalService {
         await this.postPatternDetailService.findByMediaIds(
           animeSources.map((it) => it.media_id),
         );
+      const patternPostsEpisode =
+        await this.postPatternEpisodeService.findByMediaIds(
+          animeSources.map((it) => it.media_id),
+        );
 
       for (const animeSource of animeSources) {
         let media: Media | null | undefined;
@@ -126,6 +138,9 @@ export class CronIntervalService {
         const postPatternDetail = patternPostsDetail.find(
           (it) => it.media_id === animeSource.media_id,
         );
+        const postPatternEpisode = patternPostsEpisode.find(
+          (it) => it.media_id === animeSource.media_id,
+        );
 
         const desc = `scraping data from ${animeSource.url} (${animeSource.media_id}) on interval ${animeSource.interval}`;
         const postPatternPayload: IPostPattern = {
@@ -138,6 +153,11 @@ export class CronIntervalService {
           pattern: postPatternDetail?.pattern || '[]',
           pagination_pattern: postPatternDetail?.pagination_pattern || '[]',
         };
+        const postPatternEpisodePayload: IPostPatternEpisode = {
+          media_id: postPatternEpisode?.media_id || null,
+          watchId: null,
+          pattern: postPatternEpisode?.pattern || '[]',
+        };
 
         this.logger.debug(desc);
 
@@ -147,6 +167,7 @@ export class CronIntervalService {
           oldOrigin: media?.url_old,
           postPattern: postPatternPayload,
           postPatternDetail: postPatternDetailPayload,
+          postPatternEpisode: postPatternEpisodePayload,
           maxItteratePostPage: animeSource.max_itterate_post,
           maxItteratePostDetailPage: animeSource.max_itterate_detail,
           description: desc,
@@ -154,6 +175,7 @@ export class CronIntervalService {
         });
       }
       await new Promise((res) => setTimeout(res, 300));
+      this.lastInterval.set(interval, now);
     } while (true);
 
     return;
@@ -167,6 +189,7 @@ export class CronIntervalService {
       nextPage: null,
       patternPost: opts.postPattern,
       patternPostDetail: opts.postPatternDetail,
+      patternPostEpisode: opts.postPatternEpisode,
       description: opts.description,
       timeout: opts.timeout,
       langCode: opts.lang_code,

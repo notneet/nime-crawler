@@ -1,4 +1,4 @@
-import { queueConfig } from '@libs/commons/config/main';
+import { RMQAckRequired, queueConfig } from '@libs/commons/config/main';
 import { DefKey, EnvKey } from '@libs/commons/helper/constant';
 import { Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -16,8 +16,10 @@ async function bootstrap() {
 
   if (scrapeType === 'post') {
     queueName = DefKey.Q_ANIME_SOURCE;
-  } else {
+  } else if (scrapeType === 'detail') {
     queueName = DefKey.Q_ANIME_SOURCE_DETAIL;
+  } else {
+    queueName = DefKey.Q_ANIME_SOURCE_STREAM;
   }
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
@@ -25,7 +27,8 @@ async function bootstrap() {
     queueConfig(
       configService,
       configService.get<string>(queueName, queueName),
-      5,
+      configService.get<number>(EnvKey.CONSUMER_PREFETCH_COUNT, 15),
+      RMQAckRequired.NO_ACK,
     ),
   );
   await configModule.close();

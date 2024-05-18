@@ -8,6 +8,7 @@ import { HtmlScraperModule } from '@libs/commons/html-scraper/html-scraper.modul
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule } from '@nestjs/microservices';
+import { WatchModule } from 'apps/api/src/watch/watch.module';
 import { ReadAnimeController } from './read-anime.controller';
 import { ReadAnimeService } from './read-anime.service';
 
@@ -42,6 +43,7 @@ import { ReadAnimeService } from './read-anime.service';
       },
     ]),
     HtmlScraperModule,
+    WatchModule,
   ],
   controllers: [ReadAnimeController],
   providers: [ReadAnimeService],

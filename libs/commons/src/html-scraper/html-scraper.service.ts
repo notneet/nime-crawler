@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AxiosError } from 'axios';
 import { plainToInstance } from 'class-transformer';
 import { arrayNotEmpty, isEmpty, isNotEmpty } from 'class-validator';
 import { HttpsProxyAgent } from 'https-proxy-agent';
@@ -16,11 +17,18 @@ import {
   ExistAnimeDetailKeys,
 } from '../entities/post-detail-pattern.entity';
 import {
+  AnimeEpisodeField,
+  ExistAnimeEpisodeKeys,
+} from '../entities/post-episode-pattern.entity';
+import {
   AnimePostField,
   ExistAnimePostKeys,
 } from '../entities/post-pattern.entity';
 import { EnvKey, TimeUnit } from '../helper/constant';
 import { hashUUID } from '../helper/md5';
+import { mappingStreamProviderByQuality } from '../helper/otakudesu-episode-mapping';
+import { StringHelperService } from '../string-helper/string-helper.service';
+import { SystemMonitorService } from '../system-monitor/system-monitor.service';
 
 export interface ParsedPattern {
   key: string;
@@ -46,6 +54,8 @@ export interface WebsiteDetailPayload {
   parsedPattern: ParsedPattern[];
 }
 
+export interface WebsiteEpisodePayload extends WebsiteDetailPayload {}
+
 export interface AnimeDetail {
   object_id: string;
   POST_TITLE: string;
@@ -65,12 +75,20 @@ export interface AnimeDetail {
   EPISODE_PATTERN: string[];
 }
 
+export interface AnimeEpisode {
+  object_id: string;
+  EPISODE_PROVIDER: string[] | string;
+  EPISODE_HASH: string[] | string;
+}
+
 @Injectable()
 export class HtmlScraperService {
   private readonly logger = new Logger(HtmlScraperService.name);
 
   constructor(
     private readonly htmlService: HttpService,
+    private readonly systemMonitService: SystemMonitorService,
+    private readonly stringHelperService: StringHelperService,
     private readonly config: ConfigService,
   ) {}
 
@@ -92,17 +110,28 @@ export class HtmlScraperService {
       this.logger.error(`HTML result not found`);
       return;
     }
-    const rawRes = await this.evalutePostDetailWebsite({
-      rawHTML: data,
-      ...payload,
-    });
-    const pipedData = this.pipeData(
+
+    return this.pipeData(
       await this.evalutePostDetailWebsite({ rawHTML: data, ...payload }),
       payload?.parsedPattern,
       payload?.baseUrl,
     ) as AnimeDetail;
+  }
 
-    return pipedData;
+  async episode(
+    payload: WebsiteEpisodePayload,
+  ): Promise<[AnimeEpisode[], AnimeEpisode[], AnimeEpisode[]]> {
+    const { data } = await this.getHTML(payload.baseUrl);
+
+    if (typeof data !== 'string') {
+      this.logger.error(`HTML result not found`);
+      return [[], [], []];
+    }
+
+    return this.evaluteEpisodeWebsite({
+      rawHTML: data,
+      ...payload,
+    });
   }
 
   private async evalutePostWebsite(
@@ -176,8 +205,9 @@ export class HtmlScraperService {
       );
 
       const data: AnimeDetail = {
-        object_id: hashUUID(
-          this.replaceUrl(payload?.baseUrl, String(payload?.oldOrigin)),
+        object_id: this.stringHelperService.createUUID(
+          payload?.baseUrl,
+          payload?.oldOrigin,
         ),
         POST_TITLE: this.getSingleContent<string>(
           document,
@@ -286,6 +316,43 @@ export class HtmlScraperService {
     }
   }
 
+  private async evaluteEpisodeWebsite(
+    payload: WebsiteEpisodePayload,
+  ): Promise<[AnimeEpisode[], AnimeEpisode[], AnimeEpisode[]]> {
+    let document: libxmljs.Document;
+
+    try {
+      document = libxmljs.parseHtmlString(payload.rawHTML!);
+      if (!document) {
+        throw new Error('Document is empty');
+      }
+
+      const listProviderContentXpath = document.find(
+        this.makeXpathNew<ExistAnimeEpisodeKeys>(
+          ExistAnimeEpisodeKeys.EPISODE_PROVIDER,
+          payload?.parsedPattern,
+        ),
+      );
+      const listHashContentXpath = document.find(
+        this.makeXpathNew<ExistAnimeEpisodeKeys>(
+          ExistAnimeEpisodeKeys.EPISODE_HASH,
+          payload?.parsedPattern,
+        ),
+      );
+      const rawContent: AnimeEpisode = {
+        object_id: hashUUID(
+          this.replaceUrl(payload?.baseUrl, String(payload?.oldOrigin)),
+        ),
+        EPISODE_PROVIDER: this.getContent(listProviderContentXpath, 'text'),
+        EPISODE_HASH: this.getContent(listHashContentXpath, 'value'),
+      };
+
+      return mappingStreamProviderByQuality(rawContent);
+    } catch (error) {
+      throw new Error('Fail parse the html result');
+    }
+  }
+
   private async getHTML(url: string): Promise<{ data: string | null }> {
     let isUseProxy = false;
     const proxyServer = this.config.get<string>(EnvKey.PROXY_SERVER, '');
@@ -296,7 +363,16 @@ export class HtmlScraperService {
         Number(it.browserMajor) > 50
       );
     });
-    this.logger.debug(`load ${url} with ua: ${userAgent}`);
+    const fastCrawl = this.stringHelperService.convertStringBoolean(
+      this.config.get<string>(EnvKey.USE_FAST, 'false'),
+    );
+    const waitSecondTime =
+      this.config.get<number>(EnvKey.SLEEP_TIME_SECOND, 6) * TimeUnit.SECOND;
+    const randomWaitTime =
+      Math.floor(Math.random() * (waitSecondTime - 3 + 1)) + 3;
+    this.logger.debug(
+      `load ${url} with ua: ${userAgent}; sleep ${randomWaitTime} sec...`,
+    );
     const resHTML = await lastValueFrom(
       this.htmlService
         .get(url, {
@@ -308,10 +384,15 @@ export class HtmlScraperService {
             count: 5,
             delay: 3 * TimeUnit.SECOND,
           }),
-          catchError((error) => {
+          catchError((error: AxiosError) => {
             if (error.code === 'CERT_HAS_EXPIRED') {
-              this.logger.warn(
-                `${new URL(url).origin} has invalid certificate`,
+              const htmlResponseMessage = `${new URL(url).origin} has invalid certificate`;
+              this.logger.warn(htmlResponseMessage);
+              this.systemMonitService.sendAlert(
+                'warning',
+                htmlResponseMessage,
+                error?.stack,
+                error?.code,
               );
 
               return of({ data: null });
@@ -327,6 +408,10 @@ export class HtmlScraperService {
         ),
     );
 
+    if (!Boolean(fastCrawl)) {
+      await new Promise((resolve) => setTimeout(resolve, randomWaitTime));
+    }
+
     return resHTML ? resHTML : { data: null };
   }
 
@@ -334,7 +419,8 @@ export class HtmlScraperService {
     const containerPattern = rawPattern?.find(
       (pattern) =>
         pattern.key === ExistAnimePostKeys.CONTAINER ||
-        pattern.key === ExistAnimeDetailKeys.POST_CONTAINER,
+        pattern.key === ExistAnimeDetailKeys.POST_CONTAINER ||
+        pattern.key === ExistAnimeEpisodeKeys.EPISODE_CONTAINER,
     )?.pattern;
     const contentPattern = rawPattern?.find(
       (pattern) => pattern?.key === fieldName,
@@ -419,27 +505,29 @@ export class HtmlScraperService {
   ) {
     const patterns = plainToInstance(FieldPipePattern, plainPattern);
 
-    patterns?.forEach((pattern: AnimePostField | AnimeDetailField) => {
-      const dataVal = rawData[pattern.key];
+    patterns?.forEach(
+      (pattern: AnimePostField | AnimeDetailField | AnimeEpisodeField) => {
+        const dataVal = rawData[pattern.key];
 
-      if (isNotEmpty(dataVal) && arrayNotEmpty(pattern?.pipes)) {
-        const resPipe = pattern?.pipes?.reduce((pipeVal, pipe) => {
-          pipe.baseUrl = url;
+        if (isNotEmpty(dataVal) && arrayNotEmpty(pattern?.pipes)) {
+          const resPipe = pattern?.pipes?.reduce((pipeVal, pipe) => {
+            pipe.baseUrl = url;
 
-          if (typeof pipeVal === 'number') {
-            pipeVal = pipeVal.toString();
-          }
+            if (typeof pipeVal === 'number') {
+              pipeVal = pipeVal.toString();
+            }
 
-          if (typeof pipe.exec === 'function') {
-            return pipe.exec(pipeVal);
-          }
+            if (typeof pipe.exec === 'function') {
+              return pipe.exec(pipeVal);
+            }
 
-          return pipeVal;
-        }, dataVal);
+            return pipeVal;
+          }, dataVal);
 
-        rawData[pattern.key] = resPipe;
-      }
-    });
+          rawData[pattern.key] = resPipe;
+        }
+      },
+    );
 
     return rawData;
   }

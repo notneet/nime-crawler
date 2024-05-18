@@ -13,8 +13,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = context.getResponse();
     const request = context.getRequest();
     const status =
-      exception.response.statusCode ||
-      exception.response.response.statusCode ||
+      exception?.response?.statusCode ||
+      exception?.response?.response?.statusCode ||
       HttpStatus.INTERNAL_SERVER_ERROR;
 
     // Log the exception (you can use your preferred logging library here)

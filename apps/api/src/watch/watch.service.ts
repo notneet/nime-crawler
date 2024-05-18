@@ -16,11 +16,13 @@ import { plainToInstance } from 'class-transformer';
 import { isNotEmpty } from 'class-validator';
 import { EntityManager } from 'typeorm';
 import { PageDto, PageMetaDto, PageOptionsDto } from '../dtos/pagination.dto';
+import { StreamService } from '../stream/stream.service';
 
 @Injectable()
 export class WatchService {
   constructor(
     @InjectEntityManager() protected readonly eManager: EntityManager,
+    private readonly streamsService: StreamService,
   ) {}
 
   async saveToDB(
@@ -52,7 +54,7 @@ export class WatchService {
           .execute();
       }
       Object.assign(watch, createWatchDto);
-      delete watch.updated_at;
+      watch.updated_at = new Date();
 
       return this.watchEtityMetadata
         .createQueryBuilder()
@@ -72,17 +74,27 @@ export class WatchService {
   ): Promise<PageDto<WatchDto[]>> {
     const tableName = `watch_${mediaId}`;
 
+    const orderBy = searchWatch?.random ? `RAND()` : `q.${pageOptDto?.sortBy}`;
+
     try {
-      const data = await this.baseQuery(
+      const dataAnimes = await this.baseQuery(
         tableName,
         pageOptDto?.searchBy,
         pageOptDto?.search,
       )
         .andWhere(`q.title_en LIKE '%${searchWatch?.title}%'`)
-        .orderBy('q.updated_at', pageOptDto?.order)
+        .orderBy(orderBy, pageOptDto?.order)
         .skip(pageOptDto?.skip)
         .take(pageOptDto?.take)
         .getRawMany();
+      for (const data of dataAnimes) {
+        const dataEpisodes = await this.streamsService.findByWatchId(
+          '71782ce081dddbf4a25210641a5987ec',
+          mediaId,
+        );
+        data['streams'] =
+          this.streamsService.groupEpisodesByQuality(dataEpisodes);
+      }
       const itemCount = +(
         await this.baseQuery(
           tableName,
@@ -90,7 +102,7 @@ export class WatchService {
           pageOptDto?.search,
         )
           .andWhere(`q.title_en LIKE '%${searchWatch?.title}%'`)
-          .orderBy('q.updated_at', pageOptDto?.order)
+          .orderBy(orderBy, pageOptDto?.order)
           .addSelect('COUNT(q.id)', 'watchesCount')
           .getRawOne()
       ).watchesCount;
@@ -101,7 +113,7 @@ export class WatchService {
       });
 
       return {
-        data: plainToInstance(WatchDto, data),
+        data: plainToInstance(WatchDto, dataAnimes),
         meta: pageMetaDto,
       };
     } catch (error) {
@@ -123,7 +135,7 @@ export class WatchService {
       return this.baseQuery(tableName)
         .createQueryBuilder()
         .where({ url: urlWatch } as Partial<Watch>)
-        .getRawOne();
+        .getRawOne<Watch>();
     } catch (error) {
       switch (error.code) {
         case 'ER_NO_SUCH_TABLE':
@@ -145,10 +157,15 @@ export class WatchService {
 
     try {
       watch = await this.baseQuery(tableName)
-        .where({
-          object_id: objectId,
-        } as Partial<Watch>)
+        .where(`q.object_id = :objectId`, { objectId })
         .getRawOne();
+
+      if (isNotEmpty(watch)) {
+        watch!.streams = await this.streamsService.findByWatchId(
+          watch?.object_id!,
+          mediaId,
+        );
+      }
     } catch (error) {
       switch (error.code) {
         case 'ER_NO_SUCH_TABLE':

@@ -39,15 +39,6 @@
         "tsConfigPath": "apps/cron-interval/tsconfig.app.json"
       }
     },
-    "read-anime-source": {
-      "type": "application",
-      "root": "apps/read-anime-source",
-      "entryFile": "main",
-      "sourceRoot": "apps/read-anime-source/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/read-anime-source/tsconfig.app.json"
-      }
-    },
     "routing-queue": {
       "type": "application",
       "root": "apps/routing-queue",

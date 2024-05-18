@@ -1,7 +1,6 @@
 yarn build:api;
 yarn build:media-updater;
 yarn build:cron-interval;
-yarn build:read-anime-source;
 yarn build:routing-queue;
 yarn build:scraper-service;
 yarn build:scraper-stream;

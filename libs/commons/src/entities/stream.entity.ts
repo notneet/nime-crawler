@@ -4,16 +4,19 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { urlNormalize } from '../helper/url-normalize';
+import { Watch } from './watch.entity';
 
 @Entity({ name: 'stream_model' })
 export class Stream {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
-  @Column({ length: 128 })
+  @Column()
   watch_id: string;
 
   @Column({ length: 128 })
@@ -59,4 +62,8 @@ export class Stream {
       .update(urlNormalize(this.url))
       .digest('hex');
   }
+
+  @ManyToOne(() => Watch, (watch) => watch.streams)
+  @JoinColumn({ name: 'watch_id' })
+  watch: Watch;
 }

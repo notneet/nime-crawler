@@ -26,6 +26,9 @@ module.exports = {
       autorestart: true,
       cron_restart: '0 * * * *',
       // interpreter: 'node@16.18.0',
+      env: {
+        CONSUMER_PREFETCH_COUNT: 200,
+      },
     },
   ],
 };

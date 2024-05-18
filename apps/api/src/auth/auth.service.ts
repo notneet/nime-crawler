@@ -29,7 +29,7 @@ export class AuthService {
         id: user?.id,
         name: user?.name,
         username: user?.username,
-        role: user?.role,
+        role: String(user?.role),
       },
       expiresIn: this.jwtExpires,
       accessToken: jwtToken,
