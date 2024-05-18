@@ -13,25 +13,7 @@ export class AuthService {
     return bcrypt.compare(password, user.password);
   }
 
-  /**
-   * Promise {
-  {
-    user: { id: 1, name: 'Hanivan', username: 'hanivanrizky', role: 'admin' },
-    expiresIn: '1d',
-    accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Imhhbml2YW5yaXpreSIsInVzZXJfaWQiOjEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTcxNTY4NDgxMSwiZXhwIjoxNzE1NzcxMjExfQ.Yl3KnwXu6MxV3h4gbDhzagG-q_Ptc3FftlwU4sUxHWI'
-  }
-}
-   */
-  async createToken(user: Users): Promise<{
-    user: {
-      id: number;
-      name: string;
-      username: string;
-      role: string;
-    };
-    expiresIn: string;
-    accessToken: string;
-  }> {
+  async createToken(user: Users) {
     const payload = {
       username: user.username,
       user_id: user.id,
