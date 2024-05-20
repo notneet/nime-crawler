@@ -74,11 +74,15 @@ export enum NodeItem {
   POST_DESCRIPTION = 'POST_DESCRIPTION',
   POST_COVER = 'POST_COVER',
   EPISODE_PATTERN = 'EPISODE_PATTERN',
+  BATCH_PATTERN = 'BATCH_PATTERN',
 
-  // Pattern Episode //
+  // Pattern Episode / Batch //
   EPISODE_CONTAINER = 'EPISODE_CONTAINER',
   EPISODE_PROVIDER = 'EPISODE_PROVIDER',
-  EPISODE_HASH = 'EPISODE_HASH', // can be episode embed url
+  EPISODE_LINK = 'EPISODE_LINK', // url embed or id hash
+
+  // Global Pattern //
+  PUBLISHED_DATE = 'PUBLISHED_DATE',
 }
 
 export enum ResultType {

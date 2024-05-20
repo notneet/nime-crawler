@@ -10,7 +10,7 @@ import {
 import { Controller, Inject, Logger, UseInterceptors } from '@nestjs/common';
 import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
 import { WatchService } from 'apps/api/src/watch/watch.service';
-import { arrayNotEmpty } from 'class-validator';
+import { arrayNotEmpty, isNotEmpty } from 'class-validator';
 import { DateTime } from 'luxon';
 import { ScrapeAnime } from '../../../cron-interval/src/cron-interval.service';
 import { AcknolageMessageInterceptor } from '../interceptors/acknolage-message.interceptor';
@@ -53,8 +53,11 @@ export class ReadAnimePostController {
 
     for (const key of Object.values(NodeItem)) {
       const patternProperty = this.patternMappings[key]!;
-      patterns[patternProperty] =
-        this.getPattern(parsedPattern, key)?.pattern || null;
+
+      if (isNotEmpty(patternProperty)) {
+        patterns[patternProperty] =
+          this.getPattern(parsedPattern, key)?.pattern || null;
+      }
     }
 
     const { containerPattern, ...restPatterns } = patterns;
@@ -108,9 +111,12 @@ export class ReadAnimePostController {
     if (!arrayNotEmpty(urlEpisodes)) return;
 
     for (const urlEpisode of urlEpisodes!) {
-      data.pageUrl = urlEpisode;
+      const payloadEpisode = {
+        ...data,
+        pageUrl: urlEpisode,
+      };
 
-      this.clientPostStream.emit(EventKey.READ_ANIME_STREAM, data);
+      this.clientPostStream.emit(EventKey.READ_ANIME_STREAM, payloadEpisode);
     }
   }
 
@@ -134,7 +140,9 @@ export class ReadAnimePostController {
       [NodeItem.POST_PRODUCERS]: 'postProducerPattern',
       [NodeItem.POST_DESCRIPTION]: 'postDescPattern',
       [NodeItem.POST_COVER]: 'postCoverPattern',
+      [NodeItem.PUBLISHED_DATE]: 'postPublishedDatePattern',
       [NodeItem.EPISODE_PATTERN]: 'postListEpsPattern',
+      [NodeItem.BATCH_PATTERN]: 'postListBatchPattern',
     };
 
     return patternMappings;
