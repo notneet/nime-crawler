@@ -113,7 +113,7 @@ export class ReadAnimeEpisodeController {
     const patternMappings: Partial<Record<NodeItem, string>> = {
       [NodeItem.EPISODE_CONTAINER]: 'containerEpisode',
       [NodeItem.EPISODE_PROVIDER]: 'providerPattern',
-      [NodeItem.EPISODE_HASH]: 'hashPattern',
+      [NodeItem.EPISODE_LINK]: 'linkPattern',
     };
 
     return patternMappings;
