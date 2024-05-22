@@ -5,6 +5,7 @@ import {
   Q_ANIME_SOURCE_DETAIL,
 } from '@libs/commons/helper/constant';
 import { HtmlScraperService } from '@libs/commons/html-scraper/html-scraper.service';
+import { StringHelperService } from '@libs/commons/string-helper/string-helper.service';
 import { Controller, Inject, Logger, UseInterceptors } from '@nestjs/common';
 import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
 import { WatchService } from 'apps/api/src/watch/watch.service';
@@ -29,6 +30,7 @@ export class ReadAnimeController {
     @Inject(Q_ANIME_SOURCE_DETAIL)
     private readonly clientPostDetail: ClientProxy,
     private readonly watchService: WatchService,
+    private readonly stringHelperService: StringHelperService,
   ) {}
 
   @EventPattern(EventKey.READ_ANIME_SOURCE)
@@ -45,7 +47,7 @@ export class ReadAnimeController {
   private async scrapeWithHTML(data: ScrapeAnime) {
     if (isEmpty(data.pageUrl)) return;
 
-    const { pageUrl, ...payload } = data;
+    const { pageUrl, oldOrigin, ...payload } = data;
     const parsedPattern: ParsedPattern[] = JSON.parse(
       data.patternPost!.pattern,
     );
@@ -96,6 +98,20 @@ export class ReadAnimeController {
 
     for (const urlPostDetail of contents) {
       if (isNotEmpty(pageUrl) && isNotEmpty(urlPostDetail)) {
+        const dataExist = await this.watchService.findByObjectIdWithMediaId(
+          [
+            String(
+              this.stringHelperService.makeOldObjectId(
+                oldOrigin,
+                data.pageUrl!,
+              ),
+            ),
+            String(
+              this.stringHelperService.createUUID(urlPostDetail, oldOrigin),
+            ),
+          ],
+          payload.mediaId,
+        );
         // const postDetailData = await this.watchService.findByUrl(
         //   String(payload?.mediaId),
         //   urlPostDetail,
@@ -104,18 +120,32 @@ export class ReadAnimeController {
         // if(String(postDetailData?.status||'').toLowerCase())
         // console.log(postDetailData, 'postDetailData');
 
-        const newData = {
+        const payloadDetail = {
           pageUrl: urlPostDetail,
+          oldOrigin,
           ...payload,
         };
 
-        this.emitPostDetail(newData);
+        if (
+          !data?.force ||
+          (isNotEmpty(dataExist) &&
+            !['complete', 'completed'].includes(
+              String(dataExist?.status || '')?.toLowerCase(),
+            ))
+        ) {
+          continue;
+        }
+
+        this.emitPostDetail(payloadDetail);
       }
     }
 
-    data.pageUrl = urlNextPage;
-    if (isNotEmpty(data?.pageUrl)) {
-      this.emitNextPage(data);
+    const payloadNextPage = {
+      ...data,
+      pageUrl: urlNextPage,
+    };
+    if (isNotEmpty(urlNextPage)) {
+      this.emitNextPage(payloadNextPage);
     }
   }
 

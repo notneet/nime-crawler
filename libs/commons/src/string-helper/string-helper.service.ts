@@ -18,6 +18,16 @@ export class StringHelperService {
       : Number(rawData) === 1;
   }
 
+  makeOldObjectId(oldOrigin: string | null | undefined, currentUrl: string) {
+    if (!/^https?:\/\//.test(currentUrl)) return null;
+
+    const extractedUrl = new URL(currentUrl);
+    const { protocol, host, pathname } = extractedUrl;
+    const mixedOrigin = host !== oldOrigin ? oldOrigin : host;
+
+    return hashUUID(`${protocol}//${mixedOrigin}${pathname}`);
+  }
+
   private replaceUrl(currentPageUrl: string, oldOrigin?: string) {
     if (isEmpty(oldOrigin)) return currentPageUrl;
 

@@ -5,6 +5,7 @@ import {
   Q_ANIME_SOURCE_DETAIL,
 } from '@libs/commons/helper/constant';
 import { HtmlScraperModule } from '@libs/commons/html-scraper/html-scraper.module';
+import { StringHelperModule } from '@libs/commons/string-helper/string-helper.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule } from '@nestjs/microservices';
@@ -44,6 +45,7 @@ import { ReadAnimeService } from './read-anime.service';
     ]),
     HtmlScraperModule,
     WatchModule,
+    StringHelperModule,
   ],
   controllers: [ReadAnimeController],
   providers: [ReadAnimeService],

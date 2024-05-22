@@ -63,6 +63,7 @@
     "class-validator": "^0.14.1",
     "https-proxy-agent": "^7.0.4",
     "libxmljs2": "^0.33.0",
+    "lodash": "^4.17.21",
     "luxon": "^3.4.4",
     "minio": "^8.0.0",
     "mysql2": "^3.9.7",

@@ -8,6 +8,7 @@ import {
   HtmlScraperService,
   ParsedPattern,
 } from '@libs/commons/html-scraper/html-scraper.service';
+import { StringHelperService } from '@libs/commons/string-helper/string-helper.service';
 import { Controller, Inject, Logger, UseInterceptors } from '@nestjs/common';
 import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
 import { WatchService } from 'apps/api/src/watch/watch.service';
@@ -26,6 +27,7 @@ export class ReadAnimePostController {
     private readonly watchService: WatchService,
     @Inject(Q_ANIME_SOURCE_STREAM)
     private readonly clientPostStream: ClientProxy,
+    private readonly stringHelperService: StringHelperService,
   ) {}
 
   /**
@@ -107,6 +109,7 @@ export class ReadAnimePostController {
     this.sendToQueueStream(
       data,
       result?.EPISODE_PATTERN,
+      result?.BATCH_PATTERN,
       this.extractMediaOptions(parsedPattern),
     );
   }
@@ -114,9 +117,17 @@ export class ReadAnimePostController {
   private sendToQueueStream(
     data: ScrapeAnime,
     urlEpisodes: string[] | undefined,
+    urlBatch: string | null | undefined,
     mediaOpt: FieldPipeOptionsPattern | undefined,
   ) {
     if (!arrayNotEmpty(urlEpisodes)) return;
+
+    if (isNotEmpty(urlBatch)) {
+      this.clientPostStream.emit(EventKey.READ_ANIME_BATCH, {
+        ...data,
+        pageUrl: mediaOpt?.batch_in_detail ? data?.pageUrl : urlBatch,
+      });
+    }
 
     for (const urlEpisode of urlEpisodes!) {
       const payloadEpisode = {
