@@ -49,6 +49,7 @@ export interface ScrapeAnime {
   numRetry: number;
   numPage: number;
   engine: string;
+  force?: boolean | null | undefined;
 }
 
 type ScapperOpt = {

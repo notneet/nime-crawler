@@ -3,7 +3,7 @@ import { UpdateWatchDto } from '@libs/commons/dto/update/update-watch.dto';
 import { SearchWatchDto } from '@libs/commons/dto/watch-search.dto';
 import { WatchDto } from '@libs/commons/dto/watch.dto';
 import { Watch } from '@libs/commons/entities/watch.entity';
-import { hashUUID } from '@libs/commons/helper/md5';
+import { StringHelperService } from '@libs/commons/string-helper/string-helper.service';
 import {
   Injectable,
   InternalServerErrorException,
@@ -23,6 +23,7 @@ export class WatchService {
   constructor(
     @InjectEntityManager() protected readonly eManager: EntityManager,
     private readonly streamsService: StreamService,
+    private readonly stringHelperService: StringHelperService,
   ) {}
 
   async saveToDB(
@@ -36,7 +37,12 @@ export class WatchService {
 
       watch = await this.findByObjectIdWithMediaId(
         [
-          String(this.makeOldObjectId(oldOrigin, createWatchDto?.url)),
+          String(
+            this.stringHelperService.makeOldObjectId(
+              oldOrigin,
+              createWatchDto?.url,
+            ),
+          ),
           String(createWatchDto?.object_id),
         ],
         mediaId,
@@ -239,7 +245,7 @@ export class WatchService {
     }
   }
 
-  private async findByObjectIdWithMediaId(
+  async findByObjectIdWithMediaId(
     objectId: string[],
     mediaId: number,
   ): Promise<Watch | undefined> {
@@ -269,18 +275,5 @@ export class WatchService {
 
   private get watchEtityMetadata() {
     return this.eManager.connection.getRepository(Watch);
-  }
-
-  private makeOldObjectId(
-    oldOrigin: string | null | undefined,
-    currentUrl: string,
-  ) {
-    if (!/^https?:\/\//.test(currentUrl)) return null;
-
-    const extractedUrl = new URL(currentUrl);
-    const { protocol, host, pathname } = extractedUrl;
-    const mixedOrigin = host !== oldOrigin ? oldOrigin : host;
-
-    return hashUUID(`${protocol}//${mixedOrigin}${pathname}`);
   }
 }

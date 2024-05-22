@@ -2,6 +2,7 @@ import { queueConfig } from '@libs/commons/config/main';
 import { Watch } from '@libs/commons/entities/watch.entity';
 import { DefKey, Q_ANIME_SOURCE_STREAM } from '@libs/commons/helper/constant';
 import { HtmlScraperModule } from '@libs/commons/html-scraper/html-scraper.module';
+import { StringHelperModule } from '@libs/commons/string-helper/string-helper.module';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientsModule } from '@nestjs/microservices';
@@ -30,6 +31,7 @@ import { ReadAnimePostService } from './read-anime-post.service';
     TypeOrmModule.forFeature([Watch]),
     HtmlScraperModule,
     WatchModule,
+    StringHelperModule,
   ],
   controllers: [ReadAnimePostController],
   providers: [ReadAnimePostService],
