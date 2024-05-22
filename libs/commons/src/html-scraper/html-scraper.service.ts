@@ -10,6 +10,7 @@ import * as useragent from 'random-useragent';
 import { catchError, lastValueFrom, map, of, retry } from 'rxjs';
 import {
   CleanerTypeRules,
+  FieldPipeOptionsPattern,
   FieldPipePattern,
 } from '../entities/field-field-pattern';
 import {
@@ -34,6 +35,7 @@ export interface ParsedPattern {
   key: string;
   pattern: string;
   result_type: string;
+  options?: FieldPipeOptionsPattern;
   pipes?: CleanerTypeRules;
 }
 
@@ -72,6 +74,7 @@ export interface AnimeDetail {
   POST_PRODUCERS: string;
   POST_DESCRIPTION: string;
   POST_COVER: string;
+  BATCH_PATTERN: string | null;
   EPISODE_PATTERN: string[];
 }
 
@@ -192,7 +195,7 @@ export class HtmlScraperService {
       const listEpsContentXpath = document.find(
         // this.makeXpath(payload?.containerPattern, payload?.postListEpsPattern),
         this.makeXpathNew<ExistAnimeDetailKeys>(
-          ExistAnimeDetailKeys.EPISODE_PATTERN,
+          ExistAnimeDetailKeys.POST_EPISODES,
           payload?.parsedPattern,
         ),
       );
@@ -200,6 +203,12 @@ export class HtmlScraperService {
         // this.makeXpath(payload?.containerPattern, payload?.postDescPattern),
         this.makeXpathNew<ExistAnimeDetailKeys>(
           ExistAnimeDetailKeys.POST_DESCRIPTION,
+          payload?.parsedPattern,
+        ),
+      );
+      const listBatchContentXpath = document.find(
+        this.makeXpathNew<ExistAnimeDetailKeys>(
+          ExistAnimeDetailKeys.POST_BATCH,
           payload?.parsedPattern,
         ),
       );
@@ -307,6 +316,8 @@ export class HtmlScraperService {
           '\n',
         ),
         POST_COVER: this.getContent(coverContentXpath, 'value')?.join(','),
+        BATCH_PATTERN:
+          this.getContent(listBatchContentXpath, 'value')?.join(',') || null,
         EPISODE_PATTERN: this.getContent(listEpsContentXpath, 'value'),
       };
 
@@ -371,7 +382,7 @@ export class HtmlScraperService {
     const randomWaitTime =
       Math.floor(Math.random() * (waitSecondTime - 3 + 1)) + 3;
     this.logger.debug(
-      `load ${url} with ua: ${userAgent}; sleep ${randomWaitTime} sec...`,
+      `load ${url} with ua: ${userAgent}; sleep ${randomWaitTime}ms...`,
     );
     const resHTML = await lastValueFrom(
       this.htmlService

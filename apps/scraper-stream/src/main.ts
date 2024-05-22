@@ -15,7 +15,7 @@ async function bootstrap() {
     queueConfig(
       configService,
       DefKey.Q_ANIME_SOURCE_STREAM,
-      configService.get<number>(EnvKey.CONSUMER_PREFETCH_COUNT, 3),
+      +configService.get<number>(EnvKey.CONSUMER_PREFETCH_COUNT, 3),
     ),
   );
   await app.listen();

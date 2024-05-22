@@ -1,5 +1,6 @@
 import { Stream } from '@libs/commons/entities/stream.entity';
 import { Watch } from '@libs/commons/entities/watch.entity';
+import { StringHelperModule } from '@libs/commons/string-helper/string-helper.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StreamModule } from '../stream/stream.module';
@@ -7,7 +8,11 @@ import { WatchController } from './watch.controller';
 import { WatchService } from './watch.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Watch, Stream]), StreamModule],
+  imports: [
+    TypeOrmModule.forFeature([Watch, Stream]),
+    StreamModule,
+    StringHelperModule,
+  ],
   controllers: [WatchController],
   providers: [WatchService],
   exports: [WatchService],

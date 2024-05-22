@@ -49,6 +49,7 @@ export interface ScrapeAnime {
   numRetry: number;
   numPage: number;
   engine: string;
+  force?: boolean | null | undefined;
 }
 
 type ScapperOpt = {
@@ -84,6 +85,10 @@ export class CronIntervalService {
 
   /**
    * Pass alt origin url as rmq payload. it will be consumed at scraper (done)
+   *
+   * Enable groupBy query mysql v8+: https://stackoverflow.com/questions/41887460/select-list-is-not-in-group-by-clause-and-contains-nonaggregated-column-inc
+   * Command:
+   * > SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));
    */
   async doJob() {
     for (const interval of await this.animeSourceService.findByIntervalsAndGroup()) {

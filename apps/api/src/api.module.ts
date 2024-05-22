@@ -39,6 +39,7 @@ import { WatchModule } from './watch/watch.module';
           dsn: config.get<string>(EnvKey.SENTRY_DSN),
           debug:
             config.get<string>(EnvKey.APP_ENV) === 'development' ? true : false,
+          environment: config.get<string>(EnvKey.APP_ENV),
           tracesSampleRate: 1.0,
           integrations: [
             // enable HTTP calls tracing

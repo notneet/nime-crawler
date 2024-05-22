@@ -1,3 +1,4 @@
+import { FieldPipeOptionsPattern } from '@libs/commons/entities/field-field-pattern';
 import {
   EventKey,
   NodeItem,
@@ -7,10 +8,11 @@ import {
   HtmlScraperService,
   ParsedPattern,
 } from '@libs/commons/html-scraper/html-scraper.service';
+import { StringHelperService } from '@libs/commons/string-helper/string-helper.service';
 import { Controller, Inject, Logger, UseInterceptors } from '@nestjs/common';
 import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
 import { WatchService } from 'apps/api/src/watch/watch.service';
-import { arrayNotEmpty } from 'class-validator';
+import { arrayNotEmpty, isNotEmpty } from 'class-validator';
 import { DateTime } from 'luxon';
 import { ScrapeAnime } from '../../../cron-interval/src/cron-interval.service';
 import { AcknolageMessageInterceptor } from '../interceptors/acknolage-message.interceptor';
@@ -25,6 +27,7 @@ export class ReadAnimePostController {
     private readonly watchService: WatchService,
     @Inject(Q_ANIME_SOURCE_STREAM)
     private readonly clientPostStream: ClientProxy,
+    private readonly stringHelperService: StringHelperService,
   ) {}
 
   /**
@@ -53,9 +56,14 @@ export class ReadAnimePostController {
 
     for (const key of Object.values(NodeItem)) {
       const patternProperty = this.patternMappings[key]!;
-      patterns[patternProperty] =
-        this.getPattern(parsedPattern, key)?.pattern || null;
+
+      if (isNotEmpty(patternProperty)) {
+        patterns[patternProperty] =
+          this.getPattern(parsedPattern, key)?.pattern || null;
+      }
     }
+
+    console.log(parsedPattern[0].options, 'parsedPattern');
 
     const { containerPattern, ...restPatterns } = patterns;
 
@@ -98,19 +106,36 @@ export class ReadAnimePostController {
       oldOrigin,
     );
 
-    this.sendToQueueStream(data, result?.EPISODE_PATTERN);
+    this.sendToQueueStream(
+      data,
+      result?.EPISODE_PATTERN,
+      result?.BATCH_PATTERN,
+      this.extractMediaOptions(parsedPattern),
+    );
   }
 
   private sendToQueueStream(
     data: ScrapeAnime,
     urlEpisodes: string[] | undefined,
+    urlBatch: string | null | undefined,
+    mediaOpt: FieldPipeOptionsPattern | undefined,
   ) {
     if (!arrayNotEmpty(urlEpisodes)) return;
 
-    for (const urlEpisode of urlEpisodes!) {
-      data.pageUrl = urlEpisode;
+    if (isNotEmpty(urlBatch)) {
+      this.clientPostStream.emit(EventKey.READ_ANIME_BATCH, {
+        ...data,
+        pageUrl: mediaOpt?.batch_in_detail ? data?.pageUrl : urlBatch,
+      });
+    }
 
-      this.clientPostStream.emit(EventKey.READ_ANIME_STREAM, data);
+    for (const urlEpisode of urlEpisodes!) {
+      const payloadEpisode = {
+        ...data,
+        pageUrl: urlEpisode,
+      };
+
+      this.clientPostStream.emit(EventKey.READ_ANIME_STREAM, payloadEpisode);
     }
   }
 
@@ -134,9 +159,19 @@ export class ReadAnimePostController {
       [NodeItem.POST_PRODUCERS]: 'postProducerPattern',
       [NodeItem.POST_DESCRIPTION]: 'postDescPattern',
       [NodeItem.POST_COVER]: 'postCoverPattern',
+      [NodeItem.PUBLISHED_DATE]: 'postPublishedDatePattern',
       [NodeItem.EPISODE_PATTERN]: 'postListEpsPattern',
+      [NodeItem.BATCH_PATTERN]: 'postListBatchPattern',
     };
 
     return patternMappings;
+  }
+
+  private extractMediaOptions(
+    parsedPatterns: ParsedPattern[],
+  ): FieldPipeOptionsPattern | undefined {
+    return parsedPatterns?.find(
+      (pattern) => pattern?.key === NodeItem.POST_CONTAINER,
+    )?.options;
   }
 }

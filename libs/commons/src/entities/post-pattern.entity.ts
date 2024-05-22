@@ -6,7 +6,10 @@ import {
   Entity,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { FieldPipePattern } from './field-field-pattern';
+import {
+  FieldPipeOptionsPattern,
+  FieldPipePattern,
+} from './field-field-pattern';
 
 export enum ExistAnimePostKeys {
   CONTAINER = 'CONTAINER',
@@ -28,6 +31,9 @@ export class AnimePostField extends FieldPipePattern {
   pattern: string;
 
   result_type: string;
+
+  @Type(() => FieldPipeOptionsPattern)
+  options: FieldPipeOptionsPattern;
 
   @Type(() => AnimeFieldMeta)
   meta?: AnimeFieldMeta;

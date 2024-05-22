@@ -1,0 +1,16 @@
+buat scraper batch:
+
+
+kusonime::
+1. goto list anime
+2. at detail anime page. there is a list link download
+
+otakudesu::
+1. goto list anime
+2. at detail anime page. goto detail batch page
+3. at batch anime page. there is a list link download
+
+atau buat flag, is batch at detail anime / must goto some page...
+
+bisa dicapai dengan:
+- pada proses scrape list link download. kirim kan saja link ke detail batch/anime page

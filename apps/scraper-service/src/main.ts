@@ -27,7 +27,7 @@ async function bootstrap() {
     queueConfig(
       configService,
       configService.get<string>(queueName, queueName),
-      configService.get<number>(EnvKey.CONSUMER_PREFETCH_COUNT, 15),
+      +configService.get<number>(EnvKey.CONSUMER_PREFETCH_COUNT, 15),
       RMQAckRequired.NO_ACK,
     ),
   );

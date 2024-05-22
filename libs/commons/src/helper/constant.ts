@@ -41,10 +41,12 @@ export enum EventKey {
   READ_ANIME_SOURCE = 'read_anime_source',
   READ_ANIME_DETAIL = 'read_anime_detail',
   READ_ANIME_STREAM = 'read_anime_stream',
+  READ_ANIME_BATCH = 'read_anime_batch',
 }
 
 export namespace TimeUnit {
-  export const SECOND = 1000;
+  export const MILLISECOND = 1;
+  export const SECOND = MILLISECOND * 1000;
   export const MINUTE = SECOND * 60;
   export const HOUR = MINUTE * 60;
   export const DAY = HOUR * 24;
@@ -74,11 +76,15 @@ export enum NodeItem {
   POST_DESCRIPTION = 'POST_DESCRIPTION',
   POST_COVER = 'POST_COVER',
   EPISODE_PATTERN = 'EPISODE_PATTERN',
+  BATCH_PATTERN = 'BATCH_PATTERN',
 
-  // Pattern Episode //
+  // Pattern Episode / Batch //
   EPISODE_CONTAINER = 'EPISODE_CONTAINER',
   EPISODE_PROVIDER = 'EPISODE_PROVIDER',
-  EPISODE_HASH = 'EPISODE_HASH', // can be episode embed url
+  EPISODE_LINK = 'EPISODE_LINK', // url embed or id hash
+
+  // Global Pattern //
+  PUBLISHED_DATE = 'PUBLISHED_DATE',
 }
 
 export enum ResultType {
