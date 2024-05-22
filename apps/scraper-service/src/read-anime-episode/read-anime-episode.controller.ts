@@ -8,7 +8,7 @@ import { Controller, Logger, UseInterceptors } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { StreamService } from 'apps/api/src/stream/stream.service';
 import { ScrapeAnime } from 'apps/cron-interval/src/cron-interval.service';
-import { isEmpty } from 'class-validator';
+import { isNotEmpty } from 'class-validator';
 import { DateTime } from 'luxon';
 import { AcknolageMessageInterceptor } from '../interceptors/acknolage-message.interceptor';
 
@@ -38,9 +38,11 @@ export class ReadAnimeEpisodeController {
 
     for (const key of Object.values(NodeItem)) {
       const patternProperty = this.patternMappings[key]!;
-      if (isEmpty(patternProperty)) continue;
-      patterns[patternProperty] =
-        this.getPattern(parsedPattern, key)?.pattern || null;
+
+      if (isNotEmpty(patternProperty)) {
+        patterns[patternProperty] =
+          this.getPattern(parsedPattern, key)?.pattern || null;
+      }
     }
 
     const { containerEpisode, ...restPatterns } = patterns;

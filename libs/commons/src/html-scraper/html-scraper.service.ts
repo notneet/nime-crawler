@@ -10,6 +10,7 @@ import * as useragent from 'random-useragent';
 import { catchError, lastValueFrom, map, of, retry } from 'rxjs';
 import {
   CleanerTypeRules,
+  FieldPipeOptionsPattern,
   FieldPipePattern,
 } from '../entities/field-field-pattern';
 import {
@@ -34,6 +35,7 @@ export interface ParsedPattern {
   key: string;
   pattern: string;
   result_type: string;
+  options?: FieldPipeOptionsPattern;
   pipes?: CleanerTypeRules;
 }
 
@@ -371,7 +373,7 @@ export class HtmlScraperService {
     const randomWaitTime =
       Math.floor(Math.random() * (waitSecondTime - 3 + 1)) + 3;
     this.logger.debug(
-      `load ${url} with ua: ${userAgent}; sleep ${randomWaitTime} sec...`,
+      `load ${url} with ua: ${userAgent}; sleep ${randomWaitTime}ms...`,
     );
     const resHTML = await lastValueFrom(
       this.htmlService

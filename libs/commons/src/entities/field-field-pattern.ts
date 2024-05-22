@@ -17,10 +17,17 @@ export type CleanerTypeRules = Array<
   | MonthIDTranslator
 >;
 
+export class FieldPipeOptionsPattern {
+  alt_pattern: string;
+  batch_in_detail: boolean;
+}
+
 export class FieldPipePattern {
   key: string;
   pattern: string;
   result_type: string;
+  @Type(() => FieldPipeOptionsPattern)
+  options: FieldPipeOptionsPattern;
   @Type(() => PipeRule, CleanerRuleTransOpt)
   pipes?: CleanerTypeRules;
 }

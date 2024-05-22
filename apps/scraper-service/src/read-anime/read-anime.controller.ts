@@ -56,8 +56,11 @@ export class ReadAnimeController {
 
     for (const key of Object.values(NodeItem)) {
       const patternProperty = this.patternMappings[key]!;
-      patterns[patternProperty] =
-        this.getPattern(parsedPattern, key)?.pattern || null;
+
+      if (isNotEmpty(patternProperty)) {
+        patterns[patternProperty] =
+          this.getPattern(parsedPattern, key)?.pattern || null;
+      }
     }
 
     const { pContainer, tPattern, pPagination } = patterns;

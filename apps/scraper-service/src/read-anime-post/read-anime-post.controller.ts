@@ -1,3 +1,4 @@
+import { FieldPipeOptionsPattern } from '@libs/commons/entities/field-field-pattern';
 import {
   EventKey,
   NodeItem,
@@ -60,6 +61,8 @@ export class ReadAnimePostController {
       }
     }
 
+    console.log(parsedPattern[0].options, 'parsedPattern');
+
     const { containerPattern, ...restPatterns } = patterns;
 
     if (!containerPattern) {
@@ -101,12 +104,17 @@ export class ReadAnimePostController {
       oldOrigin,
     );
 
-    this.sendToQueueStream(data, result?.EPISODE_PATTERN);
+    this.sendToQueueStream(
+      data,
+      result?.EPISODE_PATTERN,
+      this.extractMediaOptions(parsedPattern),
+    );
   }
 
   private sendToQueueStream(
     data: ScrapeAnime,
     urlEpisodes: string[] | undefined,
+    mediaOpt: FieldPipeOptionsPattern | undefined,
   ) {
     if (!arrayNotEmpty(urlEpisodes)) return;
 
@@ -146,5 +154,13 @@ export class ReadAnimePostController {
     };
 
     return patternMappings;
+  }
+
+  private extractMediaOptions(
+    parsedPatterns: ParsedPattern[],
+  ): FieldPipeOptionsPattern | undefined {
+    return parsedPatterns?.find(
+      (pattern) => pattern?.key === NodeItem.POST_CONTAINER,
+    )?.options;
   }
 }
