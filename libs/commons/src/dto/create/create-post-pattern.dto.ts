@@ -1,16 +1,13 @@
-import { NodeItem, ResultType } from '@libs/commons/helper/constant';
-import { PipesDto } from 'apps/api/src/pipes/dto/pipes.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsString,
   ValidateNested,
 } from 'class-validator';
+import { PatternDto } from './patern.dto';
 
 export class CreatePostPatternDto {
   @IsNumber()
@@ -30,25 +27,4 @@ export class CreatePostPatternDto {
   @Type(() => PatternDto)
   @ValidateNested({ each: true })
   pagination_pattern: string; // save data as string
-}
-
-export class PatternDto {
-  @IsEnum(NodeItem)
-  @IsNotEmpty()
-  key: NodeItem;
-
-  @IsString()
-  @IsNotEmpty()
-  pattern: string;
-
-  @IsEnum(ResultType)
-  @IsNotEmpty()
-  result_type: string;
-
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsOptional()
-  @Type(() => PipesDto)
-  @ValidateNested({ each: true })
-  pipes: PipesDto[];
 }
