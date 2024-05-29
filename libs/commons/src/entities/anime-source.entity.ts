@@ -35,6 +35,9 @@ export class AnimeSource {
   @Column({ length: 10 })
   engine: string;
 
+  @Column({ type: 'tinyint' })
+  provide_batch: boolean;
+
   @Column({ type: 'timestamp' })
   last_modified: Date;
 
