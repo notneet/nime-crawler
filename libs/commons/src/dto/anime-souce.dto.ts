@@ -32,6 +32,12 @@ export class AnimeSourceDto {
   country_code: string | null;
 
   @Expose()
+  engine: string;
+
+  @Expose()
+  provide_batch: boolean;
+
+  @Expose()
   last_modified: Date;
 
   @Expose()

@@ -1,3 +1,4 @@
+import { Stream } from '@libs/commons/entities/stream.entity';
 import {
   EventKey,
   NodeItem,
@@ -8,6 +9,8 @@ import { HtmlScraperService } from '@libs/commons/html-scraper/html-scraper.serv
 import { StringHelperService } from '@libs/commons/string-helper/string-helper.service';
 import { Controller, Inject, Logger, UseInterceptors } from '@nestjs/common';
 import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
+import { AnimeSourceService } from 'apps/api/src/anime-source/anime-source.service';
+import { StreamService } from 'apps/api/src/stream/stream.service';
 import { WatchService } from 'apps/api/src/watch/watch.service';
 import { isEmpty, isNotEmpty } from 'class-validator';
 import { ScrapeAnime } from '../../../cron-interval/src/cron-interval.service';
@@ -31,6 +34,8 @@ export class ReadAnimeController {
     private readonly clientPostDetail: ClientProxy,
     private readonly watchService: WatchService,
     private readonly stringHelperService: StringHelperService,
+    private readonly animeSourceService: AnimeSourceService,
+    private readonly streamService: StreamService,
   ) {}
 
   @EventPattern(EventKey.READ_ANIME_SOURCE)
@@ -98,7 +103,11 @@ export class ReadAnimeController {
 
     for (const urlPostDetail of contents) {
       if (isNotEmpty(pageUrl) && isNotEmpty(urlPostDetail)) {
-        const dataExist = await this.watchService.findByObjectIdWithMediaId(
+        let dataStream: Stream[] = [];
+        const animeSource = await this.animeSourceService.findByMediaId(
+          data?.mediaId,
+        );
+        const dataWatch = await this.watchService.findByObjectIdWithMediaId(
           [
             String(
               this.stringHelperService.makeOldObjectId(
@@ -112,13 +121,17 @@ export class ReadAnimeController {
           ],
           payload.mediaId,
         );
-        // const postDetailData = await this.watchService.findByUrl(
-        //   String(payload?.mediaId),
-        //   urlPostDetail,
-        // );
 
-        // if(String(postDetailData?.status||'').toLowerCase())
-        // console.log(postDetailData, 'postDetailData');
+        if (isNotEmpty(dataWatch)) {
+          dataStream = await this.streamService.findByWatchId(
+            dataWatch?.object_id || '',
+            String(data?.mediaId),
+          );
+        }
+        const skipScrape =
+          dataStream?.length >=
+          (dataWatch?.total_episode || 0) +
+            (animeSource?.data[0]?.provide_batch ? 3 : 0);
 
         const payloadDetail = {
           pageUrl: urlPostDetail,
@@ -127,11 +140,16 @@ export class ReadAnimeController {
         };
 
         if (
-          isNotEmpty(dataExist) &&
-          !['complete', 'completed'].includes(
-            String(dataExist?.status || '').toLowerCase(),
+          isNotEmpty(dataWatch) &&
+          skipScrape &&
+          ['completed', 'complete'].includes(
+            String(dataWatch?.status || '')?.toLocaleLowerCase(),
           )
         ) {
+          this.logger.warn(
+            `${dataWatch?.title_en} is already exist and completed, skip`,
+          );
+
           continue;
         }
 

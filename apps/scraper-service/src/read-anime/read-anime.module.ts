@@ -9,6 +9,8 @@ import { StringHelperModule } from '@libs/commons/string-helper/string-helper.mo
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule } from '@nestjs/microservices';
+import { AnimeSourceModule } from 'apps/api/src/anime-source/anime-source.module';
+import { StreamModule } from 'apps/api/src/stream/stream.module';
 import { WatchModule } from 'apps/api/src/watch/watch.module';
 import { ReadAnimeController } from './read-anime.controller';
 import { ReadAnimeService } from './read-anime.service';
@@ -46,6 +48,8 @@ import { ReadAnimeService } from './read-anime.service';
     HtmlScraperModule,
     WatchModule,
     StringHelperModule,
+    AnimeSourceModule,
+    StreamModule,
   ],
   controllers: [ReadAnimeController],
   providers: [ReadAnimeService],

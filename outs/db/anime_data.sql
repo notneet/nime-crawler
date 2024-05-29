@@ -38,6 +38,7 @@ CREATE TABLE `anime_source` (
   `lang_code` varchar(5) DEFAULT NULL,
   `country_code` varchar(5) DEFAULT NULL,
   `engine` varchar(10) NOT NULL,
+  `provide_batch` tinyint DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `anime_source_UN` (`url`),
   KEY `anime_source_n_status_IDX` (`n_status`) USING BTREE,
@@ -51,7 +52,7 @@ CREATE TABLE `anime_source` (
 
 LOCK TABLES `anime_source` WRITE;
 /*!40000 ALTER TABLE `anime_source` DISABLE KEYS */;
-INSERT INTO `anime_source` VALUES (1,1,'https://otakudesu.cloud/anime-list/',30,'2022-09-11 04:24:06','2023-12-26 13:10:57',1,NULL,'2023-01-20 07:16:42',45,10,10,'id','id','html'),(40,2,'https://kusonime.com/list-anime-batch-sub-indo/',30,'2023-02-08 03:59:13','2023-07-09 03:56:59',0,NULL,'2023-02-08 03:59:13',45,10,10,'id','id','html');
+INSERT INTO `anime_source` VALUES (1,1,'https://otakudesu.cloud/anime-list/',720,'2022-09-11 04:24:06','2024-05-29 09:37:34',1,NULL,'2023-01-20 07:16:42',45,10,10,'id','id','html',1),(40,2,'https://kusonime.com/list-anime-batch-sub-indo/',720,'2023-02-08 03:59:13','2024-05-29 08:09:54',0,NULL,'2023-02-08 03:59:13',45,10,10,'id','id','html',0);
 /*!40000 ALTER TABLE `anime_source` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -140,7 +141,7 @@ CREATE TABLE `post_detail_pattern` (
 
 LOCK TABLES `post_detail_pattern` WRITE;
 /*!40000 ALTER TABLE `post_detail_pattern` DISABLE KEYS */;
-INSERT INTO `post_detail_pattern` VALUES (5,1,'[{\"key\":\"POST_CONTAINER\",\"pattern\":\"//div[@class=\'venser\']\",\"result_type\":null},{\"key\":\"POST_TITLE\",\"pattern\":\"./div[@class=\'jdlrx\']/h1/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_TITLE_JP\",\"pattern\":\".//div[@class=\'infozingle\']/p[2]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_TITLE_EN\",\"pattern\":\".//div[@class=\'infozingle\']/p[1]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_TYPE\",\"pattern\":\".//div[@class=\'infozingle\']/p[5]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_SCORE\",\"pattern\":\".//div[@class=\'infozingle\']/p[3]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_STATUS\",\"pattern\":\".//div[@class=\'infozingle\']/p[6]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_DURATION\",\"pattern\":\".//div[@class=\'infozingle\']/p[8]/span/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"type\":\"regex-extraction\",\"regex\":\"\\\\d+\",\"scope\":\"g\"},{\"type\":\"num-normalize\"}]},{\"key\":\"POST_TOTAL_EPISODE\",\"pattern\":\".//div[@class=\'infozingle\']/p[7]/span/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"type\":\"regex-extraction\",\"regex\":\"\\\\d+\",\"scope\":\"g\"},{\"type\":\"num-normalize\"}]},{\"key\":\"POST_SEASON\",\"pattern\":\"\",\"result_type\":null},{\"key\":\"POST_GENRES\",\"pattern\":\".//div[@class=\'infozingle\']/p[11]/span/a/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_PRODUCERS\",\"pattern\":\".//div[@class=\'infozingle\']/p[4]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_DESCRIPTION\",\"pattern\":\".//div[@class=\'sinopc\']/p/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_COVER\",\"pattern\":\".//div[@class=\'fotoanime\']/img/@src\",\"result_type\":\"value\"},{\"key\":\"EPISODE_PATTERN\",\"pattern\":\".//div[@class=\'episodelist\'][2]//a/@href\",\"result_type\":\"value\"},{\"key\":\"PUBLISHED_DATE\",\"pattern\":\".//div[@class=\'infozingle\']/p[9]/span/text()[normalize-space()]\",\"pipes\":[{\"type\":\"month-id-translator\"},{\"type\":\"date-format\"}]}]',1,'2023-01-21 13:32:28','2023-01-21 13:32:28','[]'),(6,2,'[{\"key\":\"POST_CONTAINER\",\"pattern\":\"//div[@class=\'venser\']\",\"result_type\":null},{\"key\":\"POST_TITLE\",\"pattern\":\"./div[@class=\'post-thumb\']/h1/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_TITLE_JP\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[1]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_TITLE_EN\",\"pattern\":\"\",\"result_type\":\"text\"},{\"key\":\"POST_TYPE\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[5]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_SCORE\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[8]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_STATUS\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[6]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_DURATION\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[9]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_TOTAL_EPISODE\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[7]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_SEASON\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[3]/a/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_GENRES\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[2]/a/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_PRODUCERS\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[4]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_DESCRIPTION\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/p/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_COVER\",\"pattern\":\"./div[@class=\'post-thumb\']/img/@src\",\"result_type\":\"value\"},{\"key\":\"EPISODE_PATTERN\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'dlbod\']/div/div[@class=\'smokeurl\']/a/@href\",\"result_type\":\"value\"}]',1,'2023-02-08 03:58:31','2023-02-08 03:58:31','[]');
+INSERT INTO `post_detail_pattern` VALUES (5,1,'[{\"key\":\"POST_CONTAINER\",\"pattern\":\"//div[@class=\'venser\']\",\"result_type\":null,\"options\":{\"alt_pattern\":null,\"batch_in_detail\":false}},{\"key\":\"POST_TITLE\",\"pattern\":\"./div[@class=\'jdlrx\']/h1/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_TITLE_JP\",\"pattern\":\".//div[@class=\'infozingle\']/p[2]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_TITLE_EN\",\"pattern\":\".//div[@class=\'infozingle\']/p[1]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_TYPE\",\"pattern\":\".//div[@class=\'infozingle\']/p[5]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_SCORE\",\"pattern\":\".//div[@class=\'infozingle\']/p[3]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_STATUS\",\"pattern\":\".//div[@class=\'infozingle\']/p[6]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_DURATION\",\"pattern\":\".//div[@class=\'infozingle\']/p[8]/span/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"type\":\"regex-extraction\",\"regex\":\"\\\\d+\",\"scope\":\"g\"},{\"type\":\"num-normalize\"}]},{\"key\":\"POST_TOTAL_EPISODE\",\"pattern\":\".//div[@class=\'infozingle\']/p[7]/span/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"type\":\"regex-extraction\",\"regex\":\"\\\\d+\",\"scope\":\"g\"},{\"type\":\"num-normalize\"}]},{\"key\":\"POST_SEASON\",\"pattern\":\"\",\"result_type\":null},{\"key\":\"POST_GENRES\",\"pattern\":\".//div[@class=\'infozingle\']/p[11]/span/a/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_PRODUCERS\",\"pattern\":\".//div[@class=\'infozingle\']/p[4]/span/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_DESCRIPTION\",\"pattern\":\".//div[@class=\'sinopc\']/p/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_COVER\",\"pattern\":\".//div[@class=\'fotoanime\']/img/@src\",\"result_type\":\"value\"},{\"key\":\"POST_EPISODES\",\"pattern\":\".//div[@class=\'episodelist\'][2]//a/@href\",\"result_type\":\"value\"},{\"key\":\"POST_BATCH\",\"pattern\":\".//div[@class=\'episodelist\'][1]//a/@href\",\"result_type\":\"value\"},{\"key\":\"PUBLISHED_DATE\",\"pattern\":\".//div[@class=\'infozingle\']/p[9]/span/text()[normalize-space()]\",\"pipes\":[{\"type\":\"month-id-translator\"},{\"type\":\"date-format\"}]}]',1,'2023-01-21 13:32:28','2023-01-21 13:32:28','[]'),(6,2,'[{\"key\":\"POST_CONTAINER\",\"pattern\":\"//div[@class=\'venser\']\",\"result_type\":null},{\"key\":\"POST_TITLE\",\"pattern\":\"./div[@class=\'post-thumb\']/h1/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_TITLE_JP\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[1]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_TITLE_EN\",\"pattern\":\"\",\"result_type\":\"text\"},{\"key\":\"POST_TYPE\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[5]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_SCORE\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[8]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_STATUS\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[6]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_DURATION\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[9]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_TOTAL_EPISODE\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[7]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_SEASON\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[3]/a/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_GENRES\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[2]/a/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_PRODUCERS\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'info\']/p[4]/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"key\":\"REGEX_REPLACE\",\"regex\":\"^:\\\\s*\",\"to\":\"\",\"scope\":\"g\"}]},{\"key\":\"POST_DESCRIPTION\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/p/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"POST_COVER\",\"pattern\":\"./div[@class=\'post-thumb\']/img/@src\",\"result_type\":\"value\"},{\"key\":\"EPISODE_PATTERN\",\"pattern\":\"./div[@class=\'venutama\']/div[@class=\'lexot\']/div[@class=\'dlbod\']/div/div[@class=\'smokeurl\']/a/@href\",\"result_type\":\"value\"}]',1,'2023-02-08 03:58:31','2023-02-08 03:58:31','[]');
 /*!40000 ALTER TABLE `post_detail_pattern` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -170,7 +171,7 @@ CREATE TABLE `post_episode_pattern` (
 
 LOCK TABLES `post_episode_pattern` WRITE;
 /*!40000 ALTER TABLE `post_episode_pattern` DISABLE KEYS */;
-INSERT INTO `post_episode_pattern` VALUES (1,1,'[{\"key\":\"EPISODE_CONTAINER\",\"pattern\":\"//ul[@class=\'m360p\' or @class=\'m480p\' or @class=\'m720p\']\",\"result_type\":null},{\"key\":\"EPISODE_PROVIDER\",\"pattern\":\".//a/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"EPISODE_HASH\",\"pattern\":\".//a/@data-content\",\"result_type\":\"value\"}]',1,'2024-02-18 08:25:43','2024-02-18 08:25:43');
+INSERT INTO `post_episode_pattern` VALUES (1,1,'[{\"key\":\"EPISODE_CONTAINER\",\"pattern\":\"//ul[@class=\'m360p\' or @class=\'m480p\' or @class=\'m720p\']\",\"result_type\":null},{\"key\":\"EPISODE_PROVIDER\",\"pattern\":\".//a/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"EPISODE_HASH\",\"pattern\":\".//a/@data-content\",\"result_type\":\"value\"},{\"key\":\"BATCH_CONTAINER\",\"pattern\":\"//div[@class=\'batchlink\']//li\",\"result_type\":null,\"options\":{\"mix_with_container\":false}},{\"key\":\"BATCH_AUTHOR\",\"pattern\":\"\",\"result_type\":\"text\"},{\"key\":\"BATCH_TITLE\",\"pattern\":\"//div[@class=\'venser\']//div[@class=\'subheading\'][1]/h2[@itemprop=\'name\']/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"BATCH_RESOLUTION\",\"pattern\":\"./strong/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"type\":\"regex-extraction\",\"regex\":\"\\\\d+p\",\"scope\":\"g\"},{\"type\":\"regex-replace\",\"regex\":\"p\",\"textReplacement\":\"\",\"scope\":\"g\"}]},{\"key\":\"BATCH_PROVIDER\",\"pattern\":\"./a/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"BATCH_LINK\",\"pattern\":\"./a/@href\",\"result_type\":\"value\"},{\"key\":\"BATCH_SIZE\",\"pattern\":\"\",\"result_type\":\"text\"},{\"key\":\"BATCH_PUBLISHED_DATE\",\"pattern\":\"\",\"result_type\":\"text\"}]',1,'2024-02-18 08:25:43','2024-02-18 08:25:43');
 /*!40000 ALTER TABLE `post_episode_pattern` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -220,11 +221,12 @@ CREATE TABLE `stream_1` (
   `published_ts` bigint DEFAULT NULL,
   `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Name of file hosting',
   `url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Link download episode',
+  `providers` json DEFAULT NULL,
   `quality` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `file_size` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `media_id` int NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `num_episode` int unsigned DEFAULT NULL,
   `object_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `type` enum('video','batch') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -235,7 +237,7 @@ CREATE TABLE `stream_1` (
   KEY `stream_media_id_file_size_IDX` (`file_size`) USING BTREE,
   KEY `stream_media_id_media_id_IDX` (`media_id`) USING BTREE,
   KEY `stream_media_id_type_IDX` (`type`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='List download link for each anime in media';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='List download link for each anime in media';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -244,7 +246,6 @@ CREATE TABLE `stream_1` (
 
 LOCK TABLES `stream_1` WRITE;
 /*!40000 ALTER TABLE `stream_1` DISABLE KEYS */;
-INSERT INTO `stream_1` VALUES (1,'914f71ff09347461bc2fd164c52d2091','aoichi','2021-01-13 15:45:26',1610484326,'Munou na Nana Episode 1 Subtitle Indonesia','https://desustream.me/otakuplay/index.php?id=NUZlWEdObms0SWs4eTdaRHF0VXc2dz09','480',NULL,1,'2024-05-18 12:17:36','2024-05-18 12:17:36',1,'60af61655a8ed4a5cf9b593d2e2e10ee','video'),(2,'914f71ff09347461bc2fd164c52d2091','aoichi','2021-01-13 15:45:26',1610484326,'Munou na Nana Episode 1 Subtitle Indonesia','https://desustream.me/otakustream/index.php?id=QlVITWtYRFBwUmR0bkI4NFA4ZVlVZz09','720',NULL,1,'2024-05-18 12:17:36','2024-05-18 12:17:36',1,'a3a3795a540800f1a186dd240ff549c1','video');
 /*!40000 ALTER TABLE `stream_1` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -263,11 +264,12 @@ CREATE TABLE `stream_media_id` (
   `published_ts` bigint DEFAULT NULL,
   `name` varchar(100) DEFAULT NULL COMMENT 'Name of file hosting',
   `url` varchar(512) DEFAULT NULL COMMENT 'Link download episode',
+  `providers` json DEFAULT NULL,
   `quality` varchar(100) DEFAULT NULL,
   `file_size` varchar(100) DEFAULT NULL,
   `media_id` int NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `num_episode` int unsigned DEFAULT NULL,
   `object_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `type` enum('video','batch') DEFAULT NULL,
@@ -287,7 +289,7 @@ CREATE TABLE `stream_media_id` (
 
 LOCK TABLES `stream_media_id` WRITE;
 /*!40000 ALTER TABLE `stream_media_id` DISABLE KEYS */;
-INSERT INTO `stream_media_id` VALUES (3,'b4c9313d8eebaa9468ebf75ca1562a93','','2023-01-21 21:53:24',20230121215324,'','','','',1,'2023-01-21 16:34:45','2023-01-21 16:34:45',1,'d41d8cd98f00b204e9800998ecf8427e','video');
+INSERT INTO `stream_media_id` VALUES (3,'b4c9313d8eebaa9468ebf75ca1562a93','','2023-01-21 21:53:24',20230121215324,'','',NULL,'','',1,'2023-01-21 16:34:45','2023-01-21 16:34:45',1,'d41d8cd98f00b204e9800998ecf8427e','video');
 /*!40000 ALTER TABLE `stream_media_id` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -429,4 +431,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-05-20 13:47:33
+-- Dump completed on 2024-05-29 17:43:20
