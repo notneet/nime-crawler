@@ -6,6 +6,7 @@ import { plainToInstance } from 'class-transformer';
 import { arrayNotEmpty, isEmpty, isNotEmpty } from 'class-validator';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import * as libxmljs from 'libxmljs2';
+import { fromPairs, zip } from 'lodash';
 import * as useragent from 'random-useragent';
 import { catchError, lastValueFrom, map, of, retry } from 'rxjs';
 import {
@@ -18,7 +19,9 @@ import {
   ExistAnimeDetailKeys,
 } from '../entities/post-detail-pattern.entity';
 import {
+  AnimeBatchField,
   AnimeEpisodeField,
+  ExistAnimeBatchKeys,
   ExistAnimeEpisodeKeys,
 } from '../entities/post-episode-pattern.entity';
 import {
@@ -56,7 +59,9 @@ export interface WebsiteDetailPayload {
   parsedPattern: ParsedPattern[];
 }
 
-export interface WebsiteEpisodePayload extends WebsiteDetailPayload {}
+export interface WebsiteEpisodePayload extends WebsiteDetailPayload {
+  watchId: string;
+}
 
 export interface AnimeDetail {
   object_id: string;
@@ -82,6 +87,20 @@ export interface AnimeEpisode {
   object_id: string;
   EPISODE_PROVIDER: string[] | string;
   EPISODE_HASH: string[] | string;
+}
+
+export interface AnimeBatch {
+  object_id: string;
+  BATCH_AUTHOR: string | null;
+  BATCH_TITLE: string | null;
+  BATCH_RESOLUTION: string | null;
+  BATCH_ITEMS: Record<string, string> | null;
+  BATCH_PUBLISHED_DATE: Date | null;
+}
+
+export interface AnimeBatchLinks {
+  BATCH_PROVIDER: string | null;
+  BATCH_LINK: string | null;
 }
 
 @Injectable()
@@ -135,6 +154,21 @@ export class HtmlScraperService {
       rawHTML: data,
       ...payload,
     });
+  }
+
+  async batch(payload: WebsiteEpisodePayload) {
+    const { data } = await this.getHTML(payload.baseUrl);
+
+    if (typeof data !== 'string') {
+      this.logger.error(`HTML result not found`);
+      return;
+    }
+
+    return this.pipeData(
+      await this.evaluteBatchWebsite({ rawHTML: data, ...payload }),
+      payload?.parsedPattern,
+      payload?.baseUrl,
+    ) as AnimeBatch[];
   }
 
   private async evalutePostWebsite(
@@ -364,6 +398,106 @@ export class HtmlScraperService {
     }
   }
 
+  private async evaluteBatchWebsite(payload: WebsiteEpisodePayload) {
+    let document: libxmljs.Document;
+
+    try {
+      document = libxmljs.parseHtmlString(payload.rawHTML!);
+      if (!document) {
+        throw new Error('Document is empty');
+      }
+
+      const listContainer = document.find(
+        this.makeXpathNew<ExistAnimeBatchKeys>(
+          ExistAnimeBatchKeys.BATCH_CONTAINER,
+          payload?.parsedPattern,
+        ),
+      );
+
+      let data: Partial<AnimeBatch>[] = [];
+      if (isEmpty(listContainer)) return data;
+
+      listContainer?.map((docContainer: libxmljs.Element, i) => {
+        const listBatchProviderItems = this.getContent(
+          docContainer.find(
+            this.makeXpathNew<ExistAnimeBatchKeys>(
+              ExistAnimeBatchKeys.BATCH_PROVIDER,
+              payload?.parsedPattern,
+            ),
+          ),
+          'text',
+        );
+        const listBatchLinkItems = this.getContent(
+          docContainer.find(
+            this.makeXpathNew<ExistAnimeBatchKeys>(
+              ExistAnimeBatchKeys.BATCH_LINK,
+              payload?.parsedPattern,
+            ),
+          ),
+          'value',
+        );
+        const batchResolutionItem =
+          this.getContent(
+            docContainer.find(
+              this.makeXpathNew<ExistAnimeBatchKeys>(
+                ExistAnimeBatchKeys.BATCH_RESOLUTION,
+                payload?.parsedPattern,
+              ),
+            ),
+            'text',
+          )?.join(',') || null;
+        const batchAuthor =
+          this.getContent(
+            docContainer.find(
+              this.makeXpathNew<ExistAnimeBatchKeys>(
+                ExistAnimeBatchKeys.BATCH_AUTHOR,
+                payload?.parsedPattern,
+              ),
+            ),
+            'text',
+          )?.join(',') || null;
+        const batchTitle =
+          this.getContent(
+            docContainer.find(
+              this.makeXpathNew<ExistAnimeBatchKeys>(
+                ExistAnimeBatchKeys.BATCH_TITLE,
+                payload?.parsedPattern,
+              ),
+            ),
+            'text',
+          )?.join(',') || null;
+        const batchPubDate =
+          this.getContent(
+            docContainer.find(
+              this.makeXpathNew<ExistAnimeBatchKeys>(
+                ExistAnimeBatchKeys.BATCH_PUBLISHED_DATE,
+                payload?.parsedPattern,
+              ),
+            ),
+            'text',
+          )?.join(',') || null;
+
+        data.push({
+          object_id: this.stringHelperService.createUUID(
+            `${payload?.baseUrl}-${batchResolutionItem}`,
+            payload?.oldOrigin,
+          ),
+          BATCH_AUTHOR: batchAuthor,
+          BATCH_TITLE: batchTitle,
+          BATCH_RESOLUTION: batchResolutionItem,
+          BATCH_ITEMS: fromPairs(
+            zip(listBatchProviderItems, listBatchLinkItems),
+          ),
+          BATCH_PUBLISHED_DATE: batchPubDate as any,
+        });
+      });
+
+      return data;
+    } catch (error) {
+      throw new Error('Fail parse the html result');
+    }
+  }
+
   private async getHTML(url: string): Promise<{ data: string | null }> {
     let isUseProxy = false;
     const proxyServer = this.config.get<string>(EnvKey.PROXY_SERVER, '');
@@ -427,18 +561,28 @@ export class HtmlScraperService {
   }
 
   private makeXpathNew<T>(fieldName: T, rawPattern: ParsedPattern[]) {
-    const containerPattern = rawPattern?.find(
+    const containerItem = rawPattern?.find(
       (pattern) =>
         pattern.key === ExistAnimePostKeys.CONTAINER ||
         pattern.key === ExistAnimeDetailKeys.POST_CONTAINER ||
+        pattern.key === ExistAnimeBatchKeys.BATCH_CONTAINER ||
         pattern.key === ExistAnimeEpisodeKeys.EPISODE_CONTAINER,
-    )?.pattern;
-    const contentPattern = rawPattern?.find(
+    );
+    const contentItem = rawPattern?.find(
       (pattern) => pattern?.key === fieldName,
-    )?.pattern;
-    if (isEmpty(contentPattern)) return '';
+    );
+    const containerPattern = containerItem?.pattern;
+    const contentPattern = contentItem?.pattern;
+    const contentOption = contentItem?.options;
 
-    return `${containerPattern}/${contentPattern}` || '';
+    if (isEmpty(contentPattern)) {
+      this.logger.warn(`${fieldName} has pattern: '${contentPattern}'`);
+      return '';
+    }
+
+    return contentOption?.mix_with_container
+      ? `${containerPattern}/${contentPattern}` || ''
+      : contentPattern || '';
   }
 
   private makeXpath(...rawXpath: string[]) {
@@ -510,35 +654,58 @@ export class HtmlScraperService {
   }
 
   pipeData(
-    rawData: AnimeDetail,
+    rawData: AnimeDetail | AnimeEpisode | Partial<AnimeBatch>[],
     plainPattern: Array<Partial<FieldPipePattern>>,
     url: string,
   ) {
     const patterns = plainToInstance(FieldPipePattern, plainPattern);
 
-    patterns?.forEach(
-      (pattern: AnimePostField | AnimeDetailField | AnimeEpisodeField) => {
-        const dataVal = rawData[pattern.key];
+    const processPipes = (
+      data:
+        | AnimePostField
+        | AnimeDetailField
+        | AnimeEpisodeField
+        | Partial<AnimeBatchField>,
+      pattern: FieldPipePattern,
+    ) => {
+      const dataVal = data[pattern.key];
 
-        if (isNotEmpty(dataVal) && arrayNotEmpty(pattern?.pipes)) {
-          const resPipe = pattern?.pipes?.reduce((pipeVal, pipe) => {
-            pipe.baseUrl = url;
+      if (isNotEmpty(dataVal) && arrayNotEmpty(pattern?.pipes)) {
+        const resPipe = pattern?.pipes?.reduce((pipeVal, pipe) => {
+          pipe.baseUrl = url;
 
-            if (typeof pipeVal === 'number') {
-              pipeVal = pipeVal.toString();
-            }
+          if (typeof pipeVal === 'number') {
+            pipeVal = pipeVal.toString();
+          }
 
-            if (typeof pipe.exec === 'function') {
-              return pipe.exec(pipeVal);
-            }
+          if (typeof pipe.exec === 'function') {
+            return pipe.exec(pipeVal);
+          }
 
-            return pipeVal;
-          }, dataVal);
+          return pipeVal;
+        }, dataVal);
 
-          rawData[pattern.key] = resPipe;
-        }
-      },
-    );
+        data[pattern.key] = resPipe;
+      }
+    };
+
+    if (Array.isArray(rawData)) {
+      rawData.forEach((data) => {
+        patterns.forEach((pattern: AnimeEpisodeField | AnimeBatchField) => {
+          processPipes(
+            data as AnimeEpisodeField | Partial<AnimeBatchField>,
+            pattern,
+          );
+        });
+      });
+    } else {
+      patterns.forEach((pattern: AnimePostField | AnimeDetailField) => {
+        processPipes(
+          rawData as unknown as AnimePostField | AnimeDetailField,
+          pattern,
+        );
+      });
+    }
 
     return rawData;
   }
