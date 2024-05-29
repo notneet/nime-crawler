@@ -127,11 +127,10 @@ export class ReadAnimeController {
         };
 
         if (
-          !data?.force ||
-          (isNotEmpty(dataExist) &&
-            !['complete', 'completed'].includes(
-              String(dataExist?.status || '')?.toLowerCase(),
-            ))
+          isNotEmpty(dataExist) &&
+          !['complete', 'completed'].includes(
+            String(dataExist?.status || '').toLowerCase(),
+          )
         ) {
           continue;
         }

@@ -40,6 +40,9 @@ export class Stream {
   @Column({ length: 512 })
   url: string;
 
+  @Column({ type: 'json' })
+  providers: string;
+
   @Column({ length: 100 })
   quality: string;
 
@@ -48,6 +51,9 @@ export class Stream {
 
   @Column()
   media_id: number;
+
+  @Column()
+  type: string;
 
   @Column({ type: 'datetime' })
   created_at: Date;

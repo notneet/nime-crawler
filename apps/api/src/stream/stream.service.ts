@@ -6,6 +6,7 @@ import { Stream } from '@libs/commons/entities/stream.entity';
 import { Otakudesu } from '@libs/commons/helper/constant';
 import { OtakudesuHelper } from '@libs/commons/helper/otakudesu';
 import { ObscloudhostService } from '@libs/commons/obscloudhost/obscloudhost.service';
+import { StringHelperService } from '@libs/commons/string-helper/string-helper.service';
 import { HttpService } from '@nestjs/axios';
 import {
   Injectable,
@@ -28,13 +29,26 @@ export class StreamService {
     @InjectEntityManager() protected readonly eManager: EntityManager,
     private readonly httpService: HttpService,
     private readonly obsCloudhostService: ObscloudhostService,
+    private readonly stringHelperService: StringHelperService,
   ) {}
 
-  async saveToDB(createStreamDto: CreateStreamDto, mediaId: number) {
+  async saveToDB(
+    createStreamDto: CreateStreamDto,
+    mediaId: number,
+    oldOrigin?: string | null | undefined,
+  ) {
     try {
       const tableName = `stream_${mediaId}`;
-      let stream = await this.findByUrlWithMediaId(
-        createStreamDto.url,
+      let stream = await this.findByObjectIdWithMediaId(
+        [
+          String(
+            this.stringHelperService.makeOldObjectId(
+              oldOrigin,
+              createStreamDto?.url,
+            ),
+          ),
+          String(createStreamDto?.object_id),
+        ],
         mediaId,
       );
 
@@ -48,7 +62,7 @@ export class StreamService {
           .execute();
       }
       Object.assign(stream, createStreamDto);
-      delete stream.updated_at;
+      stream.updated_at = new Date();
 
       return this.streamEtityMetadata
         .createQueryBuilder()
@@ -56,7 +70,9 @@ export class StreamService {
         .set(stream)
         .where({ id: stream.id })
         .execute();
-    } catch (error) {}
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   async findAll(
@@ -251,8 +267,6 @@ export class StreamService {
     );
     const helper = new OtakudesuHelper();
 
-    console.log(atob(res.data.data));
-
     return { url: await helper.extractUrlStream(atob(res.data.data)) };
   }
 
@@ -297,6 +311,22 @@ export class StreamService {
 
       return this.baseQuery(tableName)
         .where({ url: urlStream } as Partial<Stream>)
+        .getRawOne();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  private async findByObjectIdWithMediaId(
+    objectId: string[],
+    mediaId: number,
+  ): Promise<Stream | undefined> {
+    const tableName = `stream_${mediaId}`;
+
+    try {
+      return this.baseQuery(tableName)
+        .where({ object_id: objectId[0] } as Partial<Stream>)
+        .orWhere({ object_id: objectId[1] } as Partial<Stream>)
         .getRawOne();
     } catch (error) {
       throw new InternalServerErrorException(error);

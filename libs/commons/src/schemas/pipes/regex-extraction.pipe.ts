@@ -18,7 +18,8 @@ export class RegexExtractionPipe extends PipeRule {
 
     const flag = Array.isArray(this.scope) ? this.scope.join(',') : this.scope;
     const match = val?.match(new RegExp(this.regex, flag));
+    const result = (match || []).shift();
 
-    return (match || []).shift();
+    return result;
   }
 }

@@ -93,14 +93,6 @@ export class WatchService {
         .skip(pageOptDto?.skip)
         .take(pageOptDto?.take)
         .getRawMany();
-      for (const data of dataAnimes) {
-        const dataEpisodes = await this.streamsService.findByWatchId(
-          '71782ce081dddbf4a25210641a5987ec',
-          mediaId,
-        );
-        data['streams'] =
-          this.streamsService.groupEpisodesByQuality(dataEpisodes);
-      }
       const itemCount = +(
         await this.baseQuery(
           tableName,

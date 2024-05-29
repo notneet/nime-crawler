@@ -1,6 +1,7 @@
 import { Stream } from '@libs/commons/entities/stream.entity';
 import { EnvKey } from '@libs/commons/helper/constant';
 import { ObscloudhostModule } from '@libs/commons/obscloudhost/obscloudhost.module';
+import { StringHelperModule } from '@libs/commons/string-helper/string-helper.module';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -23,6 +24,7 @@ import { StreamService } from './stream.service';
         };
       },
     }),
+    StringHelperModule,
   ],
   controllers: [StreamController],
   providers: [StreamService],

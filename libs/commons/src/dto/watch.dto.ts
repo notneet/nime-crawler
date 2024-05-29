@@ -100,20 +100,6 @@ export class WatchDto {
   cover_url: string | null;
 
   @Expose()
-  @Type(() => StreamGroupQuality)
-  streams: StreamGroupQuality | StreamGroupQuality[] | null | undefined;
-}
-
-export class StreamGroupQuality {
-  @Expose()
   @Type(() => StreamDto)
-  '360': StreamDto[] | null | undefined;
-
-  @Expose()
-  @Type(() => StreamDto)
-  '480': StreamDto[] | null | undefined;
-
-  @Expose()
-  @Type(() => StreamDto)
-  '720': StreamDto[] | null | undefined;
+  streams: StreamDto[] | null | undefined;
 }

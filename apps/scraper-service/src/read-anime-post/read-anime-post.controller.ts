@@ -63,8 +63,6 @@ export class ReadAnimePostController {
       }
     }
 
-    console.log(parsedPattern[0].options, 'parsedPattern');
-
     const { containerPattern, ...restPatterns } = patterns;
 
     if (!containerPattern) {
@@ -111,6 +109,8 @@ export class ReadAnimePostController {
       result?.EPISODE_PATTERN,
       result?.BATCH_PATTERN,
       this.extractMediaOptions(parsedPattern),
+      result?.object_id!,
+      result?.PUBLISHED_DATE!,
     );
   }
 
@@ -119,20 +119,36 @@ export class ReadAnimePostController {
     urlEpisodes: string[] | undefined,
     urlBatch: string | null | undefined,
     mediaOpt: FieldPipeOptionsPattern | undefined,
+    watchId: string,
+    publishedDate: Date,
   ) {
     if (!arrayNotEmpty(urlEpisodes)) return;
 
     if (isNotEmpty(urlBatch)) {
-      this.clientPostStream.emit(EventKey.READ_ANIME_BATCH, {
+      const payloadBatch: ScrapeAnime = {
         ...data,
-        pageUrl: mediaOpt?.batch_in_detail ? data?.pageUrl : urlBatch,
-      });
+        pageUrl: mediaOpt?.batch_in_detail ? data?.pageUrl! : urlBatch!,
+        patternPostEpisode: {
+          media_id: data.mediaId,
+          watchId,
+          publishedDate,
+          pattern: data?.patternPostEpisode?.pattern!,
+        },
+      };
+
+      this.clientPostStream.emit(EventKey.READ_ANIME_BATCH, payloadBatch);
     }
 
     for (const urlEpisode of urlEpisodes!) {
-      const payloadEpisode = {
+      const payloadEpisode: ScrapeAnime = {
         ...data,
         pageUrl: urlEpisode,
+        patternPostEpisode: {
+          media_id: data.mediaId,
+          watchId,
+          publishedDate,
+          pattern: data?.patternPostEpisode?.pattern!,
+        },
       };
 
       this.clientPostStream.emit(EventKey.READ_ANIME_STREAM, payloadEpisode);
