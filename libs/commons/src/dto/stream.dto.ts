@@ -31,6 +31,9 @@ export class StreamDto {
   url: string | null;
 
   @Expose()
+  providers: Record<string, string> | null;
+
+  @Expose()
   quality: string | null;
 
   @Expose()

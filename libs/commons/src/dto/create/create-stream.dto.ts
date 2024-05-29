@@ -1,6 +1,7 @@
 import {
   IsDateString,
   IsEnum,
+  IsJSON,
   IsNotEmpty,
   IsNumber,
   IsString,
@@ -19,8 +20,8 @@ export class CreateStreamDto {
   @IsDateString()
   published: Date;
 
-  @IsDateString()
-  published_ts: Date;
+  @IsNumber()
+  published_ts: number;
 
   @IsNumber()
   num_episode: number;
@@ -40,9 +41,12 @@ export class CreateStreamDto {
   @MaxLength(512)
   url: string;
 
+  @IsJSON()
+  providers: string | undefined;
+
   @IsString()
   @MaxLength(100)
-  quality: string;
+  quality: string | undefined;
 
   @IsString()
   @MaxLength(100)

@@ -20,6 +20,7 @@ export type CleanerTypeRules = Array<
 export class FieldPipeOptionsPattern {
   alt_pattern: string;
   batch_in_detail: boolean;
+  mix_with_container: boolean; // for now only work in batch
 }
 
 export class FieldPipePattern {

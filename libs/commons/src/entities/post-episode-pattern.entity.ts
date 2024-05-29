@@ -13,12 +13,25 @@ export enum ExistAnimeEpisodeKeys {
   EPISODE_HASH = 'EPISODE_HASH',
 }
 
+export enum ExistAnimeBatchKeys {
+  BATCH_CONTAINER = 'BATCH_CONTAINER',
+  BATCH_AUTHOR = 'BATCH_AUTHOR',
+  BATCH_TITLE = 'BATCH_TITLE',
+  BATCH_RESOLUTION = 'BATCH_RESOLUTION',
+  BATCH_PROVIDER = 'BATCH_PROVIDER',
+  BATCH_LINK = 'BATCH_LINK',
+  BATCH_SIZE = 'BATCH_SIZE',
+  BATCH_PUBLISHED_DATE = 'BATCH_PUBLISHED_DATE',
+}
+
 export class AnimeFieldMeta {
   alternativePattern?: string[];
   multiline?: boolean;
 }
 
 export class AnimeEpisodeField extends FieldPipePattern {}
+
+export class AnimeBatchField extends FieldPipePattern {}
 
 @Entity({ name: 'post_episode_pattern' })
 export class PostEpisodePattern {

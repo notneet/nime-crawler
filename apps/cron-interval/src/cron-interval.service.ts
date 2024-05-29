@@ -27,7 +27,8 @@ interface IPostPatternDetail extends BaseAnimePattern {
 }
 
 interface IPostPatternEpisode extends BaseAnimePattern {
-  watchId?: string | null;
+  watchId: string | null;
+  publishedDate: Date | null;
 }
 
 export interface ScrapeAnime {
@@ -161,6 +162,7 @@ export class CronIntervalService {
         const postPatternEpisodePayload: IPostPatternEpisode = {
           media_id: postPatternEpisode?.media_id || null,
           watchId: null,
+          publishedDate: null,
           pattern: postPatternEpisode?.pattern || '[]',
         };
 
