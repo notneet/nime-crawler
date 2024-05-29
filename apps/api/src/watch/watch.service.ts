@@ -88,7 +88,7 @@ export class WatchService {
         pageOptDto?.searchBy,
         pageOptDto?.search,
       )
-        .andWhere(`q.title_en LIKE '%${searchWatch?.title}%'`)
+        // .andWhere(`q.title_en LIKE '%${searchWatch?.title}%'`)
         .orderBy(orderBy, pageOptDto?.order)
         .skip(pageOptDto?.skip)
         .take(pageOptDto?.take)
@@ -255,7 +255,7 @@ export class WatchService {
 
   private baseQuery(
     tableName: string,
-    field: string = 'title',
+    field: string = 'title_en',
     search?: string,
   ) {
     const query = this.eManager.createQueryBuilder().from(tableName, 'q');
