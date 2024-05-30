@@ -88,7 +88,7 @@ export class WatchService {
         pageOptDto?.searchBy,
         pageOptDto?.search,
       )
-        // .andWhere(`q.title_en LIKE '%${searchWatch?.title}%'`)
+        .andWhere(`q.title_en LIKE '%${searchWatch?.title}%'`)
         .orderBy(orderBy, pageOptDto?.order)
         .skip(pageOptDto?.skip)
         .take(pageOptDto?.take)
