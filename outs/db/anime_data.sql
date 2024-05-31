@@ -232,11 +232,11 @@ CREATE TABLE `stream_1` (
   `type` enum('video','batch') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `stream_media_id_object_UN` (`object_id`),
-  UNIQUE KEY `stream_media_id_UN` (`url`),
   KEY `stream_media_id_author_IDX` (`author`) USING BTREE,
   KEY `stream_media_id_file_size_IDX` (`file_size`) USING BTREE,
   KEY `stream_media_id_media_id_IDX` (`media_id`) USING BTREE,
-  KEY `stream_media_id_type_IDX` (`type`) USING BTREE
+  KEY `stream_media_id_type_IDX` (`type`) USING BTREE,
+  KEY `stream_media_id_UN` (`url`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='List download link for each anime in media';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -356,12 +356,12 @@ CREATE TABLE `watch_1` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `watch_media_id_UN` (`url`),
   UNIQUE KEY `watch_media_id_UNN` (`object_id`),
   KEY `stream_media_id_duration_IDX` (`duration`) USING BTREE,
   KEY `stream_media_id_score_IDX` (`score`) USING BTREE,
   KEY `stream_media_id_status_IDX` (`status`) USING BTREE,
-  KEY `watch_media_id_media_id_IDX` (`media_id`) USING BTREE
+  KEY `watch_media_id_media_id_IDX` (`media_id`) USING BTREE,
+  KEY `watch_media_id_UN` (`url`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Store the detail anime';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -431,4 +431,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-05-29 17:43:20
+-- Dump completed on 2024-05-31 22:32:21
