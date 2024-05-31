@@ -479,7 +479,7 @@ export class HtmlScraperService {
 
         data.push({
           object_id: this.stringHelperService.createUUID(
-            `${payload?.baseUrl}-${payload?.watchId}-${i}`,
+            `${payload?.baseUrl}-${batchResolutionItem}`,
             payload?.oldOrigin,
           ),
           BATCH_AUTHOR: batchAuthor,
