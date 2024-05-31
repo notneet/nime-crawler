@@ -143,7 +143,7 @@ export class ReadAnimeEpisodeController {
           object_id: item?.object_id,
           type: 'batch',
           name: item?.BATCH_TITLE!,
-          url: Object.values(item?.BATCH_ITEMS!)[0],
+          url: data?.pageUrl!,
           providers: JSON.stringify(item?.BATCH_ITEMS) || undefined,
           quality: item?.BATCH_RESOLUTION || undefined,
           file_size: '',
