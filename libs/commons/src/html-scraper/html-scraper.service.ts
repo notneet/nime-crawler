@@ -28,6 +28,7 @@ import {
   AnimePostField,
   ExistAnimePostKeys,
 } from '../entities/post-pattern.entity';
+import { StreamProvider } from '../entities/stream.entity';
 import { EnvKey, TimeUnit } from '../helper/constant';
 import { hashUUID } from '../helper/md5';
 import { mappingStreamProviderByQuality } from '../helper/otakudesu-episode-mapping';
@@ -94,7 +95,7 @@ export interface AnimeBatch {
   BATCH_AUTHOR: string | null;
   BATCH_TITLE: string | null;
   BATCH_RESOLUTION: string | null;
-  BATCH_ITEMS: Record<string, string> | null;
+  BATCH_ITEMS: StreamProvider[];
   BATCH_PUBLISHED_DATE: Date | null;
 }
 
@@ -418,54 +419,16 @@ export class HtmlScraperService {
       if (isEmpty(listContainer)) return data;
 
       listContainer?.map((docContainer: libxmljs.Element, i) => {
-        const listBatchProviderItems = this.getContent(
-          docContainer.find(
-            this.makeXpathNew<ExistAnimeBatchKeys>(
-              ExistAnimeBatchKeys.BATCH_PROVIDER,
-              payload?.parsedPattern,
-            ),
+        let providerReso: string | null;
+        const mirrorItems: StreamProvider[] = [];
+        const batchTitle = this.getSingleContentNew<string>(
+          docContainer,
+          this.makeXpathNew<ExistAnimeBatchKeys>(
+            ExistAnimeBatchKeys.BATCH_TITLE,
+            payload?.parsedPattern,
           ),
-          'text',
+          i,
         );
-        const listBatchLinkItems = this.getContent(
-          docContainer.find(
-            this.makeXpathNew<ExistAnimeBatchKeys>(
-              ExistAnimeBatchKeys.BATCH_LINK,
-              payload?.parsedPattern,
-            ),
-          ),
-          'value',
-        );
-        const batchResolutionItem =
-          this.getContent(
-            docContainer.find(
-              this.makeXpathNew<ExistAnimeBatchKeys>(
-                ExistAnimeBatchKeys.BATCH_RESOLUTION,
-                payload?.parsedPattern,
-              ),
-            ),
-            'text',
-          )?.join(',') || null;
-        const batchAuthor =
-          this.getContent(
-            docContainer.find(
-              this.makeXpathNew<ExistAnimeBatchKeys>(
-                ExistAnimeBatchKeys.BATCH_AUTHOR,
-                payload?.parsedPattern,
-              ),
-            ),
-            'text',
-          )?.join(',') || null;
-        const batchTitle =
-          this.getContent(
-            docContainer.find(
-              this.makeXpathNew<ExistAnimeBatchKeys>(
-                ExistAnimeBatchKeys.BATCH_TITLE,
-                payload?.parsedPattern,
-              ),
-            ),
-            'text',
-          )?.join(',') || null;
         const batchPubDate =
           this.getContent(
             docContainer.find(
@@ -476,18 +439,57 @@ export class HtmlScraperService {
             ),
             'text',
           )?.join(',') || null;
+        const listContainerMirror = docContainer.find(
+          this.makeXpathNew<ExistAnimeBatchKeys>(
+            ExistAnimeBatchKeys.BATCH_LIST,
+            payload?.parsedPattern,
+          ),
+        );
+
+        listContainerMirror?.map((docMirror: libxmljs.Element, j) => {
+          const elMirrorName = docMirror.find(
+            this.makeXpathNew<ExistAnimeBatchKeys>(
+              ExistAnimeBatchKeys.BATCH_PROVIDER,
+              payload?.parsedPattern,
+            ),
+          );
+          const elMirrorLink = docMirror.find(
+            this.makeXpathNew<ExistAnimeBatchKeys>(
+              ExistAnimeBatchKeys.BATCH_LINK,
+              payload?.parsedPattern,
+            ),
+          );
+          providerReso = this.getSingleContentNew<string>(
+            docMirror,
+            this.makeXpathNew<ExistAnimeBatchKeys>(
+              ExistAnimeBatchKeys.BATCH_RESOLUTION,
+              payload?.parsedPattern,
+            ),
+            // j,
+          );
+
+          mirrorItems.push({
+            resolution: providerReso,
+            items: fromPairs(
+              zip(
+                this.getContent(elMirrorName, 'text'),
+                this.getContent(elMirrorLink, 'value'),
+              ),
+            ),
+          });
+
+          // if (!listProviderName || !listProviderLink) return;
+        });
 
         data.push({
           object_id: this.stringHelperService.createUUID(
-            `${payload?.baseUrl}-${batchResolutionItem}`,
+            `${payload?.baseUrl}-${batchTitle}`,
             payload?.oldOrigin,
           ),
-          BATCH_AUTHOR: batchAuthor,
+          BATCH_AUTHOR: []?.join(''),
           BATCH_TITLE: batchTitle,
-          BATCH_RESOLUTION: batchResolutionItem,
-          BATCH_ITEMS: fromPairs(
-            zip(listBatchProviderItems, listBatchLinkItems),
-          ),
+          BATCH_RESOLUTION: '',
+          BATCH_ITEMS: mirrorItems,
           BATCH_PUBLISHED_DATE: batchPubDate as any,
         });
       });
@@ -609,7 +611,7 @@ export class HtmlScraperService {
   }
 
   private getSingleContent<T>(
-    rawDocument: libxmljs.Document,
+    rawDocument: libxmljs.Document | libxmljs.Element,
     mixedPattern: string,
     returnType?: 'string' | 'number',
   ): T {
@@ -633,6 +635,41 @@ export class HtmlScraperService {
       return null as T;
     } else {
       return isFound?.toString()?.replace(':', '')?.trim() as T;
+    }
+  }
+
+  private getSingleContentNew<T>(
+    rawDocument: libxmljs.Document | libxmljs.Element,
+    mixedPattern: string,
+    itemIndexAt?: number,
+    returnType?: 'string' | 'number',
+  ) {
+    if (mixedPattern?.endsWith('/') || isEmpty(mixedPattern)) return null as T;
+
+    let isFound: libxmljs.Node | null;
+    const regexDecimal = /[0-9]+(\.[0-9]+)?/g;
+
+    if (itemIndexAt) {
+      isFound = rawDocument.find(mixedPattern)[itemIndexAt] || null;
+    } else {
+      isFound = rawDocument.get(mixedPattern) || null;
+    }
+
+    if (!isNotEmpty(isFound)) return null as T;
+    if (returnType === 'number') {
+      const extractedResult = isFound?.toString();
+
+      if (
+        isNotEmpty(extractedResult) &&
+        !isNaN(Number(extractedResult)) &&
+        extractedResult !== '-'
+      ) {
+        return (extractedResult?.match(regexDecimal)![0] as T) || null;
+      }
+
+      return null as T;
+    } else {
+      return (isFound?.toString()?.trim() as T) || null;
     }
   }
 

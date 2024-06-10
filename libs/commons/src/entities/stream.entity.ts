@@ -11,6 +11,11 @@ import {
 import { urlNormalize } from '../helper/url-normalize';
 import { Watch } from './watch.entity';
 
+export interface StreamProvider {
+  resolution: string | null;
+  items: Record<string, string | null>;
+}
+
 @Entity({ name: 'stream_model' })
 export class Stream {
   @PrimaryGeneratedColumn({ type: 'bigint' })

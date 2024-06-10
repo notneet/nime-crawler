@@ -128,6 +128,8 @@ export class ReadAnimeEpisodeController {
       return;
     }
 
+    // console.log(result);
+
     for (const item of result!) {
       const itemPublishedDate = isEmpty(item?.BATCH_PUBLISHED_DATE)
         ? data?.patternPostEpisode?.publishedDate
@@ -173,6 +175,7 @@ export class ReadAnimeEpisodeController {
       [NodeItem.BATCH_CONTAINER]: 'containerBatch',
       [NodeItem.BATCH_AUTHOR]: 'authorPattern',
       [NodeItem.BATCH_TITLE]: 'titlePattern',
+      [NodeItem.BATCH_LIST]: 'batchListPattern',
       [NodeItem.BATCH_PROVIDER]: 'batchPattern',
       [NodeItem.BATCH_RESOLUTION]: 'batchResolutionPattern',
       [NodeItem.BATCH_LINK]: 'batchLinkPattern',
