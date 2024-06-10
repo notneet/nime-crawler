@@ -171,7 +171,7 @@ CREATE TABLE `post_episode_pattern` (
 
 LOCK TABLES `post_episode_pattern` WRITE;
 /*!40000 ALTER TABLE `post_episode_pattern` DISABLE KEYS */;
-INSERT INTO `post_episode_pattern` VALUES (1,1,'[{\"key\":\"EPISODE_CONTAINER\",\"pattern\":\"//ul[@class=\'m360p\' or @class=\'m480p\' or @class=\'m720p\']\",\"result_type\":null},{\"key\":\"EPISODE_PROVIDER\",\"pattern\":\".//a/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"EPISODE_HASH\",\"pattern\":\".//a/@data-content\",\"result_type\":\"value\"},{\"key\":\"BATCH_CONTAINER\",\"pattern\":\"//div[@class=\'batchlink\']//li\",\"result_type\":null,\"options\":{\"mix_with_container\":false}},{\"key\":\"BATCH_AUTHOR\",\"pattern\":\"\",\"result_type\":\"text\"},{\"key\":\"BATCH_TITLE\",\"pattern\":\"//div[@class=\'venser\']//div[@class=\'subheading\'][1]/h2[@itemprop=\'name\']/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"BATCH_RESOLUTION\",\"pattern\":\"./strong/text()[normalize-space()]\",\"result_type\":\"text\",\"pipes\":[{\"type\":\"regex-extraction\",\"regex\":\"\\\\d+p\",\"scope\":\"g\"},{\"type\":\"regex-replace\",\"regex\":\"p\",\"textReplacement\":\"\",\"scope\":\"g\"}]},{\"key\":\"BATCH_PROVIDER\",\"pattern\":\"./a/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"BATCH_LINK\",\"pattern\":\"./a/@href\",\"result_type\":\"value\"},{\"key\":\"BATCH_SIZE\",\"pattern\":\"\",\"result_type\":\"text\"},{\"key\":\"BATCH_PUBLISHED_DATE\",\"pattern\":\"\",\"result_type\":\"text\"}]',1,'2024-02-18 08:25:43','2024-02-18 08:25:43');
+INSERT INTO `post_episode_pattern` VALUES (1,1,'[{\"key\":\"EPISODE_CONTAINER\",\"pattern\":\"//ul[@class=\'m360p\' or @class=\'m480p\' or @class=\'m720p\']\",\"result_type\":null},{\"key\":\"EPISODE_PROVIDER\",\"pattern\":\".//a/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"EPISODE_HASH\",\"pattern\":\".//a/@data-content\",\"result_type\":\"value\"},{\"key\":\"BATCH_CONTAINER\",\"pattern\":\"//div[@class=\'batchlink\']/ul\",\"result_type\":null},{\"key\":\"BATCH_AUTHOR\",\"pattern\":\"\",\"result_type\":\"text\"},{\"key\":\"BATCH_TITLE\",\"pattern\":\"./../h4/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"BATCH_LIST\",\"pattern\":\"./li\",\"result_type\":null},{\"key\":\"BATCH_PROVIDER\",\"pattern\":\"./a/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"BATCH_LINK\",\"pattern\":\"./a/@href\",\"result_type\":\"value\"},{\"key\":\"BATCH_RESOLUTION\",\"pattern\":\"./strong/text()[normalize-space()]\",\"result_type\":\"text\"},{\"key\":\"BATCH_SIZE\",\"pattern\":\"\",\"result_type\":\"text\"},{\"key\":\"BATCH_PUBLISHED_DATE\",\"pattern\":\"\",\"result_type\":\"text\"}]',1,'2024-02-18 08:25:43','2024-02-18 08:25:43');
 /*!40000 ALTER TABLE `post_episode_pattern` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -247,6 +247,49 @@ CREATE TABLE `stream_1` (
 LOCK TABLES `stream_1` WRITE;
 /*!40000 ALTER TABLE `stream_1` DISABLE KEYS */;
 /*!40000 ALTER TABLE `stream_1` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stream_2`
+--
+
+DROP TABLE IF EXISTS `stream_2`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `stream_2` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `watch_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Get from watch_media_id.object_id',
+  `author` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `published` datetime DEFAULT NULL,
+  `published_ts` bigint DEFAULT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Name of file hosting',
+  `url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Link download episode',
+  `providers` json DEFAULT NULL,
+  `quality` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `file_size` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `media_id` int NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `num_episode` int unsigned DEFAULT NULL,
+  `object_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `type` enum('video','batch') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `stream_media_id_object_UN` (`object_id`),
+  UNIQUE KEY `stream_media_id_UN` (`url`),
+  KEY `stream_media_id_author_IDX` (`author`) USING BTREE,
+  KEY `stream_media_id_file_size_IDX` (`file_size`) USING BTREE,
+  KEY `stream_media_id_media_id_IDX` (`media_id`) USING BTREE,
+  KEY `stream_media_id_type_IDX` (`type`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='List download link for each anime in media';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stream_2`
+--
+
+LOCK TABLES `stream_2` WRITE;
+/*!40000 ALTER TABLE `stream_2` DISABLE KEYS */;
+/*!40000 ALTER TABLE `stream_2` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -338,9 +381,9 @@ CREATE TABLE `watch_1` (
   `object_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `media_id` int NOT NULL,
   `url` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Normalized URL',
-  `title` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
-  `title_jp` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Alternative anime title on japanese',
-  `title_en` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Alternative anime title on english',
+  `title` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
+  `title_jp` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Alternative anime title on japanese',
+  `title_en` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Alternative anime title on english',
   `type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Anime type (TV/Movie/BD/OVA/etc))',
   `score` decimal(3,2) DEFAULT '0.00',
   `status` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Should be Ongoing/Completed',
@@ -349,19 +392,19 @@ CREATE TABLE `watch_1` (
   `published` datetime DEFAULT '1970-01-01 00:00:00',
   `published_ts` bigint DEFAULT NULL,
   `season` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `genres` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `producers` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `genres` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `producers` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `cover_url` varchar(192) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `watch_media_id_UN` (`url`),
   UNIQUE KEY `watch_media_id_UNN` (`object_id`),
   KEY `stream_media_id_duration_IDX` (`duration`) USING BTREE,
   KEY `stream_media_id_score_IDX` (`score`) USING BTREE,
   KEY `stream_media_id_status_IDX` (`status`) USING BTREE,
-  KEY `watch_media_id_media_id_IDX` (`media_id`) USING BTREE,
-  KEY `watch_media_id_UN` (`url`) USING BTREE
+  KEY `watch_media_id_media_id_IDX` (`media_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Store the detail anime';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -372,6 +415,54 @@ CREATE TABLE `watch_1` (
 LOCK TABLES `watch_1` WRITE;
 /*!40000 ALTER TABLE `watch_1` DISABLE KEYS */;
 /*!40000 ALTER TABLE `watch_1` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `watch_2`
+--
+
+DROP TABLE IF EXISTS `watch_2`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `watch_2` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `object_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `media_id` int NOT NULL,
+  `url` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Normalized URL',
+  `title` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
+  `title_jp` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Alternative anime title on japanese',
+  `title_en` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Alternative anime title on english',
+  `type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Anime type (TV/Movie/BD/OVA/etc))',
+  `score` decimal(3,2) DEFAULT '0.00',
+  `status` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Should be Ongoing/Completed',
+  `duration` int unsigned DEFAULT NULL COMMENT 'duration in minute',
+  `total_episode` int unsigned DEFAULT '0',
+  `published` datetime DEFAULT '1970-01-01 00:00:00',
+  `published_ts` bigint DEFAULT NULL,
+  `season` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `genres` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `producers` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `cover_url` varchar(192) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `watch_media_id_UN` (`url`),
+  UNIQUE KEY `watch_media_id_UNN` (`object_id`),
+  KEY `stream_media_id_duration_IDX` (`duration`) USING BTREE,
+  KEY `stream_media_id_score_IDX` (`score`) USING BTREE,
+  KEY `stream_media_id_status_IDX` (`status`) USING BTREE,
+  KEY `watch_media_id_media_id_IDX` (`media_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Store the detail anime';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `watch_2`
+--
+
+LOCK TABLES `watch_2` WRITE;
+/*!40000 ALTER TABLE `watch_2` DISABLE KEYS */;
+/*!40000 ALTER TABLE `watch_2` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -386,9 +477,9 @@ CREATE TABLE `watch_media_id` (
   `object_id` varchar(128) DEFAULT NULL,
   `media_id` int NOT NULL,
   `url` varchar(128) NOT NULL COMMENT 'Normalized URL',
-  `title` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
-  `title_jp` varchar(128) DEFAULT '' COMMENT 'Alternative anime title on japanese',
-  `title_en` varchar(128) DEFAULT '' COMMENT 'Alternative anime title on english',
+  `title` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
+  `title_jp` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Alternative anime title on japanese',
+  `title_en` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Alternative anime title on english',
   `type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT 'Anime type (TV/Movie/BD/OVA/etc))',
   `score` decimal(3,2) DEFAULT '0.00',
   `status` varchar(12) DEFAULT NULL COMMENT 'Should be Ongoing/Completed',
@@ -397,8 +488,8 @@ CREATE TABLE `watch_media_id` (
   `published` datetime DEFAULT '1970-01-01 00:00:00',
   `published_ts` bigint DEFAULT NULL,
   `season` varchar(100) DEFAULT NULL,
-  `genres` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `producers` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `genres` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `producers` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `cover_url` varchar(192) DEFAULT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -431,4 +522,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-05-31 22:32:21
+-- Dump completed on 2024-06-10 18:18:52
