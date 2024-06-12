@@ -1,5 +1,13 @@
 import { Expose, Type } from 'class-transformer';
 
+export class ProvidersStream {
+  @Expose()
+  items: Record<string, string> | null | undefined;
+
+  @Expose()
+  resolution: string | null;
+}
+
 export class StreamDto {
   @Expose()
   @Type(() => Number)
@@ -31,7 +39,8 @@ export class StreamDto {
   url: string | null;
 
   @Expose()
-  providers: Record<string, string> | null;
+  @Type(() => ProvidersStream)
+  providers: ProvidersStream[] | null | undefined;
 
   @Expose()
   quality: string | null;
