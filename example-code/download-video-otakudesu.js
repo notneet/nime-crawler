@@ -26,8 +26,9 @@ const fs = require('fs');
  * - after login, we can use (https://editthiscookie.com/) for import/export cookie
  */
 
-const url =
-  'https://desustream.me/beta/stream/?id=NlQyUm5INnhpSmFDemR2YWg0K3htUT09';
+//const url =
+//  'https://desustream.me/beta/stream/?id=NlQyUm5INnhpSmFDemR2YWg0K3htUT09';
+const url = `https://desustream.me/desudesu3/index.php?id=TkJaS1FQV0UxN0pJTjJxRTgvWnA1SzhRUjdwNVlpTE02bUw4OVZNc1Nwbz0=`;
 const urls =
   'https://www.blogger.com/video.g?token=AD6v5dy2oxVfore4EQOaB82j7_q-ToxDZxHzoSuh0LPLafaKZx0OS6wkZo--DY-jT7AALTP6-Rrd-cWuNxVsrxL9NVOqQsbyOC72IsQIoPup_YHOtuShAX2yIwriiOwuNzveU6vaXwj0';
 
@@ -41,7 +42,7 @@ const downloadFile = async () => {
 
     // Find the element containing the video source
     const videoSource = $('script[type="text/javascript"]').first().html();
-	  console.log(html)
+    console.log(html);
 
     // Extract the video file URL using a regular expression
     const match = /'file':'([^']+)'/gm.exec(videoSource);
@@ -68,7 +69,7 @@ const downloadFile = async () => {
       );
     }
 
-    const fileStream = fs.createWriteStream(destination);
+    const fileStream = fs.createWriteStream('./video.mp4');
     videoResponse.data.pipe(fileStream);
 
     return new Promise((resolve, reject) => {
