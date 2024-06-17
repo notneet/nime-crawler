@@ -75,43 +75,49 @@ export class ReadAnimePostController {
       parsedPattern,
     });
 
+    if (!arrayNotEmpty(result)) {
+      return;
+    }
+
     // console.log(result);
 
-    await this.watchService.saveToDB(
-      {
-        object_id: result?.object_id,
-        cover_url: result?.POST_COVER,
-        title: result?.POST_TITLE,
-        title_jp: result?.POST_TITLE_JP,
-        title_en: result?.POST_TITLE_EN,
-        type: result?.POST_TYPE,
-        score: result?.POST_SCORE,
-        status: result?.POST_STATUS,
-        duration: result?.POST_DURATION,
-        total_episode: result?.POST_TOTAL_EPISODE,
-        published: DateTime.fromSeconds(
-          Number(result?.PUBLISHED_DATE),
-        ).toJSDate(),
-        published_ts: Number(result?.PUBLISHED_DATE),
-        season: result?.POST_SEASON,
-        genres: result?.POST_GENRES,
-        producers: result?.POST_PRODUCERS,
-        description: result?.POST_DESCRIPTION,
-        url: data.pageUrl!,
-        media_id: data.mediaId,
-      },
-      data.mediaId,
-      oldOrigin,
-    );
+    for (const item of result!) {
+      await this.watchService.saveToDB(
+        {
+          object_id: item?.object_id,
+          cover_url: item?.POST_COVER,
+          title: item?.POST_TITLE,
+          title_jp: item?.POST_TITLE_JP,
+          title_en: item?.POST_TITLE_EN,
+          type: item?.POST_TYPE,
+          score: item?.POST_SCORE,
+          status: item?.POST_STATUS,
+          duration: item?.POST_DURATION,
+          total_episode: item?.POST_TOTAL_EPISODE,
+          published: DateTime.fromSeconds(
+            Number(item?.PUBLISHED_DATE),
+          ).toJSDate(),
+          published_ts: Number(item?.PUBLISHED_DATE),
+          season: item?.POST_SEASON,
+          genres: item?.POST_GENRES,
+          producers: item?.POST_PRODUCERS,
+          description: item?.POST_DESCRIPTION,
+          url: data.pageUrl!,
+          media_id: data.mediaId,
+        },
+        data.mediaId,
+        oldOrigin,
+      );
 
-    this.sendToQueueStream(
-      data,
-      result?.EPISODE_PATTERN,
-      result?.BATCH_PATTERN,
-      this.extractMediaOptions(parsedPattern),
-      result?.object_id!,
-      result?.PUBLISHED_DATE!,
-    );
+      this.sendToQueueStream(
+        data,
+        item?.EPISODE_PATTERN,
+        item?.BATCH_PATTERN,
+        this.extractMediaOptions(parsedPattern),
+        item?.object_id!,
+        item?.PUBLISHED_DATE!,
+      );
+    }
   }
 
   private sendToQueueStream(

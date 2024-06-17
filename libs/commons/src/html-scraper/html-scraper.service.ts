@@ -138,7 +138,7 @@ export class HtmlScraperService {
       await this.evalutePostDetailWebsite({ rawHTML: data, ...payload }),
       payload?.parsedPattern,
       payload?.baseUrl,
-    ) as AnimeDetail;
+    ) as AnimeDetail[];
   }
 
   async episode(
@@ -213,150 +213,163 @@ export class HtmlScraperService {
         throw new Error('Document is empty');
       }
 
-      const genreContentXpath = document.find(
-        // this.makeXpath(payload?.containerPattern, payload?.postGenrePattern),
+      const listContainerDetail = document.find(
         this.makeXpathNew<ExistAnimeDetailKeys>(
-          ExistAnimeDetailKeys.POST_GENRES,
-          payload?.parsedPattern,
-        ),
-      );
-      const coverContentXpath = document.find(
-        // this.makeXpath(payload?.containerPattern, payload?.postCoverPattern),
-        this.makeXpathNew<ExistAnimeDetailKeys>(
-          ExistAnimeDetailKeys.POST_COVER,
-          payload?.parsedPattern,
-        ),
-      );
-      const listEpsContentXpath = document.find(
-        // this.makeXpath(payload?.containerPattern, payload?.postListEpsPattern),
-        this.makeXpathNew<ExistAnimeDetailKeys>(
-          ExistAnimeDetailKeys.POST_EPISODES,
-          payload?.parsedPattern,
-        ),
-      );
-      const descriptionComponent = document.find(
-        // this.makeXpath(payload?.containerPattern, payload?.postDescPattern),
-        this.makeXpathNew<ExistAnimeDetailKeys>(
-          ExistAnimeDetailKeys.POST_DESCRIPTION,
-          payload?.parsedPattern,
-        ),
-      );
-      const listBatchContentXpath = document.find(
-        this.makeXpathNew<ExistAnimeDetailKeys>(
-          ExistAnimeDetailKeys.POST_BATCH,
+          ExistAnimeDetailKeys.POST_CONTAINER,
           payload?.parsedPattern,
         ),
       );
 
-      const data: AnimeDetail = {
-        object_id: this.stringHelperService.createUUID(
-          payload?.baseUrl,
-          payload?.oldOrigin,
-        ),
-        POST_TITLE: this.getSingleContent<string>(
-          document,
-          // this.makeXpath(payload?.containerPattern, payload?.titlePattern),
-          this.makeXpathNew<ExistAnimeDetailKeys>(
-            ExistAnimeDetailKeys.POST_TITLE,
-            payload?.parsedPattern,
-          ),
-        ),
-        POST_TITLE_JP: this.getSingleContent<string>(
-          document,
-          // this.makeXpath(payload?.containerPattern, payload?.titleJpPattern),
-          this.makeXpathNew<ExistAnimeDetailKeys>(
-            ExistAnimeDetailKeys.POST_TITLE_JP,
-            payload?.parsedPattern,
-          ),
-        ),
-        POST_TITLE_EN: this.getSingleContent<string>(
-          document,
-          // this.makeXpath(payload?.containerPattern, payload?.titleEnPattern),
-          this.makeXpathNew<ExistAnimeDetailKeys>(
-            ExistAnimeDetailKeys.POST_TITLE_EN,
-            payload?.parsedPattern,
-          ),
-        ),
-        POST_TYPE: this.getSingleContent<string>(
-          document,
-          // this.makeXpath(payload?.containerPattern, payload?.postTypePattern),
-          this.makeXpathNew<ExistAnimeDetailKeys>(
-            ExistAnimeDetailKeys.POST_TYPE,
-            payload?.parsedPattern,
-          ),
-        ),
-        POST_SCORE: Number(
-          this.getSingleContent<number>(
-            document,
-            // this.makeXpath(payload?.containerPattern, payload?.postScorePattern),
-            this.makeXpathNew<ExistAnimeDetailKeys>(
-              ExistAnimeDetailKeys.POST_SCORE,
-              payload?.parsedPattern,
-            ),
-            'number',
-          ) || 0,
-        ),
-        POST_STATUS: this.getSingleContent<string>(
-          document,
-          // this.makeXpath(payload?.containerPattern, payload?.postStatusPattern),
-          this.makeXpathNew<ExistAnimeDetailKeys>(
-            ExistAnimeDetailKeys.POST_STATUS,
-            payload?.parsedPattern,
-          ),
-        ),
-        POST_DURATION:
-          this.getSingleContent<number>(
-            document,
-            this.makeXpathNew<ExistAnimeDetailKeys>(
-              ExistAnimeDetailKeys.POST_DURATION,
-              payload?.parsedPattern,
-            ),
-          ) || 0,
-        POST_TOTAL_EPISODE:
-          this.getSingleContent<number>(
-            document,
-            // this.makeXpath(payload?.containerPattern, payload?.postEpsPattern),
-            this.makeXpathNew<ExistAnimeDetailKeys>(
-              ExistAnimeDetailKeys.POST_TOTAL_EPISODE,
-              payload?.parsedPattern,
-            ),
-          ) || 0,
-        PUBLISHED_DATE: this.getSingleContent<string>(
-          document,
-          this.makeXpathNew<ExistAnimeDetailKeys>(
-            ExistAnimeDetailKeys.PUBLISHED_DATE,
-            payload?.parsedPattern,
-          ),
-        ) as any,
-        POST_SEASON: this.getSingleContent<string>(
-          document,
-          // this.makeXpath(payload?.containerPattern, payload?.postSeasonPattern),
-          this.makeXpathNew<ExistAnimeDetailKeys>(
-            ExistAnimeDetailKeys.POST_SEASON,
-            payload?.parsedPattern,
-          ),
-        ),
-        POST_GENRES:
-          this.getContent(genreContentXpath, 'text')?.join(',') || null,
-        POST_PRODUCERS: this.getSingleContent<string>(
-          document,
-          this.makeXpathNew<ExistAnimeDetailKeys>(
-            ExistAnimeDetailKeys.POST_PRODUCERS,
-            payload?.parsedPattern,
-          ),
-        )
-          ?.split(', ')
-          ?.join(','),
-        POST_DESCRIPTION: this.getContent(descriptionComponent, 'text')?.join(
-          '\n',
-        ),
-        POST_COVER: this.getContent(coverContentXpath, 'value')?.join(','),
-        BATCH_PATTERN:
-          this.getContent(listBatchContentXpath, 'value')?.join(',') || null,
-        EPISODE_PATTERN: this.getContent(listEpsContentXpath, 'value'),
-      };
+      let datas: Partial<AnimeDetail>[] = [];
+      if (isEmpty(listContainerDetail)) return datas;
 
-      return data;
+      listContainerDetail?.map((docContainerDetail: libxmljs.Element, i) => {
+        const genreContentXpath = docContainerDetail.find(
+          // this.makeXpath(payload?.containerPattern, payload?.postGenrePattern),
+          this.makeXpathNew<ExistAnimeDetailKeys>(
+            ExistAnimeDetailKeys.POST_GENRES,
+            payload?.parsedPattern,
+          ),
+        );
+        const coverContentXpath = docContainerDetail.find(
+          // this.makeXpath(payload?.containerPattern, payload?.postCoverPattern),
+          this.makeXpathNew<ExistAnimeDetailKeys>(
+            ExistAnimeDetailKeys.POST_COVER,
+            payload?.parsedPattern,
+          ),
+        );
+        const listEpsContentXpath = docContainerDetail.find(
+          // this.makeXpath(payload?.containerPattern, payload?.postListEpsPattern),
+          this.makeXpathNew<ExistAnimeDetailKeys>(
+            ExistAnimeDetailKeys.POST_EPISODES,
+            payload?.parsedPattern,
+          ),
+        );
+        const descriptionComponent = docContainerDetail.find(
+          // this.makeXpath(payload?.containerPattern, payload?.postDescPattern),
+          this.makeXpathNew<ExistAnimeDetailKeys>(
+            ExistAnimeDetailKeys.POST_DESCRIPTION,
+            payload?.parsedPattern,
+          ),
+        );
+        const listBatchContentXpath = docContainerDetail.find(
+          this.makeXpathNew<ExistAnimeDetailKeys>(
+            ExistAnimeDetailKeys.POST_BATCH,
+            payload?.parsedPattern,
+          ),
+        );
+
+        datas.push({
+          object_id: this.stringHelperService.createUUID(
+            payload?.baseUrl,
+            payload?.oldOrigin,
+          ),
+          POST_TITLE: this.getSingleContentNew<string>(
+            docContainerDetail,
+            // this.makeXpath(payload?.containerPattern, payload?.titlePattern),
+            this.makeXpathNew<ExistAnimeDetailKeys>(
+              ExistAnimeDetailKeys.POST_TITLE,
+              payload?.parsedPattern,
+            ),
+          ),
+          POST_TITLE_JP: this.getSingleContentNew<string>(
+            docContainerDetail,
+            // this.makeXpath(payload?.containerPattern, payload?.titleJpPattern),
+            this.makeXpathNew<ExistAnimeDetailKeys>(
+              ExistAnimeDetailKeys.POST_TITLE_JP,
+              payload?.parsedPattern,
+            ),
+          ),
+          POST_TITLE_EN: this.getSingleContentNew<string>(
+            docContainerDetail,
+            // this.makeXpath(payload?.containerPattern, payload?.titleEnPattern),
+            this.makeXpathNew<ExistAnimeDetailKeys>(
+              ExistAnimeDetailKeys.POST_TITLE_EN,
+              payload?.parsedPattern,
+            ),
+          ),
+          POST_TYPE: this.getSingleContentNew<string>(
+            docContainerDetail,
+            // this.makeXpath(payload?.containerPattern, payload?.postTypePattern),
+            this.makeXpathNew<ExistAnimeDetailKeys>(
+              ExistAnimeDetailKeys.POST_TYPE,
+              payload?.parsedPattern,
+            ),
+          ),
+          POST_SCORE: Number(
+            this.getSingleContentNew<number>(
+              docContainerDetail,
+              // this.makeXpath(payload?.containerPattern, payload?.postScorePattern),
+              this.makeXpathNew<ExistAnimeDetailKeys>(
+                ExistAnimeDetailKeys.POST_SCORE,
+                payload?.parsedPattern,
+              ),
+              0,
+              'number',
+            ) || 0,
+          ),
+          POST_STATUS: this.getSingleContentNew<string>(
+            docContainerDetail,
+            // this.makeXpath(payload?.containerPattern, payload?.postStatusPattern),
+            this.makeXpathNew<ExistAnimeDetailKeys>(
+              ExistAnimeDetailKeys.POST_STATUS,
+              payload?.parsedPattern,
+            ),
+          ),
+          POST_DURATION:
+            this.getSingleContentNew<number>(
+              docContainerDetail,
+              this.makeXpathNew<ExistAnimeDetailKeys>(
+                ExistAnimeDetailKeys.POST_DURATION,
+                payload?.parsedPattern,
+              ),
+            ) || 0,
+          POST_TOTAL_EPISODE:
+            this.getSingleContentNew<number>(
+              docContainerDetail,
+              // this.makeXpath(payload?.containerPattern, payload?.postEpsPattern),
+              this.makeXpathNew<ExistAnimeDetailKeys>(
+                ExistAnimeDetailKeys.POST_TOTAL_EPISODE,
+                payload?.parsedPattern,
+              ),
+            ) || 0,
+          PUBLISHED_DATE: this.getSingleContentNew<string>(
+            docContainerDetail,
+            this.makeXpathNew<ExistAnimeDetailKeys>(
+              ExistAnimeDetailKeys.PUBLISHED_DATE,
+              payload?.parsedPattern,
+            ),
+          ) as any,
+          POST_SEASON: this.getSingleContentNew<string>(
+            docContainerDetail,
+            // this.makeXpath(payload?.containerPattern, payload?.postSeasonPattern),
+            this.makeXpathNew<ExistAnimeDetailKeys>(
+              ExistAnimeDetailKeys.POST_SEASON,
+              payload?.parsedPattern,
+            ),
+          ),
+          POST_GENRES:
+            this.getContent(genreContentXpath, 'text')?.join(',') || null,
+          POST_PRODUCERS: this.getSingleContentNew<string>(
+            docContainerDetail,
+            this.makeXpathNew<ExistAnimeDetailKeys>(
+              ExistAnimeDetailKeys.POST_PRODUCERS,
+              payload?.parsedPattern,
+            ),
+          )
+            ?.split(', ')
+            ?.join(','),
+          POST_DESCRIPTION: this.getContent(descriptionComponent, 'text')?.join(
+            '\n',
+          ),
+          POST_COVER: this.getContent(coverContentXpath, 'value')?.join(','),
+          BATCH_PATTERN:
+            this.getContent(listBatchContentXpath, 'value')?.join(',') || null,
+          EPISODE_PATTERN: this.getContent(listEpsContentXpath, 'value'),
+        });
+      });
+
+      return datas;
     } catch (error) {
       throw new Error('Fail parse the html result');
     }
@@ -582,6 +595,10 @@ export class HtmlScraperService {
       return '';
     }
 
+    if (isNotEmpty(contentPattern) && contentPattern?.startsWith('//')) {
+      return contentPattern;
+    }
+
     return contentOption?.mix_with_container
       ? `${containerPattern}/${contentPattern}` || ''
       : contentPattern || '';
@@ -643,7 +660,7 @@ export class HtmlScraperService {
     mixedPattern: string,
     itemIndexAt?: number,
     returnType?: 'string' | 'number',
-  ) {
+  ): T {
     if (mixedPattern?.endsWith('/') || isEmpty(mixedPattern)) return null as T;
 
     let isFound: libxmljs.Node | null;
@@ -657,19 +674,23 @@ export class HtmlScraperService {
 
     if (!isNotEmpty(isFound)) return null as T;
     if (returnType === 'number') {
-      const extractedResult = isFound?.toString();
+      let extractedResult = isFound?.toString();
+
+      if (isNotEmpty(extractedResult) && extractedResult?.includes(':')) {
+        extractedResult = extractedResult?.replace(':', '')?.trim();
+      }
 
       if (
         isNotEmpty(extractedResult) &&
         !isNaN(Number(extractedResult)) &&
         extractedResult !== '-'
       ) {
-        return (extractedResult?.match(regexDecimal)![0] as T) || null;
+        return (extractedResult?.match(regexDecimal)![0] as T) || (null as T);
       }
 
       return null as T;
     } else {
-      return (isFound?.toString()?.trim() as T) || null;
+      return (isFound?.toString()?.trim() as T) || (null as T);
     }
   }
 
@@ -691,7 +712,7 @@ export class HtmlScraperService {
   }
 
   pipeData(
-    rawData: AnimeDetail | AnimeEpisode | Partial<AnimeBatch>[],
+    rawData: Partial<AnimeDetail>[] | AnimeEpisode | Partial<AnimeBatch>[],
     plainPattern: Array<Partial<FieldPipePattern>>,
     url: string,
   ) {
