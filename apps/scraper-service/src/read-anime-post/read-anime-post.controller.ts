@@ -109,11 +109,12 @@ export class ReadAnimePostController {
         oldOrigin,
       );
 
+      const mediaOpt = this.extractMediaOptions(parsedPattern);
       this.sendToQueueStream(
         data,
         item?.EPISODE_PATTERN,
-        item?.BATCH_PATTERN,
-        this.extractMediaOptions(parsedPattern),
+        mediaOpt?.batch_in_detail ? data?.pageUrl : item?.BATCH_PATTERN,
+        mediaOpt,
         item?.object_id!,
         item?.PUBLISHED_DATE!,
       );
@@ -128,8 +129,6 @@ export class ReadAnimePostController {
     watchId: string,
     publishedDate: Date,
   ) {
-    if (!arrayNotEmpty(urlEpisodes)) return;
-
     if (isNotEmpty(urlBatch)) {
       const payloadBatch: ScrapeAnime = {
         ...data,
@@ -145,19 +144,21 @@ export class ReadAnimePostController {
       this.clientPostStream.emit(EventKey.READ_ANIME_BATCH, payloadBatch);
     }
 
-    for (const urlEpisode of urlEpisodes!) {
-      const payloadEpisode: ScrapeAnime = {
-        ...data,
-        pageUrl: urlEpisode,
-        patternPostEpisode: {
-          media_id: data.mediaId,
-          watchId,
-          publishedDate,
-          pattern: data?.patternPostEpisode?.pattern!,
-        },
-      };
+    if (arrayNotEmpty(urlEpisodes)) {
+      for (const urlEpisode of urlEpisodes!) {
+        const payloadEpisode: ScrapeAnime = {
+          ...data,
+          pageUrl: urlEpisode,
+          patternPostEpisode: {
+            media_id: data.mediaId,
+            watchId,
+            publishedDate,
+            pattern: data?.patternPostEpisode?.pattern!,
+          },
+        };
 
-      this.clientPostStream.emit(EventKey.READ_ANIME_STREAM, payloadEpisode);
+        this.clientPostStream.emit(EventKey.READ_ANIME_STREAM, payloadEpisode);
+      }
     }
   }
 
