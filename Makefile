@@ -24,9 +24,9 @@ else
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help build-all
+.PHONY: help build_all generate_migration apply_migration run_cron_interval run_read_index run_read_detail run_read_link run_read_episode
 
-generate-migration: ## Generate migration
+generate_migration: ## Generate migration
 	@clear
 
 	@if [ -z "$1" ]; then \
@@ -35,12 +35,12 @@ generate-migration: ## Generate migration
 		yarn typeorm migration:generate ./db/migrations/$1 -d ./db/datasource/anime_data.datasource.ts; \
 	fi
 
-apply-migration: ## Apply uncommitted migrations
+apply_migration: ## Apply uncommitted migrations
 	@clear
 	
 	@yarn typeorm migration:run -d ./db/datasource/anime_data.datasource.ts
 
-build-all: ## Build all services
+build_all: ## Build all services
 	@clear
 	@date +%s > .start_time
 	
@@ -65,6 +65,31 @@ build-all: ## Build all services
 	@echo -e "\033[32m>> All services successfully built!!\033[0m"
 	@echo -e "\033[35m>> Elapsed time: $$(expr $$(date +%s) - $$(cat .start_time)) seconds\033[0m"
 	@rm .start_time
+
+run_cron_interval:
+	@clear
+
+	@yarn start:dev cron-interval
+
+run_read_index:
+	@clear
+
+	@yarn start:dev read-index
+
+run_read_detail:
+	@clear
+
+	@yarn start:dev read-detail
+
+run_read_link:
+	@clear
+
+	@yarn start:dev read-link
+
+run_read_episode:
+	@clear
+
+	@yarn start:dev read-episode
 
 help: ## Show this help
 	@${HELP_CMD}

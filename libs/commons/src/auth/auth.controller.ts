@@ -1,3 +1,4 @@
+import { Envs } from '@commons/env';
 import { Body, Controller, Post, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -5,6 +6,9 @@ import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
+  private readonly MAX_ACCESS_TOKEN_AGE = 3600000; // 1 hour
+  private readonly MAX_REFRESH_TOKEN_AGE = 604800000; // 7 days
+
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
@@ -22,15 +26,15 @@ export class AuthController {
       // Set cookies
       response.cookie('access_token', access_token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 3600000, // 1 hour
+        secure: process.env[Envs.APP_ENV] === 'production',
+        maxAge: this.MAX_ACCESS_TOKEN_AGE,
       });
 
       if (refresh_token) {
         response.cookie('refresh_token', refresh_token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: 604800000, // 7 days
+          secure: process.env[Envs.APP_ENV] === 'production',
+          maxAge: this.MAX_REFRESH_TOKEN_AGE,
         });
       }
 

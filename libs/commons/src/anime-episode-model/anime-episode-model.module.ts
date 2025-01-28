@@ -1,4 +1,5 @@
 import { dbConnection } from '@commons/constants';
+import { Envs } from '@commons/env';
 import { AnimeEpisodeModel } from '@entities/anime_episode_model.entity';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,7 +14,8 @@ import { AnimeEpisodeModelService } from './anime-episode-model.service';
       useFactory: (configService: ConfigService) => ({
         ...dbConnection.animeData,
         logging:
-          configService.get<string>('APP_ENV', 'development') === 'development',
+          configService.get<string>(Envs.APP_ENV, 'production') ===
+          'development',
       }),
     }),
     TypeOrmModule.forFeature([AnimeEpisodeModel]),
