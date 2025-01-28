@@ -1,6 +1,5 @@
 import { rmqExchange } from '@commons';
 import { AnimeSourceModule } from '@commons/anime-source/anime-source.module';
-import { HtmlModule } from '@commons/html/html.module';
 import { MediaModule } from '@commons/media/media.module';
 import { PatternDetailModule } from '@commons/pattern-detail/pattern-detail.module';
 import { PatternIndexModule } from '@commons/pattern-index/pattern-index.module';
@@ -11,7 +10,6 @@ import { RabbitmqPopulatorModule } from '@helpers/rabbitmq-populator/rabbitmq-po
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { TestRepository } from '@repositories/repositories/test.repository';
 import { CronIntervalController } from './cron-interval.controller';
 import { CronIntervalService } from './cron-interval.service';
 
@@ -29,9 +27,8 @@ import { CronIntervalService } from './cron-interval.service';
     PatternDetailModule,
     PatternWatchModule,
     PatternLinkModule,
-    HtmlModule,
   ],
   controllers: [CronIntervalController],
-  providers: [CronIntervalService, TestRepository],
+  providers: [CronIntervalService],
 })
 export class CronIntervalModule {}

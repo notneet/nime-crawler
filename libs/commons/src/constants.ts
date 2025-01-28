@@ -1,6 +1,7 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import * as dotenv from 'dotenv';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { Envs } from './env';
 dotenv.config();
 
 export const rmqExchange = {
@@ -27,7 +28,9 @@ export const rmqExchange = {
       },
     ],
     uri: `${
-      process.env['RMQ_URL'] ? process.env['RMQ_URL']?.split('|') : undefined
+      process.env[Envs.RMQ_URL]
+        ? process.env[Envs.RMQ_URL]?.split('|')
+        : undefined
     }`,
     channels: {
       normal: {
@@ -53,7 +56,7 @@ export const rmqExchange = {
 export const dbConnection = {
   animeData: {
     type: 'mysql',
-    url: process.env.DATABASE_URL,
+    url: process.env[Envs.DATABASE_URL],
     cache: true,
     poolSize: 100,
     maxQueryExecutionTime: 5000,
@@ -83,7 +86,7 @@ export const defaultConfigLibXMLConfig = {
 };
 
 export const jwtConstants = {
-  secret: 'YOUR_SECRET_KEY_HERE', // In production, use an environment variable
-  expiresIn: '1h',
-  refreshExpiresIn: '7d',
+  secret: process.env[Envs.JWT_SECRET],
+  expiresIn: process.env[Envs.JWT_EXPIRES_IN],
+  refreshExpiresIn: process.env[Envs.JWT_REF_EXPIRES_IN],
 };
