@@ -1,7 +1,7 @@
 import { PatternIndex } from '@entities/pattern-index.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { dbConnection } from '../constants';
+import { dbConnection } from '../../../commons/src/constants';
 import { PatternIndexRepository } from './pattern-index.repository';
 import { PatternIndexService } from './pattern-index.service';
 

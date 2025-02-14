@@ -36,11 +36,11 @@
       "@entities/*": [
         "libs/entities/src/*"
       ],
-      "@repositories": [
-        "libs/repositories/src"
+      "@data-access": [
+        "libs/data-access/src"
       ],
-      "@repositories/*": [
-        "libs/repositories/src/*"
+      "@data-access/*": [
+        "libs/data-access/src/*"
       ]
     }
   }

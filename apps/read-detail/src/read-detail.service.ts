@@ -1,4 +1,4 @@
-import { AnimeModelService } from '@commons/anime-model/anime-model.service';
+import { AnimeModelService } from '@data-access/anime-model/anime-model.service';
 import { AnimeModel } from '@entities/anime_model.entity';
 import { PayloadMessage } from '@entities/types/payload-anime-index.type';
 import { AnimeDetailResultData } from '@entities/types/read-detail.interface';

@@ -1,7 +1,7 @@
 import { PatternDetail } from '@entities/pattern-detail.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { dbConnection } from '../constants';
+import { dbConnection } from '../../../commons/src/constants';
 import { PatternDetailRepository } from './pattern-detail.repository';
 import { PatternDetailService } from './pattern-detail.service';
 

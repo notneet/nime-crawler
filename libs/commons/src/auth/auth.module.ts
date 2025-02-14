@@ -1,5 +1,5 @@
-import { AnimeSourceModule } from '@commons/anime-source/anime-source.module';
 import { jwtConstants } from '@commons/constants';
+import { AnimeSourceModule } from '@data-access/anime-source/anime-source.module';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';

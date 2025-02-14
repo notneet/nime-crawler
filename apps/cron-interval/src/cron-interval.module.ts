@@ -1,10 +1,10 @@
 import { rmqExchange } from '@commons';
-import { AnimeSourceModule } from '@commons/anime-source/anime-source.module';
-import { MediaModule } from '@commons/media/media.module';
-import { PatternDetailModule } from '@commons/pattern-detail/pattern-detail.module';
-import { PatternIndexModule } from '@commons/pattern-index/pattern-index.module';
-import { PatternLinkModule } from '@commons/pattern-link/pattern-link.module';
-import { PatternWatchModule } from '@commons/pattern-watch/pattern-watch.module';
+import { AnimeSourceModule } from '@data-access/anime-source/anime-source.module';
+import { MediaModule } from '@data-access/media/media.module';
+import { PatternDetailModule } from '@data-access/pattern-detail/pattern-detail.module';
+import { PatternIndexModule } from '@data-access/pattern-index/pattern-index.module';
+import { PatternLinkModule } from '@data-access/pattern-link/pattern-link.module';
+import { PatternWatchModule } from '@data-access/pattern-watch/pattern-watch.module';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { RabbitmqPopulatorModule } from '@helpers/rabbitmq-populator/rabbitmq-populator.module';
 import { Module } from '@nestjs/common';

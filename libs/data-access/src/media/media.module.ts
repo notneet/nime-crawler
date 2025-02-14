@@ -1,7 +1,7 @@
 import { Media } from '@entities/media.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { dbConnection } from '../constants';
+import { dbConnection } from '../../../commons/src/constants';
 import { MediaRepository } from './media.repository';
 import { MediaService } from './media.service';
 

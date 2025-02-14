@@ -1,7 +1,7 @@
 import { AnimeSource } from '@entities/anime-source.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { dbConnection } from '../constants';
+import { dbConnection } from '../../../commons/src/constants';
 import { AnimeSourceRepository } from './anime-source.repository';
 import { AnimeSourceService } from './anime-source.service';
 

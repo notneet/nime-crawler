@@ -102,7 +102,7 @@
       "^@helpers(|/.*)$": "<rootDir>/libs/helpers/src/$1",
       "^@commons(|/.*)$": "<rootDir>/libs/commons/src/$1",
       "^@entities(|/.*)$": "<rootDir>/libs/entities/src/$1",
-      "^@repositories(|/.*)$": "<rootDir>/libs/repositories/src/$1"
+      "^@data-access(|/.*)$": "<rootDir>/libs/data-access/src/$1"
     }
   }
 }

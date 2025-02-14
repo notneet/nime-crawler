@@ -1,9 +1,9 @@
-import { AnimeSourceService } from '@commons/anime-source/anime-source.service';
-import { MediaService } from '@commons/media/media.service';
-import { PatternDetailService } from '@commons/pattern-detail/pattern-detail.service';
-import { PatternIndexService } from '@commons/pattern-index/pattern-index.service';
-import { PatternLinkService } from '@commons/pattern-link/pattern-link.service';
-import { PatternWatchService } from '@commons/pattern-watch/pattern-watch.service';
+import { AnimeSourceService } from '@data-access/anime-source/anime-source.service';
+import { MediaService } from '@data-access/media/media.service';
+import { PatternDetailService } from '@data-access/pattern-detail/pattern-detail.service';
+import { PatternIndexService } from '@data-access/pattern-index/pattern-index.service';
+import { PatternLinkService } from '@data-access/pattern-link/pattern-link.service';
+import { PatternWatchService } from '@data-access/pattern-watch/pattern-watch.service';
 import { AnimeSource } from '@entities/anime-source.entity';
 import { Media } from '@entities/media.entity';
 import { PatternDetail } from '@entities/pattern-detail.entity';

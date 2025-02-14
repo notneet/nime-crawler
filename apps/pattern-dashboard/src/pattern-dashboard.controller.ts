@@ -1,6 +1,6 @@
-import { AnimeSourceService } from '@commons/anime-source/anime-source.service';
 import { JwtAuthGuard } from '@commons/auth/guards/jwt-auth.guard';
-import { MediaService } from '@commons/media/media.service';
+import { AnimeSourceService } from '@data-access/anime-source/anime-source.service';
+import { MediaService } from '@data-access/media/media.service';
 import { AnimeSource } from '@entities/anime-source.entity';
 import { Media } from '@entities/media.entity';
 import {

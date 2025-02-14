@@ -55,15 +55,6 @@
         "tsConfigPath": "libs/entities/tsconfig.lib.json"
       }
     },
-    "repositories": {
-      "type": "library",
-      "root": "libs/repositories",
-      "entryFile": "index",
-      "sourceRoot": "libs/repositories/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/repositories/tsconfig.lib.json"
-      }
-    },
     "read-index": {
       "type": "application",
       "root": "apps/read-index",
@@ -107,6 +98,15 @@
       "sourceRoot": "apps/pattern-dashboard/src",
       "compilerOptions": {
         "tsConfigPath": "apps/pattern-dashboard/tsconfig.app.json"
+      }
+    },
+    "data-access": {
+      "type": "library",
+      "root": "libs/data-access",
+      "entryFile": "index",
+      "sourceRoot": "libs/data-access/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/data-access/tsconfig.lib.json"
       }
     }
   }

@@ -1,4 +1,4 @@
-import { AnimeEpisodeModelService } from '@commons/anime-episode-model/anime-episode-model.service';
+import { AnimeEpisodeModelService } from '@data-access/anime-episode-model/anime-episode-model.service';
 import { AnimeEpisodeModel } from '@entities/anime_episode_model.entity';
 import { AnimeEpisodeResultData } from '@entities/types/anime-episode.interface';
 import { Injectable, Logger } from '@nestjs/common';

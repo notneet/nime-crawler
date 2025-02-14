@@ -1,6 +1,6 @@
 import { rmqExchange } from '@commons';
-import { AnimeModelModule } from '@commons/anime-model/anime-model.module';
 import { HtmlModule } from '@commons/html/html.module';
+import { AnimeModelModule } from '@data-access/anime-model/anime-model.module';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { RabbitmqPopulatorModule } from '@helpers/rabbitmq-populator/rabbitmq-populator.module';
 import { Module } from '@nestjs/common';
