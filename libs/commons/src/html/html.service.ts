@@ -73,7 +73,7 @@ export class HtmlService {
         })
         .pipe(
           map((res) => {
-            setTimeout(() => {}, 5000);
+            // setTimeout(() => {}, 5000);
             return res.data;
           }),
           catchError(this.handleHttpStatusError),
@@ -398,7 +398,7 @@ export class HtmlService {
     const doc = parseHtml(rawHtml);
     const pageTitle = doc.get<Node>(`//title/text()[normalize-space()]`);
     const dContainerDownload = doc.find<Node>(`//div[@class='download'][1]/ul`);
-    const dContainerMirror = doc.find<Node>(`//div[@class='mirrorstream']/ul`);
+    const dContainer = doc.find<Node>(`//div[@class='venutama']`);
 
     let result: AnimeEpisodeResult = {
       media_id: mediaId,
@@ -410,8 +410,22 @@ export class HtmlService {
 
     const resultData: AnimeEpisodeResultData = {
       download_list: [],
-      mirror_list: [],
+      embed_url: '',
     };
+
+    if (arrayNotEmpty(dContainer)) {
+      for (const [index, itemContainer] of dContainer.entries()) {
+        const dContainerPage = itemContainer as unknown as Element;
+        const dContainerEmbed = dContainerPage.get<Node>(
+          `.//div[@class='responsive-embed-stream']/iframe/@src`,
+        );
+        const embedUrl = dContainerEmbed?.value();
+
+        if (isNotEmpty(embedUrl)) {
+          resultData.embed_url = embedUrl || '';
+        }
+      }
+    }
 
     if (arrayNotEmpty(dContainerDownload)) {
       for (const [index, itemContainer] of dContainerDownload.entries()) {
@@ -461,53 +475,53 @@ export class HtmlService {
      *
      */
 
-    if (arrayNotEmpty(dContainerMirror)) {
-      for (const [index, itemContainer] of dContainerMirror.entries()) {
-        const dContainerLinkElement = itemContainer as unknown as Element;
-        const dContainerList = dContainerLinkElement.find<Node>(`./li`);
+    // if (arrayNotEmpty(dContainerMirror)) {
+    //   for (const [index, itemContainer] of dContainerMirror.entries()) {
+    //     const dContainerLinkElement = itemContainer as unknown as Element;
+    //     const dContainerList = dContainerLinkElement.find<Node>(`./li`);
 
-        const mirrorListData: AnimeEpisodeResultDataUrl[] = [];
-        for (const item of dContainerList) {
-          const element = item as unknown as Element;
-          const anchors = element.find<Node>(`./a`);
-          const resolution = element.get<Node>(
-            `./span/text()[normalize-space()]`,
-          );
+    //     const mirrorListData: AnimeEpisodeResultDataUrl[] = [];
+    //     for (const item of dContainerList) {
+    //       const element = item as unknown as Element;
+    //       const anchors = element.find<Node>(`./a`);
+    //       const resolution = element.get<Node>(
+    //         `./span/text()[normalize-space()]`,
+    //       );
 
-          const achorData: AnimeEpisodeResultDataUrlList[] = [];
-          for (const anchor of anchors) {
-            const anchorElement = anchor as unknown as Element;
-            const title = anchorElement.get<Node>(
-              `./text()[normalize-space()]`,
-            );
-            const url = anchorElement.get<Node>(`./@data-content`);
+    //       const achorData: AnimeEpisodeResultDataUrlList[] = [];
+    //       for (const anchor of anchors) {
+    //         const anchorElement = anchor as unknown as Element;
+    //         const title = anchorElement.get<Node>(
+    //           `./text()[normalize-space()]`,
+    //         );
+    //         const url = anchorElement.get<Node>(`./@data-content`);
 
-            if (isNotEmpty(title) && isNotEmpty(url)) {
-              achorData.push({
-                title: title?.toString({ ...defaultConfigLibXMLConfig }) || '',
-                url: url?.value() || '',
-              });
-            }
-          }
+    //         if (isNotEmpty(title) && isNotEmpty(url)) {
+    //           achorData.push({
+    //             title: title?.toString({ ...defaultConfigLibXMLConfig }) || '',
+    //             url: url?.value() || '',
+    //           });
+    //         }
+    //       }
 
-          if (arrayNotEmpty(achorData)) {
-            mirrorListData.push({
-              resolution:
-                resolution?.toString({ ...defaultConfigLibXMLConfig }) || '',
-              list: achorData,
-            });
-          }
-        }
+    //       if (arrayNotEmpty(achorData)) {
+    //         mirrorListData.push({
+    //           resolution:
+    //             resolution?.toString({ ...defaultConfigLibXMLConfig }) || '',
+    //           list: achorData,
+    //         });
+    //       }
+    //     }
 
-        if (arrayNotEmpty(mirrorListData)) {
-          resultData.mirror_list.push(...(mirrorListData || []));
-        }
-      }
-    }
+    //     if (arrayNotEmpty(mirrorListData)) {
+    //       resultData.embed_url
+    //     }
+    //   }
+    // }
 
     if (
       arrayNotEmpty(resultData.download_list) ||
-      arrayNotEmpty(resultData.mirror_list)
+      isNotEmpty(resultData.embed_url)
     ) {
       result.data = resultData;
     }

@@ -3,8 +3,6 @@ import { DataSource } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 dotenv.config();
 
-console.log(__dirname + '/../migrations/*{.ts,.js}', 'dir');
-
 export const animeDataDataSource = new DataSource({
   type: 'mysql',
   url: process.env.DATABASE_URL,

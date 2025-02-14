@@ -7,7 +7,7 @@ export interface AnimeEpisodeResult {
 }
 
 export interface AnimeEpisodeResultData {
-  mirror_list: AnimeEpisodeResultDataUrl[];
+  embed_url: string;
   download_list: AnimeEpisodeResultDataUrl[];
 }
 

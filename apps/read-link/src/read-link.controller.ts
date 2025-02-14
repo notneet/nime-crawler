@@ -34,6 +34,12 @@ export class ReadLinkController {
     const start = DateTime.now();
     this.logger.verbose(`Received payload at ${start.toISO()}`);
 
+    if (!arrayNotEmpty(data?.pattern_link)) {
+      this.logger.log(`Empty pattern: ${data?.page_url}`);
+
+      return 1;
+    }
+
     const rawHTML = await this.htmlService.load(data?.page_url);
 
     await this.readLinkService.wait(10);

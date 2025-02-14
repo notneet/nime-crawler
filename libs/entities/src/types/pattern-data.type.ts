@@ -1,3 +1,4 @@
+import { IBrowserRequest } from '@commons/types/browser.type';
 import { PipeConfig } from '@helpers/pipes/types/pipe.type';
 
 export type PatternKey =
@@ -17,7 +18,7 @@ export type PatternKey =
 
 export interface PatternData {
   key: PatternKey | string;
-  data: Data;
+  data: Data | IBrowserRequest;
 }
 
 export type DataReturnType = 'key_value' | 'multiline' | 'value' | 'container';

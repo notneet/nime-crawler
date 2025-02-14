@@ -1,6 +1,7 @@
 import { AnimeEpisodeModel } from '@entities/anime_episode_model.entity';
 import { AnimeLinkResultData } from '@entities/types/anime-link.interface';
 import { Injectable, Logger } from '@nestjs/common';
+import { isEmpty } from 'class-validator';
 import { InsertResult, QueryRunner } from 'typeorm';
 import { AnimeEpisodeModelRepository } from './anime-episode-model.repository';
 
@@ -28,6 +29,7 @@ export class AnimeEpisodeModelService {
 
       const preparedData: Partial<AnimeEpisodeModel> = {
         ...data,
+        video_url: data.video_url,
         mirrors: this.normalizeJSON<AnimeLinkResultData[]>(data.mirrors),
         download_list: this.normalizeJSON<AnimeLinkResultData[]>(
           data.download_list,
@@ -50,8 +52,6 @@ export class AnimeEpisodeModelService {
         .execute();
 
       await queryRunner.commitTransaction();
-
-      console.log(res, 'res');
 
       return res;
     } catch (err) {
@@ -107,6 +107,37 @@ export class AnimeEpisodeModelService {
       throw err;
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async findByAnimeId(
+    id: bigint,
+    mediaId: bigint,
+  ): Promise<AnimeEpisodeModel | null> {
+    if (isEmpty(id) || isEmpty(mediaId)) {
+      return null;
+    }
+
+    const queryRunner =
+      this.animeEpisodeModelRepo.manager.connection.createQueryRunner();
+    const tableName = `anime_episode_${mediaId}`;
+
+    try {
+      await this.checkTableExists(queryRunner, tableName);
+
+      const res = await queryRunner.manager
+        .createQueryBuilder()
+        .from(tableName, 'q')
+        .select(`q.*`)
+        .where('q.anime_id = :id', { id })
+        .getRawOne<AnimeEpisodeModel>();
+
+      return res;
+    } catch (error) {
+      this.logger.error(
+        `Failed to find record with id ${id} in table ${tableName}: ${error.message}`,
+      );
+      throw error;
     }
   }
 

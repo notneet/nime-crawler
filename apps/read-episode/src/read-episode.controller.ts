@@ -1,8 +1,11 @@
 import { rmqExchange } from '@commons';
 import { HtmlService } from '@commons/html/html.service';
+import { IBrowserRequest } from '@commons/types/browser.type';
 import { PayloadMessage } from '@entities/types/payload-anime-index.type';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
+import { BrowserService } from '@helpers/browser/browser.service';
 import { Controller, Logger } from '@nestjs/common';
+import { arrayNotEmpty, isNotEmpty } from 'class-validator';
 import { DateTime } from 'luxon';
 import { ReadEpisodeService } from './read-episode.service';
 
@@ -13,6 +16,7 @@ export class ReadEpisodeController {
   constructor(
     private readonly readEpisodeService: ReadEpisodeService,
     private readonly htmlService: HtmlService,
+    private readonly browserService: BrowserService,
   ) {}
 
   @RabbitSubscribe({
@@ -31,7 +35,25 @@ export class ReadEpisodeController {
     const start = DateTime.now();
     this.logger.verbose(`Received payload at ${start.toISO()}`);
 
-    const rawHTML = await this.htmlService.load(data?.page_url);
+    if (!arrayNotEmpty(data?.pattern_watch)) {
+      this.logger.log(`Empty pattern: ${data?.page_url}`);
+
+      return 1;
+    }
+
+    const payloadBrowser = data.pattern_watch.find(
+      (item) => item.key === 'browser_loader',
+    );
+
+    let rawHtml: string = null;
+
+    if (isNotEmpty(payloadBrowser)) {
+      rawHtml = await this.browserService.load(
+        payloadBrowser?.data as IBrowserRequest,
+      );
+    } else {
+      rawHtml = await this.htmlService.load(data?.page_url);
+    }
 
     await this.readEpisodeService.wait(10);
 
@@ -39,16 +61,16 @@ export class ReadEpisodeController {
       data?.media_id,
       data?.page_url,
       data?.page_num,
-      rawHTML,
+      rawHtml,
     );
 
-    console.log(parsed?.data?.download_list);
-
-    console.log(
-      '\n=============================================================\n',
-    );
-
-    console.dir(parsed?.data?.mirror_list, { depth: null });
+    if (isNotEmpty(parsed?.data)) {
+      await this.readEpisodeService.updateEpisode(
+        parsed?.data,
+        data?.media_id,
+        BigInt(data?.dataId),
+      );
+    }
 
     const end = DateTime.now();
     const duration = end.diff(start).as('seconds');

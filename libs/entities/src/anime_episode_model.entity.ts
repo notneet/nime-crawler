@@ -58,7 +58,6 @@ export class AnimeEpisodeModel {
 
   @BeforeInsert()
   stringifyDownloadList() {
-    console.log(this.download_list, 'download_list');
     this.download_list = JSON.stringify(
       this.download_list,
     ) as unknown as AnimeLinkResultData[];
