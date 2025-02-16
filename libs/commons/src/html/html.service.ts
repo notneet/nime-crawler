@@ -1,16 +1,4 @@
-import { defaultConfigLibXMLConfig } from '@commons/constants';
-import {
-  AnimeEpisodeResult,
-  AnimeEpisodeResultData,
-  AnimeEpisodeResultDataUrl,
-  AnimeEpisodeResultDataUrlList,
-} from '@entities/types/anime-episode.interface';
-import {
-  AnimeLinkResult,
-  AnimeLinkResultData,
-  AnimeLinkResultDataUrl,
-  AnimeLinkResultDataUrlList,
-} from '@entities/types/anime-link.interface';
+import { Envs } from '@commons/env';
 import {
   DataReturnType,
   PatternData,
@@ -19,9 +7,11 @@ import {
 import {
   AnimeDetailResult,
   AnimeDetailResultData,
-  AnimeDetailResultDataEpisode,
 } from '@entities/types/read-detail.interface';
-import { AnimeIndexResult } from '@entities/types/read-index.interface';
+import {
+  AnimeIndexResult,
+  AnimeIndexResultData,
+} from '@entities/types/read-index.interface';
 import { PipesService } from '@helpers/pipes/pipes.service';
 import { PipeConfig } from '@helpers/pipes/types/pipe.type';
 import { HttpService } from '@nestjs/axios';
@@ -29,7 +19,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { arrayNotEmpty, isEmpty, isNotEmpty } from 'class-validator';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import { Element, Node, parseHtml } from 'libxmljs2';
 import {
   catchError,
   lastValueFrom,
@@ -40,25 +29,29 @@ import {
   retry,
   throwError,
 } from 'rxjs';
-
-declare module 'libxmljs2' {
-  interface Node {
-    value(): string;
-  }
-}
+import { DocumentParser } from './document-parser';
+import {
+  BaseParseResult,
+  ParseContext,
+  PatternDocumentData,
+  PatternReturnData,
+} from './types/parser.type';
 
 @Injectable()
 export class HtmlService {
   private readonly logger = new Logger(HtmlService.name);
+  private parser: DocumentParser;
 
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
     private readonly pipesService: PipesService,
-  ) {}
+  ) {
+    this.parser = new DocumentParser({ type: 'html' });
+  }
 
   private get proxyUrl(): string {
-    return this.configService.get<string>('PROXY_URL', '');
+    return this.configService.get<string>(Envs.PROXY_URL, '');
   }
 
   async load(pageUrl: string): Promise<string> {
@@ -72,14 +65,73 @@ export class HtmlService {
             : undefined,
         })
         .pipe(
-          map((res) => {
-            // setTimeout(() => {}, 5000);
-            return res.data;
-          }),
+          map((res) => res.data),
           catchError(this.handleHttpStatusError),
           retry({ count: 3 }),
         ),
     );
+  }
+
+  private createBaseResult(context: ParseContext): BaseParseResult {
+    return {
+      media_id: context.mediaId,
+      page_num: context.currentPage,
+      page_title:
+        this.parser.getContent('//title/text()[normalize-space()]') || '',
+      page_url: context.pageUrl,
+    };
+  }
+
+  private initializeParsing(context: ParseContext): BaseParseResult | null {
+    try {
+      this.parser.load(context.rawHtml);
+      return this.createBaseResult(context);
+    } catch (error) {
+      this.logger.error(`Error initializing parsing: ${error.message}`);
+      return null;
+    }
+  }
+
+  private mergeHtmlNode(
+    nodes: string[],
+    type: DataReturnType = 'key_value',
+  ): string {
+    if (!arrayNotEmpty(nodes)) return '';
+
+    return nodes
+      .filter((text) => isNotEmpty(text?.trim()))
+      .join(type === 'multiline' ? '\n' : '');
+  }
+
+  private parseContainerContent<T>(
+    container: string,
+    patterns: Record<string, [string, string, DataReturnType, PipeConfig[]]>,
+    parser: DocumentParser,
+  ): Partial<T> {
+    const result: Record<string, any> = {};
+
+    for (const [
+      key,
+      [pattern, altPattern, returnType, pipes],
+    ] of Object.entries(patterns)) {
+      if (isEmpty(pattern) && isEmpty(altPattern)) continue;
+
+      // Find all matching nodes for the pattern
+      const contents = parser.findContent(pattern);
+      if (arrayNotEmpty(contents)) {
+        // Merge the nodes based on return type
+        const mergedContent = this.mergeHtmlNode(contents, returnType);
+
+        if (isNotEmpty(mergedContent)) {
+          result[key] = this.pipesService.normalize(
+            mergedContent.trim(),
+            pipes,
+          );
+        }
+      }
+    }
+
+    return result as Partial<T>;
   }
 
   parseIndex(
@@ -91,56 +143,55 @@ export class HtmlService {
   ): AnimeIndexResult {
     this.logger.verbose(`Parsing page: ${pageUrl}`);
 
-    const [
-      containerPattern,
-      altContainerPattern,
-      containerReturnType,
-      containerPipes,
-    ] = this.getPattern(patternData, 'container');
+    const context: ParseContext = {
+      mediaId,
+      pageUrl,
+      currentPage,
+      rawHtml,
+      patternData,
+    };
+    const baseResult = this.initializeParsing(context);
 
-    const doc = parseHtml(rawHtml);
-    const pageTitle = doc.get<Node>(`//title/text()[normalize-space()]`);
-    const dContainer = doc.find<Node>(containerPattern);
-
-    let result: AnimeIndexResult = {
-      media_id: mediaId,
-      page_num: currentPage,
-      page_title: pageTitle?.toString({ ...defaultConfigLibXMLConfig }) || '',
-      page_url: pageUrl,
+    const result: AnimeIndexResult = {
+      ...baseResult,
       data: [],
     };
 
-    if (arrayNotEmpty(dContainer)) dContainer.length = 2;
+    try {
+      const [containerPattern] = this.getPattern(patternData, 'container');
+      const containers = this.parser.findContent(containerPattern);
 
-    if (arrayNotEmpty(dContainer)) {
-      const [urlPattern, altUrlPattern, urlReturnType, urlPipes] =
-        this.getPattern(patternData, 'url');
-      const [titlePattern, altTitlePattern, titleReturnType, titlePipes] =
-        this.getPattern(patternData, 'title');
+      if (arrayNotEmpty(containers)) {
+        containers.length = Math.min(containers.length, 2);
 
-      for (const item of dContainer) {
-        if (isEmpty(urlPattern) || isEmpty(titlePattern)) continue;
+        const patterns: PatternDocumentData<AnimeIndexResultData> = {
+          url: this.getPattern(patternData, 'url'),
+          title: this.getPattern(patternData, 'title'),
+        };
 
-        const element = item as unknown as Element;
+        for (const container of containers) {
+          const containerParser = new DocumentParser({ type: 'html' });
+          containerParser.load(container);
 
-        const urlNode = element.get(urlPattern);
-        const titleNode = element.get(titlePattern);
-        const url = urlNode?.value() || '';
-        const title =
-          titleNode?.toString({ ...defaultConfigLibXMLConfig }) || '';
+          const parsedContent = this.parseContainerContent<{
+            url: string;
+            title: string;
+          }>(container, patterns, containerParser);
 
-        if (isNotEmpty(url) && isNotEmpty(title)) {
-          result.data.push({
-            title: this.pipesService.normalize(title?.trim(), titlePipes),
-            url: this.pipesService.normalize(url?.trim(), urlPipes),
-          });
+          if (parsedContent.url && parsedContent.title) {
+            result.data.push({
+              title: parsedContent.title,
+              url: parsedContent.url,
+            });
+          }
         }
       }
+
+      return result;
+    } catch (error) {
+      this.logger.error(`Error parsing index: ${error.message}`);
+      return result;
     }
-
-    this.logger.verbose(`Parsed ${result?.data?.length} items`);
-
-    return result;
   }
 
   parseDetail(
@@ -152,22 +203,17 @@ export class HtmlService {
   ): AnimeDetailResult {
     this.logger.verbose(`Parsing detail: ${pageUrl}`);
 
-    const [
-      containerPattern,
-      altContainerPattern,
-      containerReturnType,
-      containerPipes,
-    ] = this.getPattern(patternData, 'container');
+    const context: ParseContext = {
+      mediaId,
+      pageUrl,
+      currentPage,
+      rawHtml,
+      patternData,
+    };
+    const baseResult = this.initializeParsing(context);
 
-    const doc = parseHtml(rawHtml);
-    const pageTitle = doc.get<Node>(`//title/text()[normalize-space()]`);
-    const dContainer = doc.find<Node>(containerPattern);
-
-    let result: AnimeDetailResult = {
-      media_id: mediaId,
-      page_num: currentPage,
-      page_title: pageTitle?.toString({ ...defaultConfigLibXMLConfig }) || '',
-      page_url: pageUrl,
+    const result: AnimeDetailResult = {
+      ...baseResult,
       data: {
         title: '',
         description: '',
@@ -181,364 +227,86 @@ export class HtmlService {
       },
     };
 
-    if (arrayNotEmpty(dContainer)) {
-      const [
-        epsTitlePattern,
-        altEpsTitlePattern,
-        epsTitleReturnType,
-        epsTitlePipes,
-      ] = this.getPattern(patternData, 'title');
-      const [
-        epsDescPattern,
-        altEpsDescPattern,
-        epsDescReturnType,
-        epsDescPipes,
-      ] = this.getPattern(patternData, 'description');
-      const [
-        epsDatePattern,
-        altEpsDatePattern,
-        epsDateReturnType,
-        epsDatePipes,
-      ] = this.getPattern(patternData, 'date');
-      const [epsImgPattern, altEpsImgPattern, epsImgReturnType, epsImgPipes] =
-        this.getPattern(patternData, 'image');
-      const [epsNumPattern, altEpsNumPattern, epsNumReturnType, epsNumPipes] =
-        this.getPattern(patternData, 'episode_num');
-      const [
-        epsScorePattern,
-        altEpsScorePattern,
-        epsScoreReturnType,
-        epsScorePipes,
-      ] = this.getPattern(patternData, 'score');
-      const [
-        epsCompletePattern,
-        altEpsCompletePattern,
-        epsCompleteReturnType,
-        epsCompletePipes,
-      ] = this.getPattern(patternData, 'episode_complete');
-      const [
-        epsBatchPattern,
-        altEpsBatchPattern,
-        epsBatchReturnType,
-        epsBatchPipes,
-      ] = this.getPattern(patternData, 'batch');
-      const [
-        epsListConPattern,
-        altEpsListConPattern,
-        epsListConReturnType,
-        epsListConPipes,
-      ] = this.getPattern(patternData, 'episode_container');
-      const [
-        epsItemTitlePattern,
-        altEpsItemTitlePattern,
-        epsItemTitleReturnType,
-        epsItemTitlePipes,
-      ] = this.getPattern(patternData, 'episode_title');
-      const [
-        epsItemUrlPattern,
-        altEpsItemUrlPattern,
-        epsItemUrlReturnType,
-        epsItemUrlPipes,
-      ] = this.getPattern(patternData, 'episode_url');
-      for (const item of dContainer) {
-        const element = item as unknown as Element;
-        const title = element.find<Node>(epsTitlePattern);
-        const description = element.find<Node>(epsDescPattern);
-        const date = element.find<Node>(epsDatePattern);
-        const image = element.get<Node>(epsImgPattern);
-        const episodeNum = element.find<Node>(epsNumPattern);
-        const score = element.find<Node>(epsScorePattern);
-        const episodeCompleteUrl = element.get<Node>(epsCompletePattern);
-        const batchUrl = element.get<Node>(epsBatchPattern);
-        const episodeListContainer = element.find<Node>(epsListConPattern);
+    try {
+      const [containerPattern] = this.getPattern(patternData, 'container');
+      const containers = this.parser.findContent(containerPattern);
 
-        const episodeListItem: AnimeDetailResultDataEpisode[] = [];
-        for (const episodeItem of episodeListContainer) {
-          const episodeItemElement = episodeItem as unknown as Element;
-          const episodeUrl = episodeItemElement.get<Node>(epsItemUrlPattern);
-          const episodeTitle =
-            episodeItemElement.get<Node>(epsItemTitlePattern);
-
-          if (isNotEmpty(episodeUrl) && isNotEmpty(episodeTitle)) {
-            episodeListItem.push({
-              title:
-                episodeTitle?.toString({ ...defaultConfigLibXMLConfig }) || '',
-              url: episodeUrl?.value() || '',
-            });
-          }
-        }
-
-        const titleText = this.mergeHtmlNode(title, 'key_value');
-        const descriptionText = this.mergeHtmlNode(description, 'multiline');
-        const dateText = this.mergeHtmlNode(date, 'key_value');
-        const imageText = image?.value();
-        const episodeText = this.mergeHtmlNode(episodeNum, 'key_value');
-        const scoreText = this.mergeHtmlNode(score, 'key_value');
-        const episodeCompleteUrlText = episodeCompleteUrl?.value();
-        const batchUrlText = batchUrl?.value();
-
-        const resultData: AnimeDetailResultData = {
-          title: this.pipesService.normalize(titleText, epsTitlePipes),
-          description: this.pipesService.normalize(
-            descriptionText,
-            epsDescPipes,
-          ),
-          // datetime: isNotEmpty(dateText) ? new Date(dateText) : undefined,
-          datetime: new Date(
-            this.pipesService.normalize(dateText, epsDatePipes),
-          ),
-          image_url: this.pipesService.normalize(imageText, epsImgPipes),
-          episode_count: this.pipesService.normalize(episodeText, epsNumPipes),
-          score: this.pipesService.normalize(scoreText, epsScorePipes),
-          batch_url: this.pipesService.normalize(batchUrlText, epsBatchPipes),
-          episode_list: arrayNotEmpty(episodeListItem) ? episodeListItem : [],
-          episode_url: this.pipesService.normalize(
-            episodeCompleteUrlText,
-            epsCompletePipes,
-          ),
+      if (arrayNotEmpty(containers)) {
+        const patterns: PatternDocumentData<AnimeDetailResultData> = {
+          title: this.getPattern(patternData, 'title'),
+          description: this.getPattern(patternData, 'description'),
+          datetime: this.getPattern(patternData, 'date'),
+          image_url: this.getPattern(patternData, 'image'),
+          episode_count: this.getPattern(patternData, 'episode_num'),
+          score: this.getPattern(patternData, 'score'),
+          episode_list: this.getPattern(patternData, 'episode_complete'),
+          batch_url: this.getPattern(patternData, 'batch'),
+          episode_url: this.getPattern(patternData, 'episode_url'),
         };
 
-        result.data = resultData;
-      }
-    }
+        for (const container of containers) {
+          const containerParser = new DocumentParser({ type: 'html' });
+          containerParser.load(container);
 
-    return result;
-  }
+          const parsedContent = this.parseContainerContent<
+            AnimeDetailResult['data']
+          >(container, patterns, containerParser);
 
-  parseLink(
-    mediaId: bigint,
-    pageUrl: string,
-    currentPage: number,
-    rawHtml: string,
-  ): AnimeLinkResult {
-    this.logger.verbose(`Parsing link: ${pageUrl}`);
-
-    const doc = parseHtml(rawHtml);
-    const pageTitle = doc.get<Node>(`//title/text()[normalize-space()]`);
-    const dContainer = doc.find<Node>(`//div[@class='download'][1]/ul`);
-
-    let result: AnimeLinkResult = {
-      media_id: mediaId,
-      page_num: currentPage,
-      page_title: pageTitle?.toString({ ...defaultConfigLibXMLConfig }) || '',
-      page_url: pageUrl,
-      data: [],
-    };
-
-    if (arrayNotEmpty(dContainer)) {
-      const resultData: AnimeLinkResultData[] = [];
-
-      for (const [index, itemContainer] of dContainer.entries()) {
-        const dContainerLinkElement = itemContainer as unknown as Element;
-        const dContainerTitle = dContainerLinkElement.find<Node>(
-          `../h4/text()[normalize-space()]`,
-        );
-        const dContainerList = dContainerLinkElement.find<Node>(`./li`);
-
-        const listData: AnimeLinkResultDataUrl[] = [];
-        for (const item of dContainerList) {
-          const element = item as unknown as Element;
-          const anchors = element.find<Node>(`./a`);
-          const resolution = element.get<Node>(
-            `./strong/text()[normalize-space()]`,
+          // Handle episode list separately due to its nested structure
+          const [epsListConPattern] = this.getPattern(
+            patternData,
+            'episode_container',
           );
+          const episodeContainers =
+            containerParser.findContent(epsListConPattern);
 
-          const achorData: AnimeLinkResultDataUrlList[] = [];
-          for (const anchor of anchors) {
-            const anchorElement = anchor as unknown as Element;
-            const title = anchorElement.get<Node>(
-              `./text()[normalize-space()]`,
-            );
-            const url = anchorElement.get<Node>(`./@href`);
+          const episodeListPatterns = {
+            title: this.getPattern(patternData, 'episode_title'),
+            url: this.getPattern(patternData, 'episode_url'),
+          };
 
-            if (isNotEmpty(title) && isNotEmpty(url)) {
-              achorData.push({
-                title: title?.toString({ ...defaultConfigLibXMLConfig }) || '',
-                url: url?.value() || '',
+          const episodeList = [];
+          for (const episodeContainer of episodeContainers) {
+            const episodeParser = new DocumentParser({ type: 'html' });
+            episodeParser.load(episodeContainer);
+
+            const episodeContent = this.parseContainerContent<{
+              title: string;
+              url: string;
+            }>(episodeContainer, episodeListPatterns, episodeParser);
+
+            if (episodeContent.title && episodeContent.url) {
+              episodeList.push({
+                title: episodeContent.title,
+                url: episodeContent.url,
               });
             }
           }
 
-          if (arrayNotEmpty(achorData)) {
-            listData.push({
-              resolution:
-                resolution?.toString({ ...defaultConfigLibXMLConfig }) || '',
-              list: achorData,
-            });
-          }
-        }
-
-        if (arrayNotEmpty(listData)) {
-          resultData.push({
-            title:
-              dContainerTitle?.[index]?.toString({
-                ...defaultConfigLibXMLConfig,
-              }) || '',
-            data: listData,
-          });
+          result.data = {
+            ...result.data,
+            ...parsedContent,
+            episode_list: episodeList,
+            datetime: parsedContent.datetime
+              ? new Date(parsedContent.datetime)
+              : undefined,
+          };
         }
       }
 
-      if (arrayNotEmpty(resultData)) {
-        result.data = resultData;
-      }
+      return result;
+    } catch (error) {
+      this.logger.error(`Error parsing detail: ${error.message}`);
+      return result;
     }
-
-    return result;
   }
 
-  parseEpisode(
-    mediaId: bigint,
-    pageUrl: string,
-    currentPage: number,
-    rawHtml: string,
-  ): AnimeEpisodeResult {
-    this.logger.verbose(`Parsing link: ${pageUrl}`);
-
-    const doc = parseHtml(rawHtml);
-    const pageTitle = doc.get<Node>(`//title/text()[normalize-space()]`);
-    const dContainerDownload = doc.find<Node>(`//div[@class='download'][1]/ul`);
-    const dContainer = doc.find<Node>(`//div[@class='venutama']`);
-
-    let result: AnimeEpisodeResult = {
-      media_id: mediaId,
-      page_num: currentPage,
-      page_title: pageTitle?.toString({ ...defaultConfigLibXMLConfig }) || '',
-      page_url: pageUrl,
-      data: null,
-    };
-
-    const resultData: AnimeEpisodeResultData = {
-      download_list: [],
-      embed_url: '',
-    };
-
-    if (arrayNotEmpty(dContainer)) {
-      for (const [index, itemContainer] of dContainer.entries()) {
-        const dContainerPage = itemContainer as unknown as Element;
-        const dContainerEmbed = dContainerPage.get<Node>(
-          `.//div[@class='responsive-embed-stream']/iframe/@src`,
-        );
-        const embedUrl = dContainerEmbed?.value();
-
-        if (isNotEmpty(embedUrl)) {
-          resultData.embed_url = embedUrl || '';
-        }
-      }
-    }
-
-    if (arrayNotEmpty(dContainerDownload)) {
-      for (const [index, itemContainer] of dContainerDownload.entries()) {
-        const dContainerLinkElement = itemContainer as unknown as Element;
-        const dContainerList = dContainerLinkElement.find<Node>(`./li`);
-
-        const downloadListData: AnimeEpisodeResultDataUrl[] = [];
-        for (const item of dContainerList) {
-          const element = item as unknown as Element;
-          const anchors = element.find<Node>(`./a`);
-          const resolution = element.get<Node>(
-            `./strong/text()[normalize-space()]`,
-          );
-
-          const achorData: AnimeEpisodeResultDataUrlList[] = [];
-          for (const anchor of anchors) {
-            const anchorElement = anchor as unknown as Element;
-            const title = anchorElement.get<Node>(
-              `./text()[normalize-space()]`,
-            );
-            const url = anchorElement.get<Node>(`./@href`);
-
-            if (isNotEmpty(title) && isNotEmpty(url)) {
-              achorData.push({
-                title: title?.toString({ ...defaultConfigLibXMLConfig }) || '',
-                url: url?.value() || '',
-              });
-            }
-          }
-
-          if (arrayNotEmpty(achorData)) {
-            downloadListData.push({
-              resolution:
-                resolution?.toString({ ...defaultConfigLibXMLConfig }) || '',
-              list: achorData,
-            });
-          }
-        }
-
-        if (arrayNotEmpty(downloadListData)) {
-          resultData.download_list.push(...(downloadListData || []));
-        }
-      }
-    }
-
-    /**
-     *
-     */
-
-    // if (arrayNotEmpty(dContainerMirror)) {
-    //   for (const [index, itemContainer] of dContainerMirror.entries()) {
-    //     const dContainerLinkElement = itemContainer as unknown as Element;
-    //     const dContainerList = dContainerLinkElement.find<Node>(`./li`);
-
-    //     const mirrorListData: AnimeEpisodeResultDataUrl[] = [];
-    //     for (const item of dContainerList) {
-    //       const element = item as unknown as Element;
-    //       const anchors = element.find<Node>(`./a`);
-    //       const resolution = element.get<Node>(
-    //         `./span/text()[normalize-space()]`,
-    //       );
-
-    //       const achorData: AnimeEpisodeResultDataUrlList[] = [];
-    //       for (const anchor of anchors) {
-    //         const anchorElement = anchor as unknown as Element;
-    //         const title = anchorElement.get<Node>(
-    //           `./text()[normalize-space()]`,
-    //         );
-    //         const url = anchorElement.get<Node>(`./@data-content`);
-
-    //         if (isNotEmpty(title) && isNotEmpty(url)) {
-    //           achorData.push({
-    //             title: title?.toString({ ...defaultConfigLibXMLConfig }) || '',
-    //             url: url?.value() || '',
-    //           });
-    //         }
-    //       }
-
-    //       if (arrayNotEmpty(achorData)) {
-    //         mirrorListData.push({
-    //           resolution:
-    //             resolution?.toString({ ...defaultConfigLibXMLConfig }) || '',
-    //           list: achorData,
-    //         });
-    //       }
-    //     }
-
-    //     if (arrayNotEmpty(mirrorListData)) {
-    //       resultData.embed_url
-    //     }
-    //   }
-    // }
-
-    if (
-      arrayNotEmpty(resultData.download_list) ||
-      isNotEmpty(resultData.embed_url)
-    ) {
-      result.data = resultData;
-    }
-
-    return result;
+  parseLink() {
+    //
   }
 
-  private mergeHtmlNode(
-    rawNode: Node[],
-    type: DataReturnType = 'key_value',
-  ): string {
-    if (!arrayNotEmpty(rawNode)) return '';
-
-    return rawNode
-      ?.map((node) => node?.toString({ ...defaultConfigLibXMLConfig })?.trim())
-      ?.filter((text) => text?.length > 0)
-      ?.join(type === 'multiline' ? '\n' : '');
+  parseEpisode() {
+    //
   }
 
   private handleHttpStatusError(
@@ -551,9 +319,7 @@ export class HtmlService {
       case 'ENOTFOUND':
       case 'ECONNRESET':
       case 'ECONNREFUSED':
-        console.log(`Network error: ${err?.message}`);
-        // this.logger.verbose(`Network error: ${err?.message}`);
-
+        this.logger.warn(`Network error: ${err?.message}`);
         return of(null);
       case 'EPROTO':
       case 'CERT_HAS_EXPIRED':
@@ -561,7 +327,7 @@ export class HtmlService {
       case 'UNABLE_TO_VERIFY_LEAF_SIGNATURE':
       case 'SELF_SIGNED_CERT_IN_CHAIN':
       case 'DEPTH_ZERO_SELF_SIGNED_CERT':
-        console.log('Certificate error');
+        this.logger.warn('Certificate error');
         break;
       default:
         return throwError(() => err);
@@ -570,16 +336,13 @@ export class HtmlService {
     return throwError(() => err);
   }
 
-  private getPattern(
-    data: PatternData[],
-    key: PatternKey,
-  ): [string, string, DataReturnType, PipeConfig[]] {
-    if (!arrayNotEmpty(data)) return null;
+  private getPattern(data: PatternData[], key: PatternKey): PatternReturnData {
+    if (!arrayNotEmpty(data)) return ['', '', 'key_value', []];
 
     const isFound = data.find((it) => it?.key === key)?.data;
 
-    const mainPattern = isFound?.value;
-    const altPattern = isFound?.alternative;
+    const mainPattern = isFound?.value || '';
+    const altPattern = isFound?.alternative || '';
     const returnType = isFound?.return_type || 'key_value';
     const pipes = isFound?.pipes || [];
 
