@@ -15,7 +15,7 @@ export interface AnimeDetailResultData {
   score: string; // conv number
   episode_list: AnimeDetailResultDataEpisode[];
   batch_url: string;
-  episode_url: string;
+  // episode_url: string;
 }
 
 export interface AnimeDetailResultDataEpisode {

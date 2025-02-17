@@ -304,7 +304,15 @@ export class DocumentParser {
 
       this.document =
         this.config.type === 'html'
-          ? parseHtml(cleanedContent)
+          ? parseHtml(cleanedContent, {
+              recover: true,
+              noent: true,
+              nocdata: true,
+              noblanks: true,
+              nsclean: true,
+              doctype: false,
+              implied: false,
+            })
           : parseXml(cleanedContent);
       return this;
     } catch (error) {

@@ -73,9 +73,9 @@ export class ReadDetailController {
       }
     }
 
-    if (isNotEmpty(parsed?.data?.episode_url)) {
-      await this.sendPayloadLink(data, parsed?.data?.episode_url, animeId);
-    }
+    // if (isNotEmpty(parsed?.data?.episode_url)) {
+    //   await this.sendPayloadLink(data, parsed?.data?.episode_url, animeId);
+    // }
 
     if (isNotEmpty(parsed?.data?.batch_url)) {
       await this.sendPayloadLink(data, parsed?.data?.batch_url, animeId);

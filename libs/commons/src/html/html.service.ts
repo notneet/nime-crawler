@@ -1,5 +1,10 @@
 import { Envs } from '@commons/env';
 import {
+  AnimeLinkResult,
+  AnimeLinkResultDataUrl,
+  AnimeLinkResultDataUrlList,
+} from '@entities/types/anime-link.interface';
+import {
   DataReturnType,
   PatternData,
   PatternKey,
@@ -223,7 +228,7 @@ export class HtmlService {
         score: '0',
         episode_list: [],
         batch_url: '',
-        episode_url: '',
+        // episode_url: '',
       },
     };
 
@@ -241,7 +246,7 @@ export class HtmlService {
           score: this.getPattern(patternData, 'score'),
           episode_list: this.getPattern(patternData, 'episode_complete'),
           batch_url: this.getPattern(patternData, 'batch'),
-          episode_url: this.getPattern(patternData, 'episode_url'),
+          // episode_url: this.getPattern(patternData, 'episode_url'),
         };
 
         for (const container of containers) {
@@ -301,12 +306,100 @@ export class HtmlService {
     }
   }
 
-  parseLink() {
-    //
+  parseLink(
+    mediaId: bigint,
+    pageUrl: string,
+    currentPage: number,
+    rawHtml: string,
+  ): AnimeLinkResult {
+    this.logger.verbose(`Parsing link: ${pageUrl}`);
+
+    const context: ParseContext = {
+      mediaId,
+      pageUrl,
+      currentPage,
+      rawHtml,
+      patternData: [],
+    };
+    const baseResult = this.initializeParsing(context);
+
+    const result: AnimeLinkResult = {
+      ...baseResult,
+      data: [],
+    };
+
+    try {
+      const downloadContainers = this.parser.findContent(
+        `//div[@class='batchlink'][1]`,
+      );
+
+      if (arrayNotEmpty(downloadContainers)) {
+        for (const [index, container] of downloadContainers.entries()) {
+          const containerParser = new DocumentParser({ type: 'html' });
+          containerParser.load(container);
+
+          const title = containerParser.getContent('.//h4/text()');
+          const downloadData = this.parseDownloadSection(containerParser);
+
+          if (arrayNotEmpty(downloadData)) {
+            result.data.push({
+              title: title?.trim() || '',
+              data: downloadData,
+            });
+          }
+        }
+      }
+
+      return result;
+    } catch (error) {
+      this.logger.error(`Error parsing link: ${error.message}`);
+      return result;
+    }
   }
 
   parseEpisode() {
     //
+  }
+
+  // Common parsing logic for download sections
+  private parseDownloadSection(
+    containerElement: DocumentParser,
+  ): AnimeLinkResultDataUrl[] {
+    const downloadData: AnimeLinkResultDataUrl[] = [];
+    const downloadList = containerElement.findContent('./ul/li');
+
+    for (const item of downloadList) {
+      const itemParser = new DocumentParser({ type: 'html' });
+      itemParser.load(item);
+
+      const resolution = itemParser.getContent('./strong/text()');
+      const anchors = itemParser.findContent('./a');
+
+      const anchorList = [];
+      for (const anchor of anchors) {
+        const anchorParser = new DocumentParser({ type: 'html' });
+        anchorParser.load(anchor);
+
+        const title = anchorParser.getContent('./text()');
+        const url = anchorParser.getContent('./@href');
+
+        if (isNotEmpty(title) && isNotEmpty(url)) {
+          anchorList.push({
+            title: title.trim(),
+            url: url.trim(),
+          } as AnimeLinkResultDataUrlList);
+        }
+      }
+
+      if (arrayNotEmpty(anchorList)) {
+        downloadData.push({
+          resolution: resolution?.trim() || '',
+          list: anchorList,
+        });
+      }
+    }
+
+    return downloadData;
   }
 
   private handleHttpStatusError(
