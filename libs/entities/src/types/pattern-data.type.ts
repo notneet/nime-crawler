@@ -14,7 +14,12 @@ export type PatternKey =
   | 'episode_complete'
   | 'batch'
   | 'episode_url'
-  | 'episode_title';
+  | 'episode_title'
+  | 'link_container'
+  | 'resolution'
+  | 'link'
+  | 'link_title'
+  | 'link_url';
 
 export interface PatternData {
   key: PatternKey | string;

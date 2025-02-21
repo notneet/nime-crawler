@@ -27,8 +27,8 @@ export class AnimeModelService {
 
       const preparedData: Partial<AnimeModel> = {
         ...data,
-        download_list: this.normalizeJSON<AnimeLinkResultData[]>(
-          data.download_list,
+        batch_download_list: this.normalizeJSON<AnimeLinkResultData[]>(
+          data.batch_download_list,
         ),
       };
 
@@ -50,8 +50,7 @@ export class AnimeModelService {
             'episode_duration',
             'rating',
             'release_date',
-            'batch_url',
-            'download_list',
+            'batch_download_list',
             'updated_at',
           ],
           ['url', 'uuid'],

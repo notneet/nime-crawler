@@ -59,19 +59,19 @@ export class AnimeModel {
   @Column({ type: 'timestamp', nullable: true })
   release_date: Date;
 
-  @Column({ nullable: true })
-  batch_url: string;
-
   @Column({ type: 'json', nullable: true })
-  download_list: AnimeLinkResultData[];
+  batch_download_list: AnimeLinkResultData[];
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+  })
   created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    default: () => 'CURRENT_TIMESTAMP(6)',
+    onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
   updated_at: Date;
 }

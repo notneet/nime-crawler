@@ -53,13 +53,7 @@ export class ReadLinkService {
 
     const payload: Partial<AnimeModel> = {
       ...anime,
-      batch_url: Array(10)
-        .fill('')
-        .map(() =>
-          String.fromCharCode(Math.floor(Math.random() * (122 - 97 + 1)) + 97),
-        )
-        .join(''),
-      download_list: datas,
+      batch_download_list: datas,
     };
 
     return this.animeModelService.storeData(payload, mediaId);

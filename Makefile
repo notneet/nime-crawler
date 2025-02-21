@@ -29,10 +29,11 @@ endif
 generate_migration: ## Generate migration
 	@clear
 
-	@if [ -z "$1" ]; then \
-		yarn typeorm migration:generate ./db/migrations/Migration_$(date +%s).ts -d ./db/datasource/anime_data.datasource.ts; \
+	@if [ -z "$(name)" ]; then \
+		echo -e "\033[33mWarn: use "Migration" as filename\033[0m"; \
+		yarn typeorm migration:generate ./db/migrations/Migration -d ./db/datasource/anime_data.datasource.ts; \
 	else \
-		yarn typeorm migration:generate ./db/migrations/$1 -d ./db/datasource/anime_data.datasource.ts; \
+		yarn typeorm migration:generate ./db/migrations/$(name) -d ./db/datasource/anime_data.datasource.ts; \
 	fi
 
 apply_migration: ## Apply uncommitted migrations

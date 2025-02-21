@@ -311,6 +311,7 @@ export class HtmlService {
     pageUrl: string,
     currentPage: number,
     rawHtml: string,
+    patternData: PatternData[],
   ): AnimeLinkResult {
     this.logger.verbose(`Parsing link: ${pageUrl}`);
 
@@ -319,7 +320,7 @@ export class HtmlService {
       pageUrl,
       currentPage,
       rawHtml,
-      patternData: [],
+      patternData,
     };
     const baseResult = this.initializeParsing(context);
 
@@ -329,21 +330,34 @@ export class HtmlService {
     };
 
     try {
-      const downloadContainers = this.parser.findContent(
-        `//div[@class='batchlink'][1]`,
-      );
+      const [containerPattern] = this.getPattern(patternData, 'container');
+      const containers = this.parser.findContent(containerPattern);
 
-      if (arrayNotEmpty(downloadContainers)) {
-        for (const [index, container] of downloadContainers.entries()) {
+      if (arrayNotEmpty(containers)) {
+        for (const container of containers) {
           const containerParser = new DocumentParser({ type: 'html' });
           containerParser.load(container);
 
-          const title = containerParser.getContent('.//h4/text()');
-          const downloadData = this.parseDownloadSection(containerParser);
+          // Get title using the title pattern
+          const [titlePattern, altTitlePattern, , titlePipes] = this.getPattern(
+            patternData,
+            'title',
+          );
+          let title =
+            containerParser.getContent(titlePattern) ||
+            containerParser.getContent(altTitlePattern) ||
+            '';
+          title = this.pipesService.normalize(title.trim(), titlePipes);
+
+          // Parse download sections using link_container pattern
+          const downloadData = this.parseDownloadSection(
+            containerParser,
+            patternData,
+          );
 
           if (arrayNotEmpty(downloadData)) {
             result.data.push({
-              title: title?.trim() || '',
+              title,
               data: downloadData,
             });
           }
@@ -363,38 +377,70 @@ export class HtmlService {
 
   // Common parsing logic for download sections
   private parseDownloadSection(
-    containerElement: DocumentParser,
+    containerParser: DocumentParser,
+    patternData: PatternData[],
   ): AnimeLinkResultDataUrl[] {
     const downloadData: AnimeLinkResultDataUrl[] = [];
-    const downloadList = containerElement.findContent('./ul/li');
 
-    for (const item of downloadList) {
-      const itemParser = new DocumentParser({ type: 'html' });
-      itemParser.load(item);
+    // Get all patterns needed for parsing download sections
+    const [linkContainerPattern] = this.getPattern(
+      patternData,
+      'link_container',
+    );
+    const [resolutionPattern] = this.getPattern(patternData, 'resolution');
+    const [anchorContainerPattern] = this.getPattern(patternData, 'link');
+    const [linkTitlePattern, , , linkTitlePipes] = this.getPattern(
+      patternData,
+      'link_title',
+    );
+    const [linkUrlPattern, , , linkUrlPipes] = this.getPattern(
+      patternData,
+      'link_url',
+    );
 
-      const resolution = itemParser.getContent('./strong/text()');
-      const anchors = itemParser.findContent('./a');
+    // Find all download sections using link_container pattern
+    const downloadSections = containerParser.findContent(linkContainerPattern);
 
-      const anchorList = [];
+    for (const section of downloadSections) {
+      const sectionParser = new DocumentParser({ type: 'html' });
+      sectionParser.load(section);
+
+      // Get resolution
+      const resolution = this.pipesService.normalize(
+        sectionParser.getContent(resolutionPattern)?.trim() || '',
+        this.getPattern(patternData, 'resolution')[3],
+      );
+
+      // Find all download links
+      const downloadList: AnimeLinkResultDataUrlList[] = [];
+      const anchors = sectionParser.findContent(anchorContainerPattern);
+
       for (const anchor of anchors) {
         const anchorParser = new DocumentParser({ type: 'html' });
         anchorParser.load(anchor);
 
-        const title = anchorParser.getContent('./text()');
-        const url = anchorParser.getContent('./@href');
+        const title = this.pipesService.normalize(
+          anchorParser.getContent(linkTitlePattern)?.trim() || '',
+          linkTitlePipes,
+        );
+
+        const url = this.pipesService.normalize(
+          anchorParser.getContent(linkUrlPattern)?.trim() || '',
+          linkUrlPipes,
+        );
 
         if (isNotEmpty(title) && isNotEmpty(url)) {
-          anchorList.push({
-            title: title.trim(),
-            url: url.trim(),
-          } as AnimeLinkResultDataUrlList);
+          downloadList.push({
+            title,
+            url,
+          });
         }
       }
 
-      if (arrayNotEmpty(anchorList)) {
+      if (arrayNotEmpty(downloadList)) {
         downloadData.push({
-          resolution: resolution?.trim() || '',
-          list: anchorList,
+          resolution,
+          list: downloadList,
         });
       }
     }
@@ -429,7 +475,10 @@ export class HtmlService {
     return throwError(() => err);
   }
 
-  private getPattern(data: PatternData[], key: PatternKey): PatternReturnData {
+  private getPattern<T = PatternKey>(
+    data: PatternData[],
+    key: T,
+  ): PatternReturnData {
     if (!arrayNotEmpty(data)) return ['', '', 'key_value', []];
 
     const isFound = data.find((it) => it?.key === key)?.data;

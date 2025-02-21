@@ -49,6 +49,7 @@ export class ReadLinkController {
       data?.page_url,
       data?.page_num,
       rawHTML,
+      data?.pattern_link,
     );
 
     if (arrayNotEmpty(parsed?.data)) {
