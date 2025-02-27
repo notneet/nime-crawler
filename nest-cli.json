@@ -1,5 +1,113 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src"
+  "sourceRoot": "apps/nime-crawler/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": false,
+    "tsConfigPath": "apps/nime-crawler/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/nime-crawler",
+  "projects": {
+    "nime-crawler": {
+      "type": "application",
+      "root": "apps/nime-crawler",
+      "entryFile": "main",
+      "sourceRoot": "apps/nime-crawler/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/nime-crawler/tsconfig.app.json"
+      }
+    },
+    "cron-interval": {
+      "type": "application",
+      "root": "apps/cron-interval",
+      "entryFile": "main",
+      "sourceRoot": "apps/cron-interval/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/cron-interval/tsconfig.app.json"
+      }
+    },
+    "helpers": {
+      "type": "library",
+      "root": "libs/helpers",
+      "entryFile": "index",
+      "sourceRoot": "libs/helpers/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/helpers/tsconfig.lib.json"
+      }
+    },
+    "commons": {
+      "type": "library",
+      "root": "libs/commons",
+      "entryFile": "index",
+      "sourceRoot": "libs/commons/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/commons/tsconfig.lib.json"
+      }
+    },
+    "entities": {
+      "type": "library",
+      "root": "libs/entities",
+      "entryFile": "index",
+      "sourceRoot": "libs/entities/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/entities/tsconfig.lib.json"
+      }
+    },
+    "read-index": {
+      "type": "application",
+      "root": "apps/read-index",
+      "entryFile": "main",
+      "sourceRoot": "apps/read-index/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/read-index/tsconfig.app.json"
+      }
+    },
+    "read-detail": {
+      "type": "application",
+      "root": "apps/read-detail",
+      "entryFile": "main",
+      "sourceRoot": "apps/read-detail/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/read-detail/tsconfig.app.json"
+      }
+    },
+    "read-link": {
+      "type": "application",
+      "root": "apps/read-link",
+      "entryFile": "main",
+      "sourceRoot": "apps/read-link/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/read-link/tsconfig.app.json"
+      }
+    },
+    "read-episode": {
+      "type": "application",
+      "root": "apps/read-episode",
+      "entryFile": "main",
+      "sourceRoot": "apps/read-episode/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/read-episode/tsconfig.app.json"
+      }
+    },
+    "pattern-dashboard": {
+      "type": "application",
+      "root": "apps/pattern-dashboard",
+      "entryFile": "main",
+      "sourceRoot": "apps/pattern-dashboard/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/pattern-dashboard/tsconfig.app.json"
+      }
+    },
+    "data-access": {
+      "type": "library",
+      "root": "libs/data-access",
+      "entryFile": "index",
+      "sourceRoot": "libs/data-access/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/data-access/tsconfig.lib.json"
+      }
+    }
+  }
 }
