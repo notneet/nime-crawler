@@ -15,7 +15,7 @@ export class CacheEntry {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 255, unique: true })
+  @Column({ length: 255 })
   cache_key: string;
 
   @Column({ type: 'longtext' })

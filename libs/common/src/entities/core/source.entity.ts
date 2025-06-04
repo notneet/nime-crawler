@@ -19,7 +19,7 @@ export class Source {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ length: 50, unique: true })
+  @Column({ length: 50 })
   slug: string; // samehadaku, otakudesu, huntersekai, kusonime
 
   @Column({ type: 'text' })

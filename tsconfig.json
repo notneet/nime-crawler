@@ -25,6 +25,12 @@
       "@app/common/*": [
         "libs/common/src/*",
         "libs/common/src/*"
+      ],
+      "@app/database": [
+        "libs/database/src"
+      ],
+      "@app/database/*": [
+        "libs/database/src/*"
       ]
     }
   }

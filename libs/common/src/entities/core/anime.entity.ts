@@ -16,6 +16,29 @@ import { Episode } from './episode.entity';
 import { Genre } from './genre.entity';
 import { Source } from './source.entity';
 
+export enum AnimeType {
+  TV = 'TV',
+  MOVIE = 'Movie',
+  OVA = 'OVA',
+  ONA = 'ONA',
+  SPECIAL = 'Special',
+  MUSIC = 'Music',
+}
+
+export enum AnimeStatus {
+  ONGOING = 'Ongoing',
+  COMPLETED = 'Completed',
+  UPCOMING = 'Upcoming',
+  HIATUS = 'Hiatus',
+}
+
+export enum AnimeSeason {
+  SPRING = 'Spring',
+  SUMMER = 'Summer',
+  FALL = 'Fall',
+  WINTER = 'Winter',
+}
+
 @Entity('anime')
 @Index(['slug'], { unique: true })
 @Index(['source_id', 'source_anime_id'], { unique: true })
@@ -29,7 +52,7 @@ export class Anime {
   @Column({ length: 255 })
   title: string;
 
-  @Column({ length: 255, unique: true })
+  @Column({ length: 255, unique: true }) // Added unique constraint
   slug: string;
 
   @Column({ length: 255, nullable: true })
@@ -46,17 +69,17 @@ export class Anime {
 
   @Column({
     type: 'enum',
-    enum: ['TV', 'Movie', 'OVA', 'ONA', 'Special', 'Music'],
-    default: 'TV',
+    enum: AnimeType,
+    default: AnimeType.TV,
   })
-  type: string;
+  type: AnimeType;
 
   @Column({
     type: 'enum',
-    enum: ['Ongoing', 'Completed', 'Upcoming', 'Hiatus'],
-    default: 'Ongoing',
+    enum: AnimeStatus,
+    default: AnimeStatus.ONGOING,
   })
-  status: string;
+  status: AnimeStatus;
 
   @Column({ type: 'smallint', nullable: true })
   total_episodes: number;
@@ -66,10 +89,10 @@ export class Anime {
 
   @Column({
     type: 'enum',
-    enum: ['Spring', 'Summer', 'Fall', 'Winter'],
+    enum: AnimeSeason,
     nullable: true,
   })
-  season: string;
+  season: AnimeSeason;
 
   @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true })
   rating: number;
@@ -99,6 +122,7 @@ export class Anime {
   @UpdateDateColumn()
   updated_at: Date;
 
+  // Relations
   @ManyToOne(() => Source, (source) => source.animes)
   @JoinColumn({ name: 'source_id' })
   source: Source;

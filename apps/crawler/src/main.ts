@@ -1,8 +1,12 @@
+import { NestMicroserviceOptions } from '@nestjs/common/interfaces/microservices/nest-microservice-options.interface';
 import { NestFactory } from '@nestjs/core';
 import { CrawlerModule } from './crawler.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(CrawlerModule);
-  await app.listen(process.env.port ?? 3000);
+  const app =
+    await NestFactory.createMicroservice<NestMicroserviceOptions>(
+      CrawlerModule,
+    );
+  await app.listen();
 }
-bootstrap();
+bootstrap().then(() => console.log(`${CrawlerModule.name} is running`));

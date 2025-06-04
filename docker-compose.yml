@@ -1,0 +1,316 @@
+version: '3.8'
+
+x-logging: &default-logging
+  driver: loki
+  options:
+    loki-url: 'http://loki:3100/loki/api/v1/push'
+    loki-pipeline-stages: |
+      - json:
+          expressions:
+            level: level
+            timestamp: timestamp
+            message: message
+            service: service
+      - labels:
+          level:
+          service:
+    loki-external-labels: 'job=nime-crawler,environment=production'
+
+services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./services/api-gateway/Dockerfile
+    image: nime-crawler/api-gateway
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_POOL_MIN=${DATABASE_POOL_MIN}
+      - DATABASE_POOL_MAX=${DATABASE_POOL_MAX}
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    logging: *default-logging
+    networks:
+      - app-network
+
+  # Crawler Service
+  crawler-service:
+    build:
+      context: .
+      dockerfile: ./services/crawler/Dockerfile
+    image: nime-crawler/crawler
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_POOL_MIN=${DATABASE_POOL_MIN}
+      - DATABASE_POOL_MAX=${DATABASE_POOL_MAX}
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    logging: *default-logging
+    networks:
+      - app-network
+
+  # Scheduler Service
+  scheduler-service:
+    build:
+      context: .
+      dockerfile: ./services/scheduler/Dockerfile
+    image: nime-crawler/scheduler
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_POOL_MIN=${DATABASE_POOL_MIN}
+      - DATABASE_POOL_MAX=${DATABASE_POOL_MAX}
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    logging: *default-logging
+    networks:
+      - app-network
+
+  # Link Checker Service
+  link-checker-service:
+    build:
+      context: .
+      dockerfile: ./services/link-checker/Dockerfile
+    image: nime-crawler/link-checker
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_POOL_MIN=${DATABASE_POOL_MIN}
+      - DATABASE_POOL_MAX=${DATABASE_POOL_MAX}
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    logging: *default-logging
+    networks:
+      - app-network
+
+  # Analytics Service
+  analytics-service:
+    build:
+      context: .
+      dockerfile: ./services/analytics/Dockerfile
+    image: nime-crawler/analytics
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_POOL_MIN=${DATABASE_POOL_MIN}
+      - DATABASE_POOL_MAX=${DATABASE_POOL_MAX}
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    logging: *default-logging
+    networks:
+      - app-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: .
+      dockerfile: ./services/notification/Dockerfile
+    image: nime-crawler/notification
+    restart: unless-stopped
+    environment:
+      # Database
+      - NODE_ENV=production
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_POOL_MIN=${DATABASE_POOL_MIN}
+      - DATABASE_POOL_MAX=${DATABASE_POOL_MAX}
+
+      # Message Queue
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+
+      # Discord Bot (necord)
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+      - DISCORD_NOTIFICATION_CHANNEL_ID=${DISCORD_NOTIFICATION_CHANNEL_ID}
+
+      # Telegram Bot (nestjs-telegraf)
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_WEBHOOK_URL=${TELEGRAM_WEBHOOK_URL}
+      - TELEGRAM_WEBHOOK_PATH=${TELEGRAM_WEBHOOK_PATH}
+      - TELEGRAM_ADMIN_IDS=${TELEGRAM_ADMIN_IDS}
+      - TELEGRAM_NOTIFICATION_CHAT_ID=${TELEGRAM_NOTIFICATION_CHAT_ID}
+    logging: *default-logging
+    networks:
+      - app-network
+
+  # Mailer Service
+  mailer-service:
+    build:
+      context: .
+      dockerfile: ./services/mailer/Dockerfile
+    image: nime-crawler/mailer
+    restart: unless-stopped
+    ports:
+      - '3002:3000' # For React Email preview
+    environment:
+      # Service Config
+      - NODE_ENV=production
+      - PORT=3000
+
+      # Database
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_POOL_MIN=${DATABASE_POOL_MIN}
+      - DATABASE_POOL_MAX=${DATABASE_POOL_MAX}
+
+      # Message Queue
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+
+      # MailerSend Configuration
+      - MAILERSEND_API_KEY=${MAILERSEND_API_KEY}
+      - MAILERSEND_FROM_EMAIL=${MAILERSEND_FROM_EMAIL}
+      - MAILERSEND_FROM_NAME="NIME Crawler"
+
+      # React Email Preview (development only)
+      - EMAIL_PREVIEW_PORT=3000
+    volumes:
+      - ./services/mailer/emails:/app/emails
+    logging: *default-logging
+    networks:
+      - app-network
+
+  # Infrastructure Services
+  redis:
+    image: redis:6-alpine
+    restart: unless-stopped
+    volumes:
+      - ~/service/redis_data:/data
+      - ./docker/redis/redis.conf:/etc/nginx/redis.conf:ro
+    logging: *default-logging
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: unless-stopped
+    ports:
+      - '15672:15672' # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    logging: *default-logging
+    networks:
+      - app-network
+
+  # Service Discovery
+  consul:
+    image: consul:1.9
+    restart: unless-stopped
+    ports:
+      - '8500:8500'
+    volumes:
+      - consul-data:/consul/data
+    logging: *default-logging
+    networks:
+      - app-network
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    logging: *default-logging
+    networks:
+      - app-network
+
+  loki:
+    image: grafana/loki:latest
+    restart: unless-stopped
+    ports:
+      - '3100:3100'
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./docker/loki/local-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - '3001:3000'
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    logging: *default-logging
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - app-network
+
+  # Load Balancer
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/certs:/etc/nginx/certs:ro
+    logging: *default-logging
+    depends_on:
+      - api-gateway
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  rabbitmq-data:
+  consul-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:

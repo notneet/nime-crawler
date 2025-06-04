@@ -17,7 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./apps/crawler/test/jest-e2e.json"
+    "test:e2e": "jest --config ./apps/crawler/test/jest-e2e.json",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "typeorm:migration:generate": "npm run typeorm -- migration:generate -d libs/database/src/data-source.ts",
+    "typeorm:migration:run": "npm run typeorm -- migration:run -d libs/database/src/data-source.ts",
+    "typeorm:migration:revert": "npm run typeorm -- migration:revert -d libs/database/src/data-source.ts"
   },
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^6.0.1",
@@ -42,6 +46,7 @@
     "ioredis": "^5.6.1",
     "luxon": "^3.6.1",
     "mysql2": "^3.14.1",
+    "redis": "^5.5.5",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.24"
@@ -94,7 +99,8 @@
       "<rootDir>/apps/"
     ],
     "moduleNameMapper": {
-      "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1"
+      "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1",
+      "^@app/database(|/.*)$": "<rootDir>/libs/database/src/$1"
     }
   }
 }
