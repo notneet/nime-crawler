@@ -17,6 +17,15 @@
         "tsConfigPath": "apps/analytics/tsconfig.app.json"
       }
     },
+    "api-gateway": {
+      "type": "application",
+      "root": "apps/api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+      }
+    },
     "common": {
       "type": "library",
       "root": "libs/common",
@@ -24,6 +33,15 @@
       "sourceRoot": "libs/common/src",
       "compilerOptions": {
         "tsConfigPath": "libs/common/tsconfig.lib.json"
+      }
+    },
+    "crawler": {
+      "type": "application",
+      "root": "apps/crawler",
+      "entryFile": "main",
+      "sourceRoot": "apps/crawler/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/crawler/tsconfig.app.json"
       }
     },
     "link-checker": {
@@ -42,15 +60,6 @@
       "sourceRoot": "apps/mailer/src",
       "compilerOptions": {
         "tsConfigPath": "apps/mailer/tsconfig.app.json"
-      }
-    },
-    "crawler": {
-      "type": "application",
-      "root": "apps/crawler",
-      "entryFile": "main",
-      "sourceRoot": "apps/crawler/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/crawler/tsconfig.app.json"
       }
     },
     "notification": {
