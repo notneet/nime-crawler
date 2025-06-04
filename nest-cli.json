@@ -26,15 +26,6 @@
         "tsConfigPath": "libs/common/tsconfig.lib.json"
       }
     },
-    "crawler": {
-      "type": "application",
-      "root": "apps/crawler",
-      "entryFile": "main",
-      "sourceRoot": "apps/crawler/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/crawler/tsconfig.app.json"
-      }
-    },
     "link-checker": {
       "type": "application",
       "root": "apps/link-checker",
