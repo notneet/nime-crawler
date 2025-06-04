@@ -6,41 +6,25 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021",
+    "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": false,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@helpers": [
-        "libs/helpers/src"
+      "@app/common": [
+        "libs/common/src",
+        "libs/common/src"
       ],
-      "@helpers/*": [
-        "libs/helpers/src/*"
-      ],
-      "@commons": [
-        "libs/commons/src"
-      ],
-      "@commons/*": [
-        "libs/commons/src/*"
-      ],
-      "@entities": [
-        "libs/entities/src"
-      ],
-      "@entities/*": [
-        "libs/entities/src/*"
-      ],
-      "@data-access": [
-        "libs/data-access/src"
-      ],
-      "@data-access/*": [
-        "libs/data-access/src/*"
+      "@app/common/*": [
+        "libs/common/src/*",
+        "libs/common/src/*"
       ]
     }
   }
