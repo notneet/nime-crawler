@@ -4,7 +4,6 @@ import {
   AnimeType,
 } from '@app/common/entities/core/anime.entity';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
   DataSource,
   DeepPartial,
@@ -44,10 +43,8 @@ export interface AnimeSearchOptions {
 @Injectable()
 export class AnimeRepository extends Repository<Anime> {
   constructor(
-    @InjectRepository(Anime)
-    private readonly animeRepository: Repository<Anime>,
+    dataSource: DataSource,
     private readonly redisService: RedisService,
-    private readonly dataSource: DataSource,
   ) {
     super(Anime, dataSource.createEntityManager());
   }
@@ -60,14 +57,14 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.animeRepository.find(options);
+        return this.find(options);
       },
       { ttl: 300, namespace: 'anime' }, // 5 minutes cache
     );
   }
 
   async findOne(options: FindOneOptions<Anime>): Promise<Anime | null> {
-    return this.animeRepository.findOne(options);
+    return this.findOne(options);
   }
 
   async findById(id: number, relations?: string[]): Promise<Anime | null> {
@@ -76,7 +73,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.animeRepository.findOne({
+        return this.findOne({
           where: { id },
           relations,
         });
@@ -91,7 +88,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.animeRepository.findOne({
+        return this.findOne({
           where: { slug },
           relations: ['source', 'genres', 'episodes'],
         });
@@ -106,14 +103,14 @@ export class AnimeRepository extends Repository<Anime> {
   create(
     entityLike?: DeepPartial<Anime> | DeepPartial<Anime>[],
   ): Anime | Anime[] {
-    return this.animeRepository.create(entityLike as any);
+    return this.create(entityLike as any);
   }
 
   async save<T extends DeepPartial<Anime>>(
     entity: T,
     options?: SaveOptions,
   ): Promise<T & Anime> {
-    const savedAnime = await this.animeRepository.save(entity, options);
+    const savedAnime = await this.save(entity, options);
     await this.invalidateListCaches();
     return savedAnime;
   }
@@ -122,7 +119,7 @@ export class AnimeRepository extends Repository<Anime> {
     criteria: number | FindOptionsWhere<Anime>,
     partialEntity: Partial<Anime>,
   ): Promise<UpdateResult> {
-    const result = await this.animeRepository.update(criteria, partialEntity);
+    const result = await this.update(criteria, partialEntity);
 
     // Invalidate caches
     if (typeof criteria === 'number') {
@@ -135,7 +132,7 @@ export class AnimeRepository extends Repository<Anime> {
   async delete(
     criteria: number | FindOptionsWhere<Anime>,
   ): Promise<DeleteResult> {
-    const result = await this.animeRepository.delete(criteria);
+    const result = await this.delete(criteria);
 
     if (typeof criteria === 'number') {
       await this.invalidateAnimeCache(criteria);
@@ -148,7 +145,7 @@ export class AnimeRepository extends Repository<Anime> {
   async softDelete(
     criteria: number | FindOptionsWhere<Anime>,
   ): Promise<UpdateResult> {
-    const result = await this.animeRepository.softDelete(criteria);
+    const result = await this.softDelete(criteria);
 
     if (typeof criteria === 'number') {
       await this.invalidateAnimeCache(criteria);
@@ -169,7 +166,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.animeRepository.findOne({
+        return this.findOne({
           where: { source_id: sourceId, source_anime_id: sourceAnimeId },
         });
       },
@@ -186,7 +183,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.animeRepository.find({
+        return this.find({
           where: { status },
           order: { updated_at: 'DESC' },
           take: limit,
@@ -203,7 +200,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.animeRepository.find({
+        return this.find({
           where: { type },
           order: { rating: 'DESC' },
           take: limit,
@@ -219,7 +216,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.animeRepository.find({
+        return this.find({
           order: { view_count: 'DESC' },
           take: limit,
           relations: ['source'],
@@ -235,7 +232,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.animeRepository.find({
+        return this.find({
           order: { last_updated_at: 'DESC' },
           take: limit,
           relations: ['source'],
@@ -251,8 +248,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.animeRepository
-          .createQueryBuilder('anime')
+        return this.createQueryBuilder('anime')
           .where(
             'anime.title LIKE :query OR anime.alternative_title LIKE :query',
             {
@@ -278,7 +274,7 @@ export class AnimeRepository extends Repository<Anime> {
     const limit = options.limit || 10;
     const skip = (page - 1) * limit;
 
-    let queryBuilder = this.animeRepository.createQueryBuilder('anime');
+    let queryBuilder = this.createQueryBuilder('anime');
 
     // Apply search filters
     if (searchOptions.status) {
@@ -314,12 +310,21 @@ export class AnimeRepository extends Repository<Anime> {
 
     // Apply relations if specified
     if (findOptions.relations) {
-      Object.keys(findOptions.relations).forEach((relation) => {
-        queryBuilder = queryBuilder.leftJoinAndSelect(
-          `anime.${relation}`,
-          relation,
-        );
-      });
+      if (Array.isArray(findOptions.relations)) {
+        findOptions.relations.forEach((relation) => {
+          queryBuilder = queryBuilder.leftJoinAndSelect(
+            `anime.${relation}`,
+            relation,
+          );
+        });
+      } else {
+        Object.keys(findOptions.relations).forEach((relation) => {
+          queryBuilder = queryBuilder.leftJoinAndSelect(
+            `anime.${relation}`,
+            relation,
+          );
+        });
+      }
     }
 
     // Get total count and data
@@ -371,30 +376,28 @@ export class AnimeRepository extends Repository<Anime> {
           totalViews,
           totalDownloads,
         ] = await Promise.all([
-          this.animeRepository.count(),
-          this.animeRepository.count({
+          this.count(),
+          this.count({
             where: { status: AnimeStatus.ONGOING },
           }),
-          this.animeRepository.count({
+          this.count({
             where: { status: AnimeStatus.COMPLETED },
           }),
-          this.animeRepository.count({
+          this.count({
             where: { status: AnimeStatus.UPCOMING },
           }),
-          this.animeRepository.count({ where: { status: AnimeStatus.HIATUS } }),
-          this.animeRepository.count({ where: { type: AnimeType.TV } }),
-          this.animeRepository.count({ where: { type: AnimeType.MOVIE } }),
-          this.animeRepository.count({ where: { type: AnimeType.OVA } }),
-          this.animeRepository.count({ where: { type: AnimeType.ONA } }),
-          this.animeRepository.count({ where: { type: AnimeType.SPECIAL } }),
-          this.animeRepository.count({ where: { type: AnimeType.MUSIC } }),
-          this.animeRepository
-            .createQueryBuilder('anime')
+          this.count({ where: { status: AnimeStatus.HIATUS } }),
+          this.count({ where: { type: AnimeType.TV } }),
+          this.count({ where: { type: AnimeType.MOVIE } }),
+          this.count({ where: { type: AnimeType.OVA } }),
+          this.count({ where: { type: AnimeType.ONA } }),
+          this.count({ where: { type: AnimeType.SPECIAL } }),
+          this.count({ where: { type: AnimeType.MUSIC } }),
+          this.createQueryBuilder('anime')
             .select('SUM(anime.view_count)', 'total')
             .getRawOne()
             .then((result) => parseInt(result.total) || 0),
-          this.animeRepository
-            .createQueryBuilder('anime')
+          this.createQueryBuilder('anime')
             .select('SUM(anime.download_count)', 'total')
             .getRawOne()
             .then((result) => parseInt(result.total) || 0),
@@ -427,7 +430,7 @@ export class AnimeRepository extends Repository<Anime> {
   // ============= UTILITY METHODS =============
 
   async updateViewCount(id: number): Promise<void> {
-    await this.animeRepository.increment({ id }, 'view_count', 1);
+    await this.increment({ id }, 'view_count', 1);
 
     // Update cache counter
     await this.redisService.increment(`views:${id}`, 1, { namespace: 'stats' });
@@ -437,7 +440,7 @@ export class AnimeRepository extends Repository<Anime> {
   }
 
   async updateDownloadCount(id: number): Promise<void> {
-    await this.animeRepository.increment({ id }, 'download_count', 1);
+    await this.increment({ id }, 'download_count', 1);
 
     // Update cache counter
     await this.redisService.increment(`downloads:${id}`, 1, {
@@ -453,7 +456,7 @@ export class AnimeRepository extends Repository<Anime> {
   private async invalidateAnimeCache(animeId: number): Promise<void> {
     try {
       // Get anime to get slug
-      const anime = await this.animeRepository.findOne({
+      const anime = await this.findOne({
         where: { id: animeId },
       });
       if (anime) {

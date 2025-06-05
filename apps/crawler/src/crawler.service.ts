@@ -60,6 +60,10 @@ export class CrawlerService {
 
   constructor(private readonly animeRepository: AnimeRepository) {}
 
+  async basic() {
+    return this.animeRepository.findAll();
+  }
+
   // // ============= BASIC CRUD OPERATIONS =============
 
   // /**

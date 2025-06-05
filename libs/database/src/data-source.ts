@@ -1,9 +1,9 @@
 import { join } from 'path';
-import { DataSource } from 'typeorm';
+import { DataSourceOptions } from 'typeorm';
 
 require('dotenv').config();
 
-const AppDataSource = new DataSource({
+const AppDataSource: DataSourceOptions = {
   type: 'mysql',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '3306', 10) || 3306,
@@ -65,6 +65,6 @@ const AppDataSource = new DataSource({
     },
     duration: 30000, // 30 seconds default cache
   },
-});
+};
 
 export default AppDataSource;

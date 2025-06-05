@@ -52,7 +52,7 @@ export class Anime {
   @Column({ length: 255 })
   title: string;
 
-  @Column({ length: 255, unique: true }) // Added unique constraint
+  @Column({ length: 255 })
   slug: string;
 
   @Column({ length: 255, nullable: true })

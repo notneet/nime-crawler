@@ -1,6 +1,5 @@
 import { registerAs } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { join } from 'path';
 
 export default registerAs(
   'database',
@@ -11,22 +10,8 @@ export default registerAs(
     username: process.env.DB_USERNAME || 'root',
     password: process.env.DB_PASSWORD || 'password',
     database: process.env.DB_DATABASE || 'anime_crawler',
-    entities: [
-      // Core entities
-      join(__dirname, '../common/src/entities/core/*.entity{.ts,.js}'),
-      // Crawler entities
-      join(__dirname, '../common/src/entities/crawler/*.entity{.ts,.js}'),
-      // Monitoring entities
-      join(__dirname, '../common/src/entities/monitoring/*.entity{.ts,.js}'),
-      // Queue entities
-      join(__dirname, '../common/src/entities/queue/*.entity{.ts,.js}'),
-      // Cache entities
-      join(__dirname, '../common/src/entities/cache/*.entity{.ts,.js}'),
-    ],
-    migrations: [
-      // Migrations in database lib
-      join(__dirname, './migrations/*{.ts,.js}'),
-    ],
+    entities: ['dist/**/*.entity{.ts,.js}'],
+    migrations: ['dist/**/*.entity{.ts,.js}'],
     synchronize: process.env.NODE_ENV === 'development',
     logging:
       process.env.NODE_ENV === 'development'

@@ -4,7 +4,7 @@
   "sourceRoot": "apps/crawler/src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": true,
+    "webpack": false,
     "tsConfigPath": "apps/crawler/tsconfig.app.json"
   },
   "projects": {
