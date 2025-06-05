@@ -470,21 +470,21 @@
     amqplib "^0.10.7"
     lodash "^4.17.21"
 
-"@hanivanrizky/nestjs-html-parser@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.npmjs.org/@hanivanrizky/nestjs-html-parser/-/nestjs-html-parser-1.2.0.tgz"
-  integrity sha512-2luq/QLXZJWIJCADPa4cLO7bLmi+dJp0WTv6fB6aOpuh/nE+UUlPWFoQOoq9v/D2+kOXGmRudboKEGe+38IV4Q==
+"@hanivanrizky/nestjs-html-parser@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@hanivanrizky/nestjs-html-parser/-/nestjs-html-parser-1.2.1.tgz#d5b7f29491ea13ca90977e88f0bed1a69a5c134b"
+  integrity sha512-Kq43rtt77HvRTc6CpVv/uhMmFIlJD/SI1OuKyjl3Am0UbnfcuoWQKTTOmaJEQEXG70l18PDxQ2vW5d00LFptpQ==
   dependencies:
     "@ahmedrangel/rand-user-agent" "^2.0.23"
-    "@nestjs/common" "^11.0.1"
-    "@nestjs/core" "^11.0.1"
-    "@nestjs/platform-express" "^11.0.1"
+    "@nestjs/common" "^11.1.2"
+    "@nestjs/core" "^11.1.2"
+    "@nestjs/platform-express" "^11.1.2"
     axios "^1.9.0"
     cheerio "^1.0.0"
     https-proxy-agent "^7.0.6"
     jsdom "^26.1.0"
     reflect-metadata "^0.2.2"
-    rxjs "^7.8.1"
+    rxjs "^7.8.2"
     socks-proxy-agent "^8.0.5"
 
 "@humanfs/core@^0.19.1":
@@ -1085,7 +1085,7 @@
     webpack "5.99.6"
     webpack-node-externals "3.0.0"
 
-"@nestjs/common@^11.0.1":
+"@nestjs/common@^11.0.1", "@nestjs/common@^11.1.2":
   version "11.1.2"
   resolved "https://registry.npmjs.org/@nestjs/common/-/common-11.1.2.tgz"
   integrity sha512-cHh4OPH44PjaHM93D1jgE1HO/B7XTZVRDxy/cPuGgyMEA4p2zXO+qqcOgTMC5FYcp7dX9jLeCjXAU0ToFAnODw==
@@ -1105,7 +1105,7 @@
     dotenv-expand "12.0.1"
     lodash "4.17.21"
 
-"@nestjs/core@^11.0.1":
+"@nestjs/core@^11.0.1", "@nestjs/core@^11.1.2":
   version "11.1.2"
   resolved "https://registry.npmjs.org/@nestjs/core/-/core-11.1.2.tgz"
   integrity sha512-QRuyxwu0BjNfmmmunsw1ylX7RSyfDQHt+xD+tKncdtgiMOOzAu+LA1gB4WoZnw4frQkk+qZbhEbM61cIjOxD3w==
@@ -1125,7 +1125,7 @@
     iterare "1.2.1"
     tslib "2.8.1"
 
-"@nestjs/platform-express@^11.0.1":
+"@nestjs/platform-express@^11.0.1", "@nestjs/platform-express@^11.1.2":
   version "11.1.2"
   resolved "https://registry.npmjs.org/@nestjs/platform-express/-/platform-express-11.1.2.tgz"
   integrity sha512-GlNwOT4htRp8RpZ+TpqGtSHwGKw/abdxxBRse40XE2SWs5ikaoujr9Yd+5sJWDNXB4QTftwb+FplXhyk1Ra+4A==
@@ -5999,7 +5999,7 @@ rxjs@7.8.1:
   dependencies:
     tslib "^2.1.0"
 
-rxjs@^7.8.1:
+rxjs@^7.8.1, rxjs@^7.8.2:
   version "7.8.2"
   resolved "https://registry.npmjs.org/rxjs/-/rxjs-7.8.2.tgz"
   integrity sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==
