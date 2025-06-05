@@ -1,9 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { RabbitSubscribe, Nack, RabbitRPC } from '@golevelup/nestjs-rabbitmq';
-import { 
-  IQueueJob, 
-  IQueueConsumer, 
-  IQueueJobResult, 
+import {
+  IQueueJob,
+  IQueueConsumer,
+  IQueueJobResult,
   QueueJobStatus,
   QUEUE_NAMES,
   EXCHANGE_NAMES,
@@ -33,9 +33,12 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
 
     try {
       this.logger.log(`Processing job ${job.id} of type: ${job.type}`);
-      
+
       // Update metrics
-      await this.metricsService.incrementJobCount(this.getQueueName(job.type), 'processing');
+      await this.metricsService.incrementJobCount(
+        this.getQueueName(job.type),
+        'processing',
+      );
 
       // Process the job
       result = await this.processJob(job);
@@ -48,17 +51,27 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
       // Handle successful completion
       if (result.status === QueueJobStatus.COMPLETED) {
         await this.handleJobCompletion(job, result.result);
-        await this.metricsService.incrementJobCount(this.getQueueName(job.type), 'completed');
-        await this.metricsService.updateProcessingTime(this.getQueueName(job.type), processingTime);
+        await this.metricsService.incrementJobCount(
+          this.getQueueName(job.type),
+          'completed',
+        );
+        await this.metricsService.updateProcessingTime(
+          this.getQueueName(job.type),
+          processingTime,
+        );
       }
 
-      this.logger.log(`Job ${job.id} completed in ${processingTime}ms with status: ${result.status}`);
+      this.logger.log(
+        `Job ${job.id} completed in ${processingTime}ms with status: ${result.status}`,
+      );
       return result;
-
     } catch (error) {
       const processingTime = Date.now() - startTime;
-      
-      this.logger.error(`Job ${job.id} failed after ${processingTime}ms: ${error.message}`, error.stack);
+
+      this.logger.error(
+        `Job ${job.id} failed after ${processingTime}ms: ${error.message}`,
+        error.stack,
+      );
 
       result = {
         jobId: job.id,
@@ -71,7 +84,10 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
 
       // Handle job failure
       await this.handleJobFailure(job, error);
-      await this.metricsService.incrementJobCount(this.getQueueName(job.type), 'failed');
+      await this.metricsService.incrementJobCount(
+        this.getQueueName(job.type),
+        'failed',
+      );
 
       // Check if job should be retried
       if (this.shouldRetryJob(job, error)) {
@@ -91,7 +107,7 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
    */
   async handleJobFailure(job: IQueueJob, error: Error): Promise<void> {
     this.logger.error(`Job ${job.id} failed: ${error.message}`);
-    
+
     // Log failure details
     const failureInfo = {
       jobId: job.id,
@@ -104,7 +120,10 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
     };
 
     // Store failure information (implement based on your needs)
-    this.logger.error('Job failure details:', JSON.stringify(failureInfo, null, 2));
+    this.logger.error(
+      'Job failure details:',
+      JSON.stringify(failureInfo, null, 2),
+    );
   }
 
   /**
@@ -114,7 +133,9 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
     const retryCount = (job.retryCount || 0) + 1;
     const retryDelay = this.calculateRetryDelay(retryCount);
 
-    this.logger.warn(`Retrying job ${job.id} (attempt ${retryCount}/${job.maxRetries}) with delay: ${retryDelay}ms`);
+    this.logger.warn(
+      `Retrying job ${job.id} (attempt ${retryCount}/${job.maxRetries}) with delay: ${retryDelay}ms`,
+    );
 
     // Update job for retry
     const retryJob = {
@@ -130,7 +151,10 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
 
     // Re-queue the job with delay (implementation depends on your queue setup)
     // This would typically involve re-publishing the message
-    await this.metricsService.incrementJobCount(this.getQueueName(job.type), 'retried');
+    await this.metricsService.incrementJobCount(
+      this.getQueueName(job.type),
+      'retried',
+    );
   }
 
   /**
@@ -138,7 +162,7 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
    */
   async handleJobCompletion(job: IQueueJob, result: any): Promise<void> {
     this.logger.log(`Job ${job.id} completed successfully`);
-    
+
     // Log completion details
     const completionInfo = {
       jobId: job.id,
@@ -148,7 +172,10 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
       resultSize: JSON.stringify(result || {}).length,
     };
 
-    this.logger.debug('Job completion details:', JSON.stringify(completionInfo, null, 2));
+    this.logger.debug(
+      'Job completion details:',
+      JSON.stringify(completionInfo, null, 2),
+    );
   }
 
   /**
@@ -171,7 +198,9 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
       'NotFoundError',
     ];
 
-    if (nonRetriableErrors.some(errorType => error.message.includes(errorType))) {
+    if (
+      nonRetriableErrors.some(errorType => error.message.includes(errorType))
+    ) {
       return false;
     }
 
@@ -185,7 +214,7 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
     const baseDelay = 1000; // 1 second
     const maxDelay = 60000; // 1 minute
     const exponentialDelay = baseDelay * Math.pow(2, retryCount - 1);
-    
+
     return Math.min(exponentialDelay, maxDelay);
   }
 
@@ -201,10 +230,14 @@ export abstract class BaseQueueConsumer implements IQueueConsumer {
       return QUEUE_NAMES.ANALYTICS;
     } else if (['discord', 'telegram', 'email', 'webhook'].includes(jobType)) {
       return QUEUE_NAMES.NOTIFICATION;
-    } else if (jobType.includes('daily') || jobType.includes('hourly') || jobType.includes('schedule')) {
+    } else if (
+      jobType.includes('daily') ||
+      jobType.includes('hourly') ||
+      jobType.includes('schedule')
+    ) {
       return QUEUE_NAMES.SCHEDULER;
     }
-    
+
     return 'default.queue';
   }
 

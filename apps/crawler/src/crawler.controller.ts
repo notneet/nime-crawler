@@ -1,22 +1,14 @@
-import { Controller, OnApplicationBootstrap } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { CrawlerService } from './crawler.service';
+import { Controller, OnApplicationBootstrap, Logger } from '@nestjs/common';
+import { CrawlerMicroservice } from './crawler.microservice';
 
 @Controller()
 export class CrawlerController implements OnApplicationBootstrap {
-  constructor(
-    private readonly crawlerService: CrawlerService,
-    private readonly configService: ConfigService,
-  ) {}
+  private readonly logger = new Logger(CrawlerController.name);
+
+  constructor(private readonly crawlerMicroservice: CrawlerMicroservice) {}
 
   async onApplicationBootstrap() {
-    const result = await this.crawlerService.getAllAnime();
-    console.dir(result, { depth: null });
+    this.logger.log('Crawler microservice starting...');
+    // The microservice will initialize itself in onModuleInit
   }
-  // async onApplicationBootstrap() {
-  // console.log('ok');
-  // console.log(this.configService.get('database'));
-  // const result = await this.crawlerService.getAllAnime();
-  // console.log(result);
-  // }
 }

@@ -7,7 +7,7 @@ export function formatDateToISO(date: Date | string): string {
   }
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   if (isNaN(dateObj.getTime())) {
     return '';
   }
@@ -62,7 +62,7 @@ export function addMinutes(date: Date, minutes: number): Date {
 export function isToday(date: Date): boolean {
   const today = new Date();
   const targetDate = new Date(date);
-  
+
   return today.toDateString() === targetDate.toDateString();
 }
 
@@ -112,7 +112,7 @@ export function formatDisplayDate(date: Date | string): string {
   }
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   if (isNaN(dateObj.getTime())) {
     return '';
   }
@@ -133,7 +133,7 @@ export function formatDisplayDateTime(date: Date | string): string {
   }
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   if (isNaN(dateObj.getTime())) {
     return '';
   }
@@ -156,7 +156,7 @@ export function getRelativeTime(date: Date | string): string {
   }
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   if (isNaN(dateObj.getTime())) {
     return '';
   }

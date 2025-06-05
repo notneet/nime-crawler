@@ -153,31 +153,64 @@ export class QueueConfigService {
   private loadConfiguration(): QueueConfiguration {
     return {
       connection: {
-        url: this.configService.get<string>('RABBITMQ_URL', 'amqp://localhost:5672'),
+        url: this.configService.get<string>(
+          'RABBITMQ_URL',
+          'amqp://localhost:5672',
+        ),
         heartbeat: this.configService.get<number>('QUEUE_HEARTBEAT', 60),
         prefetch: this.configService.get<number>('QUEUE_PREFETCH', 10),
-        reconnectAttempts: this.configService.get<number>('QUEUE_RECONNECT_ATTEMPTS', 5),
-        reconnectDelay: this.configService.get<number>('QUEUE_RECONNECT_DELAY', 5000),
+        reconnectAttempts: this.configService.get<number>(
+          'QUEUE_RECONNECT_ATTEMPTS',
+          5,
+        ),
+        reconnectDelay: this.configService.get<number>(
+          'QUEUE_RECONNECT_DELAY',
+          5000,
+        ),
       },
       retry: {
         maxRetries: this.configService.get<number>('QUEUE_MAX_RETRIES', 3),
-        baseDelay: this.configService.get<number>('QUEUE_RETRY_BASE_DELAY', 1000),
-        maxDelay: this.configService.get<number>('QUEUE_RETRY_MAX_DELAY', 60000),
-        exponentialBase: this.configService.get<number>('QUEUE_RETRY_EXPONENTIAL_BASE', 2),
+        baseDelay: this.configService.get<number>(
+          'QUEUE_RETRY_BASE_DELAY',
+          1000,
+        ),
+        maxDelay: this.configService.get<number>(
+          'QUEUE_RETRY_MAX_DELAY',
+          60000,
+        ),
+        exponentialBase: this.configService.get<number>(
+          'QUEUE_RETRY_EXPONENTIAL_BASE',
+          2,
+        ),
       },
       metrics: {
         enabled: this.configService.get<boolean>('QUEUE_METRICS_ENABLED', true),
-        collectInterval: this.configService.get<number>('QUEUE_METRICS_INTERVAL', 30000),
-        retentionPeriod: this.configService.get<number>('QUEUE_METRICS_RETENTION', 86400000), // 24 hours
+        collectInterval: this.configService.get<number>(
+          'QUEUE_METRICS_INTERVAL',
+          30000,
+        ),
+        retentionPeriod: this.configService.get<number>(
+          'QUEUE_METRICS_RETENTION',
+          86400000,
+        ), // 24 hours
       },
       deadLetter: {
         enabled: this.configService.get<boolean>('QUEUE_DLQ_ENABLED', true),
         ttl: this.configService.get<number>('QUEUE_DLQ_TTL', 604800000), // 7 days
-        maxLength: this.configService.get<number>('QUEUE_DLQ_MAX_LENGTH', 10000),
+        maxLength: this.configService.get<number>(
+          'QUEUE_DLQ_MAX_LENGTH',
+          10000,
+        ),
       },
       exchanges: {
-        default: this.configService.get<string>('QUEUE_DEFAULT_EXCHANGE', 'nime.exchange'),
-        deadLetter: this.configService.get<string>('QUEUE_DLQ_EXCHANGE', 'nime.dlx'),
+        default: this.configService.get<string>(
+          'QUEUE_DEFAULT_EXCHANGE',
+          'nime.exchange',
+        ),
+        deadLetter: this.configService.get<string>(
+          'QUEUE_DLQ_EXCHANGE',
+          'nime.dlx',
+        ),
       },
       queues: {
         'crawl.queue': {
@@ -219,8 +252,14 @@ export class QueueConfigService {
           durable: true,
           exclusive: false,
           autoDelete: false,
-          messageTtl: this.configService.get<number>('QUEUE_DLQ_TTL', 604800000),
-          maxLength: this.configService.get<number>('QUEUE_DLQ_MAX_LENGTH', 10000),
+          messageTtl: this.configService.get<number>(
+            'QUEUE_DLQ_TTL',
+            604800000,
+          ),
+          maxLength: this.configService.get<number>(
+            'QUEUE_DLQ_MAX_LENGTH',
+            10000,
+          ),
         },
       },
     };
@@ -334,7 +373,7 @@ export class QueueConfigService {
    */
   getEnvironmentConfig(): any {
     const env = this.configService.get<string>('NODE_ENV', 'development');
-    
+
     const environmentConfigs = {
       development: {
         connection: { prefetch: 1 },

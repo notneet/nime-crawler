@@ -13,12 +13,12 @@ export class SeedRunner {
     try {
       console.log('Initializing database connection...');
       await this.dataSource.initialize();
-      
+
       console.log('Starting seeding process...');
-      
+
       const animeSeeder = new AnimeSeeder();
       await animeSeeder.run(this.dataSource);
-      
+
       console.log('Seeding completed successfully!');
     } catch (error) {
       console.error('Error during seeding:', error);
@@ -35,7 +35,7 @@ export class SeedRunner {
 // Run seeder if this file is executed directly
 if (require.main === module) {
   const seedRunner = new SeedRunner();
-  seedRunner.run().catch((error) => {
+  seedRunner.run().catch(error => {
     console.error('Seeding failed:', error);
     process.exit(1);
   });

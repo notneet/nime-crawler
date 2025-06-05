@@ -9,6 +9,14 @@ import {
   PaginationOptions,
 } from '@app/database/repositories/anime.repository';
 import { Injectable, Logger } from '@nestjs/common';
+import { AnimeScraperService } from './scrapers/anime-scraper.service';
+import {
+  AnimeProcessor,
+  BulkProcessResult as ProcessorBulkProcessResult,
+} from './processors/anime.processor';
+import { Source } from '@app/common/entities/core/source.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 export interface CreateAnimeDto {
   title: string;
@@ -58,7 +66,13 @@ export interface BulkProcessResult {
 export class CrawlerService {
   private readonly logger = new Logger(CrawlerService.name);
 
-  constructor(private readonly animeRepository: AnimeRepository) {}
+  constructor(
+    private readonly animeRepository: AnimeRepository,
+    private readonly animeScraperService: AnimeScraperService,
+    private readonly animeProcessor: AnimeProcessor,
+    @InjectRepository(Source)
+    private readonly sourceRepository: Repository<Source>,
+  ) {}
 
   async basic() {
     return this.animeRepository.findAll();
@@ -813,6 +827,231 @@ export class CrawlerService {
   //     return false;
   //   });
   // }
+
+  async crawlSource(
+    sourceId: number,
+    maxPages: number = 5,
+  ): Promise<ProcessorBulkProcessResult> {
+    try {
+      this.logger.log(`Starting crawl for source ID: ${sourceId}`);
+
+      const source = await this.sourceRepository.findOne({
+        where: { id: sourceId, is_active: true },
+      });
+
+      if (!source) {
+        throw new Error(`Active source with ID ${sourceId} not found`);
+      }
+
+      this.logger.log(`Crawling source: ${source.name} (${source.base_url})`);
+
+      const scrapedData =
+        await this.animeScraperService.scrapePaginatedAnimeList(
+          source,
+          maxPages,
+        );
+
+      this.logger.log(
+        `Scraped ${scrapedData.length} anime from ${source.name}`,
+      );
+
+      const processResult = await this.animeProcessor.bulkProcessScrapedAnime(
+        source,
+        scrapedData,
+      );
+
+      await this.updateSourceLastCrawled(sourceId);
+
+      this.logger.log(
+        `Crawl complete for ${source.name}: ${processResult.created} created, ${processResult.updated} updated`,
+      );
+
+      return processResult;
+    } catch (error) {
+      this.logger.error(`Error crawling source ${sourceId}:`, error);
+      throw error;
+    }
+  }
+
+  async crawlAllActiveSources(
+    maxPages: number = 3,
+  ): Promise<{ [sourceId: number]: ProcessorBulkProcessResult }> {
+    try {
+      this.logger.log('Starting crawl for all active sources');
+
+      const activeSources = await this.sourceRepository.find({
+        where: { is_active: true },
+        order: { priority: 'DESC', last_crawled_at: 'ASC' },
+      });
+
+      this.logger.log(`Found ${activeSources.length} active sources`);
+
+      const results: { [sourceId: number]: ProcessorBulkProcessResult } = {};
+
+      for (const source of activeSources) {
+        try {
+          this.logger.log(`Processing source: ${source.name}`);
+
+          results[source.id] = await this.crawlSource(source.id, maxPages);
+
+          // Respect rate limiting between sources
+          if (source.delay_ms > 0) {
+            await this.delay(source.delay_ms);
+          }
+        } catch (error) {
+          this.logger.error(`Error crawling source ${source.name}:`, error);
+          results[source.id] = {
+            processed: 0,
+            created: 0,
+            updated: 0,
+            skipped: 0,
+            errors: [
+              {
+                sourceAnimeId: 'unknown',
+                title: 'unknown',
+                error: error.message,
+              },
+            ],
+          };
+        }
+      }
+
+      this.logger.log('Completed crawling all active sources');
+      return results;
+    } catch (error) {
+      this.logger.error('Error crawling all sources:', error);
+      throw error;
+    }
+  }
+
+  async updateStaleAnime(
+    sourceId?: number,
+    olderThanHours: number = 24,
+  ): Promise<ProcessorBulkProcessResult> {
+    try {
+      this.logger.log(
+        `Updating stale anime (older than ${olderThanHours} hours)`,
+      );
+
+      const staleAnime = await this.animeProcessor.getAnimeNeedingUpdates(
+        sourceId,
+        olderThanHours,
+        100,
+      );
+
+      if (staleAnime.length === 0) {
+        this.logger.log('No stale anime found');
+        return {
+          processed: 0,
+          created: 0,
+          updated: 0,
+          skipped: 0,
+          errors: [],
+        };
+      }
+
+      this.logger.log(`Found ${staleAnime.length} stale anime to update`);
+
+      // Group anime by source for efficient crawling
+      const animeBySource = staleAnime.reduce(
+        (acc, anime) => {
+          if (!acc[anime.source_id]) {
+            acc[anime.source_id] = [];
+          }
+          acc[anime.source_id].push(anime);
+          return acc;
+        },
+        {} as { [sourceId: number]: typeof staleAnime },
+      );
+
+      const combinedResult: ProcessorBulkProcessResult = {
+        processed: 0,
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        errors: [],
+      };
+
+      for (const [sourceIdStr] of Object.entries(animeBySource)) {
+        const sourceId = parseInt(sourceIdStr, 10);
+
+        try {
+          const source = await this.sourceRepository.findOne({
+            where: { id: sourceId, is_active: true },
+          });
+
+          if (!source) {
+            this.logger.warn(`Source ${sourceId} not found or inactive`);
+            continue;
+          }
+
+          // For now, we'll re-crawl the entire source
+          // In the future, we could implement targeted anime updates
+          const result = await this.crawlSource(sourceId, 2);
+
+          combinedResult.processed += result.processed;
+          combinedResult.created += result.created;
+          combinedResult.updated += result.updated;
+          combinedResult.skipped += result.skipped;
+          combinedResult.errors.push(...result.errors);
+        } catch (error) {
+          this.logger.error(
+            `Error updating stale anime for source ${sourceId}:`,
+            error,
+          );
+        }
+      }
+
+      this.logger.log(
+        `Stale anime update complete: ${combinedResult.updated} updated, ${combinedResult.errors.length} errors`,
+      );
+
+      return combinedResult;
+    } catch (error) {
+      this.logger.error('Error updating stale anime:', error);
+      throw error;
+    }
+  }
+
+  async getActiveSources() {
+    try {
+      return await this.sourceRepository.find({
+        where: { is_active: true },
+        order: { priority: 'DESC', name: 'ASC' },
+      });
+    } catch (error) {
+      this.logger.error('Error fetching active sources:', error);
+      throw error;
+    }
+  }
+
+  async getSourceById(sourceId: number) {
+    try {
+      return await this.sourceRepository.findOne({
+        where: { id: sourceId },
+      });
+    } catch (error) {
+      this.logger.error(`Error fetching source ${sourceId}:`, error);
+      throw error;
+    }
+  }
+
+  async updateSourceLastCrawled(sourceId: number): Promise<void> {
+    try {
+      await this.sourceRepository.update(sourceId, {
+        last_crawled_at: new Date(),
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error updating last crawled time for source ${sourceId}:`,
+        error,
+      );
+    }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
   /**
    * Legacy method for backward compatibility

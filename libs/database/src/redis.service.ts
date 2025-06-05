@@ -51,7 +51,7 @@ export class RedisService implements OnModuleDestroy {
       this.logger.log('Redis connected successfully');
     });
 
-    this.redis.on('error', (error) => {
+    this.redis.on('error', error => {
       this.logger.error('Redis connection error:', error);
     });
 
@@ -325,7 +325,7 @@ export class RedisService implements OnModuleDestroy {
   ): Promise<number> {
     try {
       const fullKey = this.buildKey(key, options);
-      const stringValues = values.map((v) => JSON.stringify(v));
+      const stringValues = values.map(v => JSON.stringify(v));
       return await this.redis.lpush(fullKey, ...stringValues);
     } catch (error) {
       this.logger.error(`Cache lpush error for key ${key}:`, error);
@@ -359,7 +359,7 @@ export class RedisService implements OnModuleDestroy {
     try {
       const fullKey = this.buildKey(key, options);
       const data = await this.redis.lrange(fullKey, start, stop);
-      return data.map((item) => JSON.parse(item));
+      return data.map(item => JSON.parse(item));
     } catch (error) {
       this.logger.error(`Cache lrange error for key ${key}:`, error);
       return [];
@@ -391,7 +391,7 @@ export class RedisService implements OnModuleDestroy {
   ): Promise<number> {
     try {
       const fullKey = this.buildKey(key, options);
-      const stringValues = values.map((v) => JSON.stringify(v));
+      const stringValues = values.map(v => JSON.stringify(v));
       return await this.redis.sadd(fullKey, ...stringValues);
     } catch (error) {
       this.logger.error(`Cache sadd error for key ${key}:`, error);
@@ -406,7 +406,7 @@ export class RedisService implements OnModuleDestroy {
     try {
       const fullKey = this.buildKey(key, options);
       const data = await this.redis.smembers(fullKey);
-      return data.map((item) => JSON.parse(item));
+      return data.map(item => JSON.parse(item));
     } catch (error) {
       this.logger.error(`Cache smembers error for key ${key}:`, error);
       return [];
@@ -493,7 +493,7 @@ export class RedisService implements OnModuleDestroy {
    */
   private parseInfoValue(info: string, key: string): string {
     const lines = info.split('\r\n');
-    const line = lines.find((l) => l.startsWith(`${key}:`));
+    const line = lines.find(l => l.startsWith(`${key}:`));
     return line ? line.split(':')[1] : '0';
   }
 

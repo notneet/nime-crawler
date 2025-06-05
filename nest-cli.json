@@ -88,6 +88,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/scheduler/tsconfig.app.json"
       }
+    },
+    "queue": {
+      "type": "library",
+      "root": "libs/queue",
+      "entryFile": "index",
+      "sourceRoot": "libs/queue/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/queue/tsconfig.lib.json"
+      }
     }
   },
   "monorepo": true,

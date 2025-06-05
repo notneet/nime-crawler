@@ -34,7 +34,7 @@ export class AnimeUpdateHistory {
   @CreateDateColumn()
   updated_at: Date;
 
-  @ManyToOne(() => Anime, (anime) => anime.update_history)
+  @ManyToOne(() => Anime, anime => anime.update_history)
   @JoinColumn({ name: 'anime_id' })
   anime: Anime;
 }

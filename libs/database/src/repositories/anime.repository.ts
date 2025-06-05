@@ -311,14 +311,14 @@ export class AnimeRepository extends Repository<Anime> {
     // Apply relations if specified
     if (findOptions.relations) {
       if (Array.isArray(findOptions.relations)) {
-        findOptions.relations.forEach((relation) => {
+        findOptions.relations.forEach(relation => {
           queryBuilder = queryBuilder.leftJoinAndSelect(
             `anime.${relation}`,
             relation,
           );
         });
       } else {
-        Object.keys(findOptions.relations).forEach((relation) => {
+        Object.keys(findOptions.relations).forEach(relation => {
           queryBuilder = queryBuilder.leftJoinAndSelect(
             `anime.${relation}`,
             relation,
@@ -367,6 +367,8 @@ export class AnimeRepository extends Repository<Anime> {
           completedCount,
           upcomingCount,
           hiatusCount,
+          airingCount,
+          cancelledCount,
           tvCount,
           movieCount,
           ovaCount,
@@ -387,6 +389,8 @@ export class AnimeRepository extends Repository<Anime> {
             where: { status: AnimeStatus.UPCOMING },
           }),
           this.count({ where: { status: AnimeStatus.HIATUS } }),
+          this.count({ where: { status: AnimeStatus.AIRING } }),
+          this.count({ where: { status: AnimeStatus.CANCELLED } }),
           this.count({ where: { type: AnimeType.TV } }),
           this.count({ where: { type: AnimeType.MOVIE } }),
           this.count({ where: { type: AnimeType.OVA } }),
@@ -396,11 +400,11 @@ export class AnimeRepository extends Repository<Anime> {
           this.createQueryBuilder('anime')
             .select('SUM(anime.view_count)', 'total')
             .getRawOne()
-            .then((result) => parseInt(result.total) || 0),
+            .then(result => parseInt(result.total) || 0),
           this.createQueryBuilder('anime')
             .select('SUM(anime.download_count)', 'total')
             .getRawOne()
-            .then((result) => parseInt(result.total) || 0),
+            .then(result => parseInt(result.total) || 0),
         ]);
 
         return {
@@ -410,6 +414,8 @@ export class AnimeRepository extends Repository<Anime> {
             [AnimeStatus.COMPLETED]: completedCount,
             [AnimeStatus.UPCOMING]: upcomingCount,
             [AnimeStatus.HIATUS]: hiatusCount,
+            [AnimeStatus.AIRING]: airingCount,
+            [AnimeStatus.CANCELLED]: cancelledCount,
           },
           byType: {
             [AnimeType.TV]: tvCount,

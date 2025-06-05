@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsOptional, IsEnum, IsObject, IsDate } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  IsObject,
+  IsDate,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPositiveInt, IsRetryCount, ParseJson } from '../decorators';
 
@@ -57,9 +64,9 @@ export class BaseQueueJobDto {
 }
 
 export class CrawlJobDto extends BaseQueueJobDto {
-  type: 'crawl-anime' | 'crawl-episode' | 'crawl-source';
-  
-  data: {
+  declare type: 'crawl-anime' | 'crawl-episode' | 'crawl-source';
+
+  declare data: {
     sourceId: number;
     sourceAnimeId?: string;
     animeId?: number;
@@ -70,9 +77,9 @@ export class CrawlJobDto extends BaseQueueJobDto {
 }
 
 export class LinkCheckJobDto extends BaseQueueJobDto {
-  type: 'check-link' | 'health-check' | 'batch-check';
-  
-  data: {
+  declare type: 'check-link' | 'health-check' | 'batch-check';
+
+  declare data: {
     linkId?: number;
     episodeId?: number;
     urls?: string[];
@@ -81,9 +88,9 @@ export class LinkCheckJobDto extends BaseQueueJobDto {
 }
 
 export class AnalyticsJobDto extends BaseQueueJobDto {
-  type: 'track-view' | 'track-download' | 'track-search' | 'aggregate-stats';
-  
-  data: {
+  declare type: 'track-view' | 'track-download' | 'track-search' | 'aggregate-stats';
+
+  declare data: {
     animeId?: number;
     episodeId?: number;
     userId?: string;
@@ -95,9 +102,9 @@ export class AnalyticsJobDto extends BaseQueueJobDto {
 }
 
 export class NotificationJobDto extends BaseQueueJobDto {
-  type: 'discord' | 'telegram' | 'email' | 'webhook';
-  
-  data: {
+  declare type: 'discord' | 'telegram' | 'email' | 'webhook';
+
+  declare data: {
     recipients?: string[];
     channelId?: string;
     chatId?: string;
@@ -110,9 +117,9 @@ export class NotificationJobDto extends BaseQueueJobDto {
 }
 
 export class SchedulerJobDto extends BaseQueueJobDto {
-  type: 'daily-crawl' | 'hourly-check' | 'weekly-cleanup' | 'custom-task';
-  
-  data: {
+  declare type: 'daily-crawl' | 'hourly-check' | 'weekly-cleanup' | 'custom-task';
+
+  declare data: {
     taskName: string;
     sourceIds?: number[];
     parameters?: any;

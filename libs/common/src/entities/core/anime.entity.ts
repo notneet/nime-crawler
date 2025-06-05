@@ -15,29 +15,10 @@ import { AnimeUpdateHistory } from '../monitoring/anime-update-history.entity';
 import { Episode } from './episode.entity';
 import { Genre } from './genre.entity';
 import { Source } from './source.entity';
+import { AnimeType, AnimeStatus, AnimeSeason } from '../../enums/anime.enums';
 
-export enum AnimeType {
-  TV = 'TV',
-  MOVIE = 'Movie',
-  OVA = 'OVA',
-  ONA = 'ONA',
-  SPECIAL = 'Special',
-  MUSIC = 'Music',
-}
-
-export enum AnimeStatus {
-  ONGOING = 'Ongoing',
-  COMPLETED = 'Completed',
-  UPCOMING = 'Upcoming',
-  HIATUS = 'Hiatus',
-}
-
-export enum AnimeSeason {
-  SPRING = 'Spring',
-  SUMMER = 'Summer',
-  FALL = 'Fall',
-  WINTER = 'Winter',
-}
+// Re-export enums for backward compatibility
+export { AnimeType, AnimeStatus, AnimeSeason };
 
 @Entity('anime')
 @Index(['slug'], { unique: true })
@@ -123,14 +104,14 @@ export class Anime {
   updated_at: Date;
 
   // Relations
-  @ManyToOne(() => Source, (source) => source.animes)
+  @ManyToOne(() => Source, source => source.animes)
   @JoinColumn({ name: 'source_id' })
   source: Source;
 
-  @OneToMany(() => Episode, (episode) => episode.anime)
+  @OneToMany(() => Episode, episode => episode.anime)
   episodes: Episode[];
 
-  @ManyToMany(() => Genre, (genre) => genre.animes)
+  @ManyToMany(() => Genre, genre => genre.animes)
   @JoinTable({
     name: 'anime_genres',
     joinColumn: { name: 'anime_id', referencedColumnName: 'id' },
@@ -138,6 +119,6 @@ export class Anime {
   })
   genres: Genre[];
 
-  @OneToMany(() => AnimeUpdateHistory, (history) => history.anime)
+  @OneToMany(() => AnimeUpdateHistory, history => history.anime)
   update_history: AnimeUpdateHistory[];
 }

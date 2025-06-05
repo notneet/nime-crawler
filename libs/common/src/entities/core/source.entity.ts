@@ -49,9 +49,9 @@ export class Source {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @OneToMany(() => Anime, (anime) => anime.source)
+  @OneToMany(() => Anime, anime => anime.source)
   animes: Anime[];
 
-  @OneToMany(() => CrawlJob, (job) => job.source)
+  @OneToMany(() => CrawlJob, job => job.source)
   crawl_jobs: CrawlJob[];
 }

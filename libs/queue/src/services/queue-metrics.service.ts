@@ -21,7 +21,7 @@ export class QueueMetricsService {
         failedJobs: 0,
         averageProcessingTime: 0,
       });
-      
+
       this.processingTimes.set(queueName, []);
       this.logger.log(`Initialized metrics for queue: ${queueName}`);
     }
@@ -30,7 +30,16 @@ export class QueueMetricsService {
   /**
    * Increment job count for specific status
    */
-  async incrementJobCount(queueName: string, status: 'produced' | 'processing' | 'completed' | 'failed' | 'retried' | 'scheduled'): Promise<void> {
+  async incrementJobCount(
+    queueName: string,
+    status:
+      | 'produced'
+      | 'processing'
+      | 'completed'
+      | 'failed'
+      | 'retried'
+      | 'scheduled',
+  ): Promise<void> {
     this.initializeQueueMetrics(queueName);
     const metrics = this.metrics.get(queueName)!;
 
@@ -60,15 +69,20 @@ export class QueueMetricsService {
         break;
     }
 
-    this.logger.debug(`Updated ${queueName} metrics: ${status} - Total: ${metrics.totalJobs}, Pending: ${metrics.pendingJobs}, Processing: ${metrics.processingJobs}, Completed: ${metrics.completedJobs}, Failed: ${metrics.failedJobs}`);
+    this.logger.debug(
+      `Updated ${queueName} metrics: ${status} - Total: ${metrics.totalJobs}, Pending: ${metrics.pendingJobs}, Processing: ${metrics.processingJobs}, Completed: ${metrics.completedJobs}, Failed: ${metrics.failedJobs}`,
+    );
   }
 
   /**
    * Update processing time for a queue
    */
-  async updateProcessingTime(queueName: string, processingTimeMs: number): Promise<void> {
+  async updateProcessingTime(
+    queueName: string,
+    processingTimeMs: number,
+  ): Promise<void> {
     this.initializeQueueMetrics(queueName);
-    
+
     let times = this.processingTimes.get(queueName)!;
     times.push(processingTimeMs);
 
@@ -79,11 +93,14 @@ export class QueueMetricsService {
     }
 
     // Calculate average processing time
-    const averageTime = times.reduce((sum, time) => sum + time, 0) / times.length;
+    const averageTime =
+      times.reduce((sum, time) => sum + time, 0) / times.length;
     const metrics = this.metrics.get(queueName)!;
     metrics.averageProcessingTime = Math.round(averageTime);
 
-    this.logger.debug(`Updated processing time for ${queueName}: ${processingTimeMs}ms (avg: ${metrics.averageProcessingTime}ms)`);
+    this.logger.debug(
+      `Updated processing time for ${queueName}: ${processingTimeMs}ms (avg: ${metrics.averageProcessingTime}ms)`,
+    );
   }
 
   /**
@@ -121,15 +138,19 @@ export class QueueMetricsService {
   /**
    * Get queue health status
    */
-  getQueueHealth(queueName: string): { status: 'healthy' | 'warning' | 'critical'; details: string } {
+  getQueueHealth(queueName: string): {
+    status: 'healthy' | 'warning' | 'critical';
+    details: string;
+  } {
     const metrics = this.metrics.get(queueName);
-    
+
     if (!metrics) {
       return { status: 'critical', details: 'Queue metrics not found' };
     }
 
     const totalProcessed = metrics.completedJobs + metrics.failedJobs;
-    const failureRate = totalProcessed > 0 ? (metrics.failedJobs / totalProcessed) * 100 : 0;
+    const failureRate =
+      totalProcessed > 0 ? (metrics.failedJobs / totalProcessed) * 100 : 0;
     const currentlyProcessing = metrics.processingJobs;
     const pending = metrics.pendingJobs;
 
@@ -139,7 +160,10 @@ export class QueueMetricsService {
     const HIGH_PROCESSING_TIME = 30000; // 30 seconds
 
     if (failureRate > HIGH_FAILURE_RATE) {
-      return { status: 'critical', details: `High failure rate: ${failureRate.toFixed(1)}%` };
+      return {
+        status: 'critical',
+        details: `High failure rate: ${failureRate.toFixed(1)}%`,
+      };
     }
 
     if (pending > HIGH_PENDING_COUNT) {
@@ -147,11 +171,17 @@ export class QueueMetricsService {
     }
 
     if (metrics.averageProcessingTime > HIGH_PROCESSING_TIME) {
-      return { status: 'warning', details: `High processing time: ${metrics.averageProcessingTime}ms` };
+      return {
+        status: 'warning',
+        details: `High processing time: ${metrics.averageProcessingTime}ms`,
+      };
     }
 
     if (failureRate > 5 || pending > 100) {
-      return { status: 'warning', details: `Moderate load - Failure rate: ${failureRate.toFixed(1)}%, Pending: ${pending}` };
+      return {
+        status: 'warning',
+        details: `Moderate load - Failure rate: ${failureRate.toFixed(1)}%, Pending: ${pending}`,
+      };
     }
 
     return { status: 'healthy', details: 'Queue operating normally' };
@@ -160,7 +190,10 @@ export class QueueMetricsService {
   /**
    * Get overall system health
    */
-  getSystemHealth(): { status: 'healthy' | 'warning' | 'critical'; details: any[] } {
+  getSystemHealth(): {
+    status: 'healthy' | 'warning' | 'critical';
+    details: any[];
+  } {
     const allMetrics = this.getAllMetrics();
     const healthStatuses = allMetrics.map(metrics => ({
       queue: metrics.queueName,
@@ -184,9 +217,16 @@ export class QueueMetricsService {
   /**
    * Get processing time statistics
    */
-  getProcessingTimeStats(queueName: string): { min: number; max: number; avg: number; p50: number; p95: number; p99: number } | null {
+  getProcessingTimeStats(queueName: string): {
+    min: number;
+    max: number;
+    avg: number;
+    p50: number;
+    p95: number;
+    p99: number;
+  } | null {
     const times = this.processingTimes.get(queueName);
-    
+
     if (!times || times.length === 0) {
       return null;
     }
@@ -213,7 +253,7 @@ export class QueueMetricsService {
 
     allMetrics.forEach(metrics => {
       const queueLabel = `queue="${metrics.queueName}"`;
-      
+
       output += `# HELP queue_total_jobs Total jobs processed by queue\n`;
       output += `# TYPE queue_total_jobs counter\n`;
       output += `queue_total_jobs{${queueLabel}} ${metrics.totalJobs}\n\n`;
@@ -247,21 +287,21 @@ export class QueueMetricsService {
    */
   logMetricsSummary(): void {
     const allMetrics = this.getAllMetrics();
-    
+
     if (allMetrics.length === 0) {
       this.logger.log('No queue metrics available');
       return;
     }
 
     this.logger.log('=== Queue Metrics Summary ===');
-    
+
     allMetrics.forEach(metrics => {
       const health = this.getQueueHealth(metrics.queueName);
       this.logger.log(
         `${metrics.queueName}: Total=${metrics.totalJobs}, Pending=${metrics.pendingJobs}, ` +
-        `Processing=${metrics.processingJobs}, Completed=${metrics.completedJobs}, ` +
-        `Failed=${metrics.failedJobs}, AvgTime=${metrics.averageProcessingTime}ms, ` +
-        `Health=${health.status} (${health.details})`
+          `Processing=${metrics.processingJobs}, Completed=${metrics.completedJobs}, ` +
+          `Failed=${metrics.failedJobs}, AvgTime=${metrics.averageProcessingTime}ms, ` +
+          `Health=${health.status} (${health.details})`,
       );
     });
 

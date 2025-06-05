@@ -21,6 +21,9 @@ export class CrawlJob {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ length: 36, unique: true })
+  job_id: string;
+
   @Column()
   source_id: number;
 
@@ -70,10 +73,10 @@ export class CrawlJob {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @ManyToOne(() => Source, (source) => source.crawl_jobs)
+  @ManyToOne(() => Source, source => source.crawl_jobs)
   @JoinColumn({ name: 'source_id' })
   source: Source;
 
-  @OneToMany(() => CrawlLog, (log) => log.job)
+  @OneToMany(() => CrawlLog, log => log.job)
   logs: CrawlLog[];
 }

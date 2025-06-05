@@ -10,7 +10,7 @@ export { BaseQueueConsumer } from './consumers/base-queue-consumer';
 // Services
 export { QueueMetricsService } from './services/queue-metrics.service';
 export { DeadLetterQueueService } from './services/dead-letter-queue.service';
-export { 
+export {
   QueueConfigService,
   QueueConnectionConfig,
   QueueRetryConfig,

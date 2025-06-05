@@ -33,13 +33,16 @@ export const CACHE_TTL = {
 export const CACHE_KEY_GENERATORS = {
   anime: (id: number) => `${CACHE_KEYS.ANIME}:${id}`,
   animeBySlug: (slug: string) => `${CACHE_KEYS.ANIME}:slug:${slug}`,
-  animeList: (page: number, limit: number) => `${CACHE_KEYS.ANIME}:list:${page}:${limit}`,
+  animeList: (page: number, limit: number) =>
+    `${CACHE_KEYS.ANIME}:list:${page}:${limit}`,
   episode: (id: number) => `${CACHE_KEYS.EPISODE}:${id}`,
-  episodesByAnime: (animeId: number) => `${CACHE_KEYS.EPISODE}:anime:${animeId}`,
+  episodesByAnime: (animeId: number) =>
+    `${CACHE_KEYS.EPISODE}:anime:${animeId}`,
   source: (id: number) => `${CACHE_KEYS.SOURCE}:${id}`,
   sourceBySlug: (slug: string) => `${CACHE_KEYS.SOURCE}:slug:${slug}`,
   genre: (id: number) => `${CACHE_KEYS.GENRE}:${id}`,
-  search: (query: string, page: number) => `${CACHE_KEYS.SEARCH}:${query}:${page}`,
+  search: (query: string, page: number) =>
+    `${CACHE_KEYS.SEARCH}:${query}:${page}`,
   popular: (limit: number) => `${CACHE_KEYS.POPULAR}:${limit}`,
   recent: (limit: number) => `${CACHE_KEYS.RECENT}:${limit}`,
   stats: () => `${CACHE_KEYS.STATS}:global`,

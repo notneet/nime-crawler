@@ -65,10 +65,10 @@ export class Episode {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @ManyToOne(() => Anime, (anime) => anime.episodes)
+  @ManyToOne(() => Anime, anime => anime.episodes)
   @JoinColumn({ name: 'anime_id' })
   anime: Anime;
 
-  @OneToMany(() => DownloadLink, (link) => link.episode)
+  @OneToMany(() => DownloadLink, link => link.episode)
   download_links: DownloadLink[];
 }

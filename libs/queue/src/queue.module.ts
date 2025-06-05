@@ -1,10 +1,10 @@
-import { Module, DynamicModule } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { QueueProducerService } from './producers/queue-producer.service';
 import { DeadLetterQueueService } from './services/dead-letter-queue.service';
-import { QueueMetricsService } from './services/queue-metrics.service';
 import { QueueConfigService } from './services/queue-config.service';
+import { QueueMetricsService } from './services/queue-metrics.service';
 
 export interface QueueModuleOptions {
   rabbitmqUrl?: string;
@@ -20,7 +20,7 @@ export class QueueModule {
       module: QueueModule,
       imports: [
         ConfigModule,
-        RabbitMQModule.forRootAsync(RabbitMQModule, {
+        RabbitMQModule.forRootAsync({
           imports: [ConfigModule],
           useFactory: async (configService: ConfigService) => ({
             exchanges: [
@@ -39,7 +39,12 @@ export class QueueModule {
                 },
               },
             ],
-            uri: options.rabbitmqUrl || configService.get<string>('RABBITMQ_URL', 'amqp://localhost:5672'),
+            uri:
+              options.rabbitmqUrl ||
+              configService.get<string>(
+                'RABBITMQ_URL',
+                'amqp://localhost:5672',
+              ),
             connectionInitOptions: { wait: false },
             enableControllerDiscovery: true,
           }),

@@ -1,6 +1,9 @@
 export * from './common.module';
 export * from './common.service';
 
+// Enums
+export * from './enums';
+
 // Entities
 export * from './entities/core/anime.entity';
 export * from './entities/core/source.entity';

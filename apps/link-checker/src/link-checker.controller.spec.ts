@@ -11,7 +11,9 @@ describe('LinkCheckerController', () => {
       providers: [LinkCheckerService],
     }).compile();
 
-    linkCheckerController = app.get<LinkCheckerController>(LinkCheckerController);
+    linkCheckerController = app.get<LinkCheckerController>(
+      LinkCheckerController,
+    );
   });
 
   describe('root', () => {

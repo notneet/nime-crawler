@@ -175,7 +175,10 @@ export function NormalizeUrl() {
 export function ToArray(separator: string = ',') {
   return Transform(({ value }) => {
     if (typeof value === 'string') {
-      return value.split(separator).map(item => item.trim()).filter(Boolean);
+      return value
+        .split(separator)
+        .map(item => item.trim())
+        .filter(Boolean);
     }
     if (Array.isArray(value)) {
       return value;

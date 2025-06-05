@@ -35,7 +35,7 @@ export class CrawlLog {
   @CreateDateColumn()
   created_at: Date;
 
-  @ManyToOne(() => CrawlJob, (job) => job.logs)
+  @ManyToOne(() => CrawlJob, job => job.logs)
   @JoinColumn({ name: 'job_id' })
   job: CrawlJob;
 }

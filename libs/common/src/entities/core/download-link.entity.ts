@@ -48,7 +48,7 @@ export class DownloadLink {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @ManyToOne(() => Episode, (episode) => episode.download_links)
+  @ManyToOne(() => Episode, episode => episode.download_links)
   @JoinColumn({ name: 'episode_id' })
   episode: Episode;
 }

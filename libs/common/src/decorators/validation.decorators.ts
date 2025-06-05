@@ -37,7 +37,13 @@ export function IsAnimeSlug(validationOptions?: ValidationOptions) {
   return applyDecorators(
     IsString(validationOptions),
     Length(1, 255, validationOptions),
-    Transform(({ value }) => value?.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')),
+    Transform(({ value }) =>
+      value
+        ?.toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, ''),
+    ),
   );
 }
 
@@ -161,8 +167,11 @@ export function IsDelayMs(validationOptions?: ValidationOptions) {
 /**
  * Custom validator for checking if a string is a valid enum value
  */
-export function IsValidEnumString(enumObject: object, validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+export function IsValidEnumString(
+  enumObject: object,
+  validationOptions?: ValidationOptions,
+) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isValidEnumString',
       target: object.constructor,
@@ -170,7 +179,10 @@ export function IsValidEnumString(enumObject: object, validationOptions?: Valida
       options: validationOptions,
       validator: {
         validate(value: any, args: ValidationArguments) {
-          return typeof value === 'string' && Object.values(enumObject).includes(value);
+          return (
+            typeof value === 'string' &&
+            Object.values(enumObject).includes(value)
+          );
         },
         defaultMessage(args: ValidationArguments) {
           return `${args.property} must be one of: ${Object.values(enumObject).join(', ')}`;

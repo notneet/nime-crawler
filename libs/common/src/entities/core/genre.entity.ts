@@ -28,6 +28,6 @@ export class Genre {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @ManyToMany(() => Anime, (anime) => anime.genres)
+  @ManyToMany(() => Anime, anime => anime.genres)
   animes: Anime[];
 }
