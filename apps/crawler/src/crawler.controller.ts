@@ -11,7 +11,7 @@ export class CrawlerController implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     const result = await this.crawlerService.getAllAnime();
-    console.log(result);
+    console.dir(result, { depth: null });
   }
   // async onApplicationBootstrap() {
   // console.log('ok');
