@@ -1,13 +1,17 @@
 import { Controller, Get, Logger } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ApiGatewayService } from './api-gateway.service';
 
-@Controller()
+@ApiTags('health')
+@Controller({ version: '1' })
 export class ApiGatewayController {
   private readonly logger = new Logger(ApiGatewayController.name);
 
   constructor(private readonly apiGatewayService: ApiGatewayService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get API information' })
+  @ApiResponse({ status: 200, description: 'API information retrieved successfully' })
   getApiInfo() {
     this.logger.log('API info requested');
     return {
@@ -18,6 +22,8 @@ export class ApiGatewayController {
   }
 
   @Get('health')
+  @ApiOperation({ summary: 'Health check endpoint' })
+  @ApiResponse({ status: 200, description: 'Health check completed successfully' })
   async getHealthCheck() {
     this.logger.log('Health check requested');
     const healthData = await this.apiGatewayService.getHealthCheck();
@@ -29,6 +35,8 @@ export class ApiGatewayController {
   }
 
   @Get('api/info')
+  @ApiOperation({ summary: 'Get detailed API information' })
+  @ApiResponse({ status: 200, description: 'API details retrieved successfully' })
   getApiDetails() {
     this.logger.log('API details requested');
     return {

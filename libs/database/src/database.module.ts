@@ -26,6 +26,8 @@ import {
 import { DatabaseService } from './database.service';
 import { RedisService } from './redis.service';
 import { AnimeRepository } from './repositories/anime.repository';
+import { SourceRepository } from './repositories/source.repository';
+import { SourceHealthRepository } from './repositories/source-health.repository';
 
 // Define all entities
 const entities = [
@@ -54,6 +56,8 @@ const entities = [
 // Define repositories
 const repositories = [
   AnimeRepository,
+  SourceRepository,
+  SourceHealthRepository,
   // Add more repositories here as you create them
 ];
 

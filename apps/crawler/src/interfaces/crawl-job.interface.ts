@@ -1,5 +1,5 @@
 export interface CrawlJobData {
-  sourceId: number;
+  sourceId: bigint;
   jobType: CrawlJobType;
   priority: number;
   parameters?: CrawlJobParameters;
@@ -18,15 +18,15 @@ export enum CrawlJobType {
 export interface CrawlJobParameters {
   maxPages?: number;
   sourceUrl?: string;
-  animeId?: number;
-  episodeId?: number;
+  animeId?: bigint;
+  episodeId?: bigint;
   forceUpdate?: boolean;
   delayMs?: number;
 }
 
 export interface CrawlJobResult {
   jobId: string;
-  sourceId: number;
+  sourceId: bigint;
   jobType: CrawlJobType;
   status: CrawlJobStatus;
   startedAt: Date;

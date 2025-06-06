@@ -149,7 +149,7 @@ export class AnimeProcessor {
         last_updated_at: new Date(),
       };
 
-      const updateResult = await this.animeRepository.update(
+      const updateResult = await this.animeRepository.updateAnime(
         existingAnime.id,
         updateData,
       );
@@ -165,7 +165,9 @@ export class AnimeProcessor {
       });
 
       if (!updatedAnime) {
-        throw new Error(`Failed to fetch updated anime with ID: ${existingAnime.id}`);
+        throw new Error(
+          `Failed to fetch updated anime with ID: ${existingAnime.id}`,
+        );
       }
 
       this.logger.log(`Successfully updated anime: ${updatedAnime.title}`);
@@ -311,7 +313,7 @@ export class AnimeProcessor {
   }
 
   async getAnimeNeedingUpdates(
-    sourceId?: number,
+    sourceId?: bigint,
     olderThanHours: number = 24,
     limit: number = 100,
   ): Promise<Anime[]> {
@@ -349,13 +351,13 @@ export class AnimeProcessor {
   }
 
   async updateAnimeMetadata(
-    animeId: number,
+    animeId: bigint,
     metadata: Partial<Anime>,
   ): Promise<Anime | null> {
     try {
       this.logger.log(`Updating metadata for anime ID: ${animeId}`);
 
-      const updateResult = await this.animeRepository.update(animeId, {
+      const updateResult = await this.animeRepository.updateAnime({ id: animeId }, {
         ...metadata,
         last_updated_at: new Date(),
       });
@@ -387,7 +389,7 @@ export class AnimeProcessor {
     }
   }
 
-  async incrementViewCount(animeId: number): Promise<void> {
+  async incrementViewCount(animeId: bigint): Promise<void> {
     try {
       await this.animeRepository.updateViewCount(animeId);
     } catch (error) {
@@ -399,7 +401,7 @@ export class AnimeProcessor {
     }
   }
 
-  async incrementDownloadCount(animeId: number): Promise<void> {
+  async incrementDownloadCount(animeId: bigint): Promise<void> {
     try {
       await this.animeRepository.updateDownloadCount(animeId);
     } catch (error) {

@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { CrawlerGatewayService } from '../services/crawler-gateway.service';
 import {
   ScheduleCrawlJobDto,
@@ -16,13 +17,18 @@ import {
   CrawlJobQueryDto,
 } from '../dto/crawler.dto';
 
-@Controller('crawler')
+@ApiTags('crawler')
+@Controller({ path: 'crawler', version: '1' })
 export class CrawlerController {
   private readonly logger = new Logger(CrawlerController.name);
 
   constructor(private readonly crawlerGatewayService: CrawlerGatewayService) {}
 
   @Post('schedule/full-crawl')
+  @ApiOperation({ summary: 'Schedule a full crawl job for a source' })
+  @ApiBody({ type: ScheduleCrawlJobDto })
+  @ApiResponse({ status: 201, description: 'Full crawl job scheduled successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async scheduleFullCrawl(@Body() scheduleDto: ScheduleCrawlJobDto) {
     try {
       this.logger.log(
@@ -63,6 +69,10 @@ export class CrawlerController {
   }
 
   @Post('schedule/update-crawl')
+  @ApiOperation({ summary: 'Schedule an update crawl job for a source' })
+  @ApiBody({ type: ScheduleCrawlJobDto })
+  @ApiResponse({ status: 201, description: 'Update crawl job scheduled successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async scheduleUpdateCrawl(@Body() scheduleDto: ScheduleCrawlJobDto) {
     try {
       this.logger.log(
@@ -103,8 +113,12 @@ export class CrawlerController {
   }
 
   @Post('schedule/anime/:animeId')
+  @ApiOperation({ summary: 'Schedule a crawl job for a specific anime' })
+  @ApiParam({ name: 'animeId', description: 'Anime ID to crawl' })
+  @ApiResponse({ status: 201, description: 'Single anime crawl job scheduled successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async scheduleSingleAnimeCrawl(
-    @Param('animeId') animeId: number,
+    @Param('animeId') animeId: string,
     @Body() scheduleDto: Pick<ScheduleCrawlJobDto, 'sourceId' | 'priority'>,
   ) {
     try {
@@ -146,8 +160,12 @@ export class CrawlerController {
   }
 
   @Post('schedule/health-check/:sourceId')
+  @ApiOperation({ summary: 'Schedule a health check for a source' })
+  @ApiParam({ name: 'sourceId', description: 'Source ID to check' })
+  @ApiResponse({ status: 201, description: 'Source health check job scheduled successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async scheduleHealthCheck(
-    @Param('sourceId') sourceId: number,
+    @Param('sourceId') sourceId: string,
     @Body() body: Pick<ScheduleCrawlJobDto, 'priority'> = { priority: 1 },
   ) {
     try {
@@ -185,6 +203,9 @@ export class CrawlerController {
   }
 
   @Get('jobs')
+  @ApiOperation({ summary: 'Get crawl jobs with optional filters' })
+  @ApiResponse({ status: 200, description: 'Crawl jobs retrieved successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async getCrawlJobs(@Query() query: CrawlJobQueryDto) {
     try {
       this.logger.log('Fetching crawl jobs with filters', query);
@@ -213,6 +234,11 @@ export class CrawlerController {
   }
 
   @Get('jobs/:jobId')
+  @ApiOperation({ summary: 'Get crawl job status by job ID' })
+  @ApiParam({ name: 'jobId', description: 'Crawl job ID' })
+  @ApiResponse({ status: 200, description: 'Crawl job status retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Crawl job not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async getCrawlJobStatus(@Param('jobId') jobId: string) {
     try {
       this.logger.log(`Fetching status for crawl job ${jobId}`);
@@ -256,7 +282,11 @@ export class CrawlerController {
   }
 
   @Get('sources/:sourceId/health')
-  async getSourceHealth(@Param('sourceId') sourceId: number) {
+  @ApiOperation({ summary: 'Get health status for a source' })
+  @ApiParam({ name: 'sourceId', description: 'Source ID' })
+  @ApiResponse({ status: 200, description: 'Source health status retrieved successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getSourceHealth(@Param('sourceId') sourceId: string) {
     try {
       this.logger.log(`Fetching health status for source ${sourceId}`);
 

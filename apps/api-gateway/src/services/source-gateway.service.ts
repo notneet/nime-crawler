@@ -2,9 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Like, Between } from 'typeorm';
 import { Source } from '@app/common/entities/core/source.entity';
-import { Anime } from '@app/common/entities/core/anime.entity';
+import { SourceRepository } from '@app/database/repositories/source.repository';
+import { AnimeRepository } from '@app/database/repositories/anime.repository';
+import { SourceHealthRepository } from '@app/database/repositories/source-health.repository';
 import { CrawlJob } from '@app/common/entities/crawler/crawl-job.entity';
-import { SourceHealth } from '@app/common/entities/monitoring/source-health.entity';
 import { SourceQueryDto, SourceDto, SourceStatsDto } from '../dto/source.dto';
 import { AnimeDto } from '../dto/anime.dto';
 
@@ -13,14 +14,11 @@ export class SourceGatewayService {
   private readonly logger = new Logger(SourceGatewayService.name);
 
   constructor(
-    @InjectRepository(Source)
-    private readonly sourceRepository: Repository<Source>,
-    @InjectRepository(Anime)
-    private readonly animeRepository: Repository<Anime>,
+    private readonly sourceRepository: SourceRepository,
+    private readonly animeRepository: AnimeRepository,
     @InjectRepository(CrawlJob)
     private readonly crawlJobRepository: Repository<CrawlJob>,
-    @InjectRepository(SourceHealth)
-    private readonly sourceHealthRepository: Repository<SourceHealth>,
+    private readonly sourceHealthRepository: SourceHealthRepository,
   ) {}
 
   async getSources(query: SourceQueryDto): Promise<{
@@ -62,7 +60,7 @@ export class SourceGatewayService {
       await this.sourceRepository.findAndCount(findOptions);
 
     const sourcesDto: SourceDto[] = sources.map(source => ({
-      id: source.id,
+      id: source.id.toString(),
       name: source.name,
       slug: source.slug,
       baseUrl: source.base_url,
@@ -84,9 +82,9 @@ export class SourceGatewayService {
     };
   }
 
-  async getSourceById(id: number): Promise<SourceDto | null> {
+  async getSourceById(id: string): Promise<SourceDto | null> {
     const source = await this.sourceRepository.findOne({
-      where: { id },
+      where: { id: BigInt(id) },
     });
 
     if (!source) {
@@ -94,7 +92,7 @@ export class SourceGatewayService {
     }
 
     return {
-      id: source.id,
+      id: source.id.toString(),
       name: source.name,
       slug: source.slug,
       baseUrl: source.base_url,
@@ -110,7 +108,7 @@ export class SourceGatewayService {
   }
 
   async getSourceAnime(
-    sourceId: number,
+    sourceId: string,
     page: number = 1,
     limit: number = 20,
   ): Promise<{
@@ -120,7 +118,7 @@ export class SourceGatewayService {
     limit: number;
   }> {
     const [anime, total] = await this.animeRepository.findAndCount({
-      where: { source_id: sourceId },
+      where: { source_id: BigInt(sourceId) },
       relations: ['genres'],
       skip: (page - 1) * limit,
       take: limit,
@@ -128,7 +126,7 @@ export class SourceGatewayService {
     });
 
     const animeDto: AnimeDto[] = anime.map(item => ({
-      id: item.id,
+      id: item.id.toString(),
       title: item.title,
       slug: item.slug,
       alternativeTitle: item.alternative_title,
@@ -143,7 +141,7 @@ export class SourceGatewayService {
       rating: item.rating,
       viewCount: item.view_count,
       downloadCount: item.download_count,
-      sourceId: item.source_id,
+      sourceId: item.source_id.toString(),
       sourceAnimeId: item.source_anime_id,
       sourceUrl: item.source_url,
       lastUpdatedAt: item.last_updated_at,
@@ -160,9 +158,9 @@ export class SourceGatewayService {
     };
   }
 
-  async getSourceStats(sourceId: number): Promise<SourceStatsDto> {
+  async getSourceStats(sourceId: string): Promise<SourceStatsDto> {
     const source = await this.sourceRepository.findOne({
-      where: { id: sourceId },
+      where: { id: BigInt(sourceId) },
     });
 
     if (!source) {
@@ -182,43 +180,43 @@ export class SourceGatewayService {
       failedCrawlsToday,
       latestHealth,
     ] = await Promise.all([
-      this.animeRepository.count({ where: { source_id: sourceId } }),
+      this.animeRepository.count({ where: { source_id: BigInt(sourceId) } }),
       this.animeRepository
         .createQueryBuilder('anime')
         .leftJoin('anime.episodes', 'episode')
-        .where('anime.source_id = :sourceId', { sourceId })
+        .where('anime.source_id = :sourceId', { sourceId: BigInt(sourceId) })
         .select('COUNT(episode.id)', 'count')
         .getRawOne()
         .then(result => parseInt(result?.count || '0')),
       this.crawlJobRepository.count({
         where: {
-          source_id: sourceId,
+          source_id: BigInt(sourceId),
           created_at: Between(today, tomorrow),
         },
       }),
       this.crawlJobRepository.count({
         where: {
-          source_id: sourceId,
+          source_id: BigInt(sourceId),
           status: 'completed',
           created_at: Between(today, tomorrow),
         },
       }),
       this.crawlJobRepository.count({
         where: {
-          source_id: sourceId,
+          source_id: BigInt(sourceId),
           status: 'failed',
           created_at: Between(today, tomorrow),
         },
       }),
       this.sourceHealthRepository.findOne({
-        where: { source_id: sourceId },
+        where: { source_id: BigInt(sourceId) },
         order: { checked_at: 'DESC' },
       }),
     ]);
 
     // Calculate average response time from recent health checks
     const recentHealthChecks = await this.sourceHealthRepository.find({
-      where: { source_id: sourceId },
+      where: { source_id: BigInt(sourceId) },
       order: { checked_at: 'DESC' },
       take: 10,
     });
@@ -232,7 +230,7 @@ export class SourceGatewayService {
         : 0;
 
     return {
-      sourceId: source.id,
+      sourceId: source.id.toString(),
       sourceName: source.name,
       totalAnime,
       totalEpisodes,
@@ -244,7 +242,7 @@ export class SourceGatewayService {
       healthStatus: {
         isAccessible: latestHealth?.is_accessible ?? false,
         lastChecked: latestHealth?.checked_at ?? new Date(0),
-        successRate24h: latestHealth?.success_rate_24h ?? 0,
+        successRate24h: 0, // Calculate from health checks if needed
       },
     };
   }

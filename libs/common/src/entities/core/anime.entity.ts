@@ -11,14 +11,14 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { AnimeSeason, AnimeStatus, AnimeType } from '../../enums/anime.enums';
 import { AnimeUpdateHistory } from '../monitoring/anime-update-history.entity';
 import { Episode } from './episode.entity';
 import { Genre } from './genre.entity';
 import { Source } from './source.entity';
-import { AnimeType, AnimeStatus, AnimeSeason } from '../../enums/anime.enums';
 
 // Re-export enums for backward compatibility
-export { AnimeType, AnimeStatus, AnimeSeason };
+export { AnimeSeason, AnimeStatus, AnimeType };
 
 @Entity('anime')
 @Index(['slug'], { unique: true })
@@ -27,8 +27,8 @@ export { AnimeType, AnimeStatus, AnimeSeason };
 @Index(['type'])
 @Index(['release_year'])
 export class Anime {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
+  id: bigint;
 
   @Column({ length: 255 })
   title: string;
@@ -85,8 +85,8 @@ export class Anime {
   download_count: number;
 
   // Source reference
-  @Column()
-  source_id: number;
+  @Column({ type: 'bigint' })
+  source_id: bigint;
 
   @Column({ length: 100 })
   source_anime_id: string; // Original ID from source site

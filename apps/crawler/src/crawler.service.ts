@@ -15,8 +15,7 @@ import {
   BulkProcessResult as ProcessorBulkProcessResult,
 } from './processors/anime.processor';
 import { Source } from '@app/common/entities/core/source.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { SourceRepository } from '@app/database/repositories/source.repository';
 
 export interface CreateAnimeDto {
   title: string;
@@ -70,8 +69,7 @@ export class CrawlerService {
     private readonly animeRepository: AnimeRepository,
     private readonly animeScraperService: AnimeScraperService,
     private readonly animeProcessor: AnimeProcessor,
-    @InjectRepository(Source)
-    private readonly sourceRepository: Repository<Source>,
+    private readonly sourceRepository: SourceRepository,
   ) {}
 
   async basic() {
@@ -829,7 +827,7 @@ export class CrawlerService {
   // }
 
   async crawlSource(
-    sourceId: number,
+    sourceId: bigint,
     maxPages: number = 5,
   ): Promise<ProcessorBulkProcessResult> {
     try {
@@ -875,7 +873,7 @@ export class CrawlerService {
 
   async crawlAllActiveSources(
     maxPages: number = 3,
-  ): Promise<{ [sourceId: number]: ProcessorBulkProcessResult }> {
+  ): Promise<{ [sourceId: string]: ProcessorBulkProcessResult }> {
     try {
       this.logger.log('Starting crawl for all active sources');
 
@@ -886,13 +884,13 @@ export class CrawlerService {
 
       this.logger.log(`Found ${activeSources.length} active sources`);
 
-      const results: { [sourceId: number]: ProcessorBulkProcessResult } = {};
+      const results: { [sourceId: string]: ProcessorBulkProcessResult } = {};
 
       for (const source of activeSources) {
         try {
           this.logger.log(`Processing source: ${source.name}`);
 
-          results[source.id] = await this.crawlSource(source.id, maxPages);
+          results[source.id.toString()] = await this.crawlSource(source.id, maxPages);
 
           // Respect rate limiting between sources
           if (source.delay_ms > 0) {
@@ -900,7 +898,7 @@ export class CrawlerService {
           }
         } catch (error) {
           this.logger.error(`Error crawling source ${source.name}:`, error);
-          results[source.id] = {
+          results[source.id.toString()] = {
             processed: 0,
             created: 0,
             updated: 0,
@@ -925,7 +923,7 @@ export class CrawlerService {
   }
 
   async updateStaleAnime(
-    sourceId?: number,
+    sourceId?: bigint,
     olderThanHours: number = 24,
   ): Promise<ProcessorBulkProcessResult> {
     try {
@@ -955,13 +953,14 @@ export class CrawlerService {
       // Group anime by source for efficient crawling
       const animeBySource = staleAnime.reduce(
         (acc, anime) => {
-          if (!acc[anime.source_id]) {
-            acc[anime.source_id] = [];
+          const sourceKey = anime.source_id.toString();
+          if (!acc[sourceKey]) {
+            acc[sourceKey] = [];
           }
-          acc[anime.source_id].push(anime);
+          acc[sourceKey].push(anime);
           return acc;
         },
-        {} as { [sourceId: number]: typeof staleAnime },
+        {} as { [sourceId: string]: typeof staleAnime },
       );
 
       const combinedResult: ProcessorBulkProcessResult = {
@@ -977,7 +976,7 @@ export class CrawlerService {
 
         try {
           const source = await this.sourceRepository.findOne({
-            where: { id: sourceId, is_active: true },
+            where: { id: BigInt(sourceId), is_active: true },
           });
 
           if (!source) {
@@ -987,7 +986,7 @@ export class CrawlerService {
 
           // For now, we'll re-crawl the entire source
           // In the future, we could implement targeted anime updates
-          const result = await this.crawlSource(sourceId, 2);
+          const result = await this.crawlSource(BigInt(sourceId), 2);
 
           combinedResult.processed += result.processed;
           combinedResult.created += result.created;
@@ -1025,7 +1024,7 @@ export class CrawlerService {
     }
   }
 
-  async getSourceById(sourceId: number) {
+  async getSourceById(sourceId: bigint) {
     try {
       return await this.sourceRepository.findOne({
         where: { id: sourceId },
@@ -1036,9 +1035,9 @@ export class CrawlerService {
     }
   }
 
-  async updateSourceLastCrawled(sourceId: number): Promise<void> {
+  async updateSourceLastCrawled(sourceId: bigint): Promise<void> {
     try {
-      await this.sourceRepository.update(sourceId, {
+      await this.sourceRepository.update({ id: sourceId }, {
         last_crawled_at: new Date(),
       });
     } catch (error) {

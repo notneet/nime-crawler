@@ -1,9 +1,9 @@
 import { join } from 'path';
-import { DataSourceOptions } from 'typeorm';
+import { DataSource } from 'typeorm';
 
 require('dotenv').config();
 
-const AppDataSource: DataSourceOptions = {
+const AppDataSource = new DataSource({
   type: 'mysql',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '3306', 10) || 3306,
@@ -38,7 +38,7 @@ const AppDataSource: DataSourceOptions = {
     // Migrations in database lib
     join(__dirname, './migrations/*{.ts,.js}'),
   ],
-  synchronize: process.env.NODE_ENV === 'development',
+  synchronize: false, //process.env.NODE_ENV === 'development',
   logging:
     process.env.NODE_ENV === 'development'
       ? ['error', 'info', 'log', 'migration', 'query', 'schema', 'warn']
@@ -65,6 +65,6 @@ const AppDataSource: DataSourceOptions = {
     },
     duration: 30000, // 30 seconds default cache
   },
-};
+});
 
 export default AppDataSource;

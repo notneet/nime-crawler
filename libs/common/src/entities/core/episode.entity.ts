@@ -17,11 +17,11 @@ import { DownloadLink } from './download-link.entity';
 @Index(['anime_id'])
 @Index(['source_episode_id'])
 export class Episode {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
+  id: bigint;
 
-  @Column()
-  anime_id: number;
+  @Column({ type: 'bigint' })
+  anime_id: bigint;
 
   @Column({ type: 'smallint' })
   episode_number: number;

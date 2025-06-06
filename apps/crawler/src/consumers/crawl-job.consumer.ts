@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BaseQueueConsumer, QueueMetricsService, DeadLetterQueueService } from '@app/queue';
+import {
+  BaseQueueConsumer,
+  QueueMetricsService,
+  DeadLetterQueueService,
+} from '@app/queue';
 import {
   QUEUE_NAMES,
   ROUTING_KEYS,
@@ -14,8 +18,7 @@ import {
 import { CrawlerService } from '../crawler.service';
 import { CrawlJobProducer } from '../producers/crawl-job.producer';
 import { Source } from '@app/common/entities/core/source.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { SourceRepository } from '@app/database/repositories/source.repository';
 import { IQueueJob, IQueueJobResult } from '@app/common';
 
 @Injectable()
@@ -27,8 +30,7 @@ export class CrawlJobConsumer extends BaseQueueConsumer {
     private readonly crawlJobProducer: CrawlJobProducer,
     queueMetrics: QueueMetricsService,
     deadLetterService: DeadLetterQueueService,
-    @InjectRepository(Source)
-    private readonly sourceRepository: Repository<Source>,
+    private readonly sourceRepository: SourceRepository,
   ) {
     super(queueMetrics, deadLetterService);
   }
@@ -37,15 +39,15 @@ export class CrawlJobConsumer extends BaseQueueConsumer {
     // Convert IQueueJob to CrawlJobMessage format
     const message: CrawlJobMessage = {
       jobId: job.id,
-      data: job.data as any,
+      data: job.data,
       attemptCount: job.retryCount || 0,
       maxAttempts: job.maxRetries || 3,
       createdAt: new Date(),
-      headers: job.metadata as any,
+      headers: job.metadata,
     };
 
     const result = await this.processMessage(message);
-    
+
     return {
       jobId: job.id,
       status: 'completed' as any,
@@ -130,7 +132,7 @@ export class CrawlJobConsumer extends BaseQueueConsumer {
     };
 
     try {
-      if (sourceId === 0) {
+      if (sourceId === 0n) {
         // Special case: crawl all active sources
         const activeSources = await this.sourceRepository.find({
           where: { is_active: true },

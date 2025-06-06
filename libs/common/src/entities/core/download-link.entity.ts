@@ -15,11 +15,11 @@ import { Episode } from './episode.entity';
 @Index(['provider'])
 @Index(['quality'])
 export class DownloadLink {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
+  id: bigint;
 
-  @Column()
-  episode_id: number;
+  @Column({ type: 'bigint' })
+  episode_id: bigint;
 
   @Column({ length: 100 })
   provider: string; // Google Drive, Mega, MediaFire, etc.

@@ -23,6 +23,103 @@ The NIME Crawler is a microservice-based anime aggregation system built with Nes
 
 ---
 
+## 🔄 RabbitMQ Queue Infrastructure
+
+The NIME Crawler uses a sophisticated RabbitMQ setup with multiple exchanges, queues, and routing patterns for microservice communication.
+
+### **Exchange Configuration**
+
+**Primary Exchanges:**
+- **`nime.exchange`** (Topic) - Main exchange for all job routing
+- **`nime.dlx`** (Topic) - Dead Letter Exchange for failed jobs
+
+**Service-Specific Exchanges:**
+- `crawl.exchange` - Crawler-specific jobs
+- `scheduler.exchange` - Scheduled tasks  
+- `link-check.exchange` - Link validation jobs
+- `analytics.exchange` - Analytics events
+- `notification.exchange` - Notification messages
+
+### **Queue Definitions**
+
+| Queue Name | Purpose | TTL | Max Length | Dead Letter Config |
+|------------|---------|-----|------------|-------------------|
+| `crawl.queue` | Main crawler jobs | 30 mins | 1,000 | → `dead-letter.queue` |
+| `link-check.queue` | Link validation | 30 mins | 500 | → `dead-letter.queue` |
+| `analytics.queue` | Analytics tracking | 30 mins | 2,000 | → `dead-letter.queue` |
+| `notification.queue` | Notifications | 30 mins | 500 | → `dead-letter.queue` |
+| `scheduler.queue` | Scheduled tasks | 30 mins | 100 | → `dead-letter.queue` |
+| `dead-letter.queue` | Failed jobs | 24 hours | 1,000 | N/A |
+
+### **Routing Key Patterns**
+
+**Crawler Service:**
+- `crawl.anime` - Anime crawling jobs
+- `crawl.episode` - Episode-specific crawls
+- `crawl.source` - Source health checks
+- `crawl.retry` - Retry failed crawls
+
+**Scheduler Service:**
+- `scheduler.daily` - Daily recurring tasks
+- `scheduler.hourly` - Hourly tasks
+- `scheduler.weekly` - Weekly maintenance
+- `scheduler.custom` - User-defined schedules
+
+**Link Checker Service:**
+- `link-check.validate` - Single link validation
+- `link-check.health` - Batch health checks
+- `link-check.batch` - Bulk validation
+
+**Analytics Service:**
+- `analytics.view` - Page/anime views
+- `analytics.download` - Download tracking
+- `analytics.search` - Search queries
+- `analytics.aggregate` - Statistics aggregation
+
+**Notification Service:**
+- `notification.discord` - Discord messages
+- `notification.telegram` - Telegram notifications
+- `notification.email` - Email alerts
+- `notification.webhook` - Webhook calls
+
+### **Message Flow Architecture**
+
+```
+HTTP Request → API Gateway → QueueProducerService → RabbitMQ Exchange
+                                                         ↓
+                                            Queue (by routing key)
+                                                         ↓
+                                            Service Consumer → Processing
+                                                         ↓
+                                            Success: ACK / Failure: NACK → DLQ
+```
+
+### **Queue Configuration Settings**
+
+**Connection Settings:**
+```bash
+RABBITMQ_URL=amqp://localhost:5672  # Default connection
+QUEUE_HEARTBEAT=60                  # Connection heartbeat (seconds)
+QUEUE_PREFETCH=1                    # Consumer prefetch count
+QUEUE_RECONNECT_ATTEMPTS=5          # Reconnection attempts
+QUEUE_RECONNECT_DELAY=5000          # Reconnection delay (ms)
+```
+
+**Retry & Error Handling:**
+```bash
+QUEUE_MAX_RETRIES=3                 # Maximum retry attempts
+QUEUE_RETRY_BASE_DELAY=5000         # Base retry delay (ms)
+QUEUE_RETRY_EXPONENTIAL_BASE=2      # Exponential backoff base
+```
+
+**Dead Letter Queue Settings:**
+```bash
+QUEUE_DLQ_TTL=86400000             # DLQ message TTL (24 hours)
+QUEUE_DLQ_MAX_LENGTH=1000          # DLQ maximum messages
+```
+
+---
+
 ## 🚀 Quick Start Guide
 
 ### **Prerequisites**
@@ -60,6 +157,74 @@ docker-compose ps
 
 # Check logs if needed
 make docker-logs
+```
+
+### **3. Verify RabbitMQ Queue Setup**
+
+```bash
+# Access RabbitMQ Management UI
+open http://localhost:15672
+# Login: guest/guest
+
+# Verify all exchanges exist:
+# - crawl.exchange (Topic)
+# - scheduler.exchange (Topic)  
+# - link-check.exchange (Topic)
+# - analytics.exchange (Topic)
+# - notification.exchange (Topic)
+# - dead-letter.exchange (Topic)
+
+# Verify all queues are created:
+# - crawl.queue
+# - scheduler.queue
+# - link-check.queue
+# - analytics.queue
+# - notification.queue
+# - dead-letter.queue
+
+# Check queue bindings match routing patterns
+# Each service queue should be bound to its exchange with appropriate routing keys
+```
+
+**Automated Verification:**
+```bash
+# Run the automated RabbitMQ verification script (defaults: guest/guest, localhost:15672)
+./scripts/verify-rabbitmq.sh
+
+# For custom RabbitMQ instances
+./scripts/verify-rabbitmq.sh -u admin -p password
+./scripts/verify-rabbitmq.sh --url http://production-rabbitmq:15672
+./scripts/verify-rabbitmq.sh -u admin -p secret --url http://rabbitmq.example.com:15672
+
+# Show help
+./scripts/verify-rabbitmq.sh --help
+
+# This script checks:
+# - RabbitMQ connectivity and authentication
+# - All required exchanges exist (topic type)
+# - All required queues exist with proper TTL/DLQ settings
+# - Exchange-to-queue bindings with correct routing patterns
+# - Queue statistics (messages, consumers)
+```
+
+**Manual CLI Verification:**
+```bash
+# Install rabbitmq-management tools (if not using Docker)
+sudo apt-get install rabbitmq-server rabbitmq-plugins
+
+# List exchanges
+sudo rabbitmqctl list_exchanges
+
+# List queues with details
+sudo rabbitmqctl list_queues name messages consumers
+
+# List bindings
+sudo rabbitmqctl list_bindings
+
+# Quick REST API checks
+curl -u guest:guest http://localhost:15672/api/exchanges
+curl -u guest:guest http://localhost:15672/api/queues
+curl -u guest:guest http://localhost:15672/api/bindings
 ```
 
 ---
@@ -113,6 +278,47 @@ curl http://localhost:3000/crawler/jobs/{jobId}
 
 # Monitor crawler service logs in Terminal 1
 # Look for: "Processing crawl job {jobId} - Type: full_crawl"
+
+# Verify message routing in RabbitMQ
+# 1. Check crawl.queue message count in Management UI
+# 2. Watch message rates (publish/deliver/ack/nack)
+# 3. Verify routing key matches pattern: crawl.anime, crawl.source, etc.
+```
+
+#### **Step 3a: Test Different Routing Keys**
+
+```bash
+# Test different crawl job types (different routing keys)
+
+# Health check job (routing: crawl.source)
+curl -X POST http://localhost:3000/crawler/schedule/health-check \
+  -H "Content-Type: application/json" \
+  -d '{"sourceId": 1}'
+
+# Update crawl job (routing: crawl.anime)  
+curl -X POST http://localhost:3000/crawler/schedule/update-crawl \
+  -H "Content-Type: application/json" \
+  -d '{"sourceId": 1, "maxPages": 1}'
+
+# Single anime crawl (routing: crawl.anime)
+curl -X POST http://localhost:3000/crawler/schedule/single-anime \
+  -H "Content-Type: application/json" \
+  -d '{"sourceId": 1, "animeId": 123}'
+```
+
+#### **Step 3b: Test Message Patterns Directly**
+
+```bash
+# Test different message patterns using the test script
+node scripts/test-message-patterns.js
+
+# This will send test messages for:
+# - read-thread pattern
+# - crawl-job pattern  
+# - health-check pattern
+# - unsupported pattern (to test error handling)
+
+# Monitor crawler logs to see pattern handling
 ```
 
 #### **Step 4: Verify Results**
@@ -176,10 +382,20 @@ open http://localhost:15672
 ```
 
 Check these queues:
-- `crawl.queue` - Crawler jobs
-- `analytics.queue` - Analytics events  
-- `notification.queue` - Notification messages
-- `nime.dlx` - Dead letter queue for failed jobs
+- `crawl.queue` - Crawler jobs (anime/episode/source/retry)
+- `scheduler.queue` - Scheduled tasks (daily/hourly/weekly/custom)
+- `link-check.queue` - Link validation (validate/health/batch)
+- `analytics.queue` - Analytics events (view/download/search/aggregate)
+- `notification.queue` - Notification messages (discord/telegram/email/webhook)
+- `dead-letter.queue` - Failed jobs from all services
+
+**Expected Exchange Bindings:**
+- `crawl.exchange` → `crawl.queue` (routing: `crawl.*`)
+- `scheduler.exchange` → `scheduler.queue` (routing: `scheduler.*`)
+- `link-check.exchange` → `link-check.queue` (routing: `link-check.*`)
+- `analytics.exchange` → `analytics.queue` (routing: `analytics.*`)
+- `notification.exchange` → `notification.queue` (routing: `notification.*`)
+- `dead-letter.exchange` → `dead-letter.queue` (routing: `*.dead`)
 
 ### **Scenario 3: Error Handling & Retry Testing**
 
@@ -284,6 +500,61 @@ docker-compose restart rabbitmq
 
 # Check connection
 make queue-health
+
+# Verify RabbitMQ logs
+docker logs nime-rabbitmq
+
+# Test connection manually
+curl -u guest:guest http://localhost:15672/api/whoami
+```
+
+#### **Missing Queues or Exchanges**
+```bash
+# Check if exchanges are created
+curl -u guest:guest http://localhost:15672/api/exchanges
+
+# Expected exchanges:
+# - crawl.exchange
+# - scheduler.exchange
+# - link-check.exchange
+# - analytics.exchange
+# - notification.exchange
+# - dead-letter.exchange
+
+# Check if queues exist
+curl -u guest:guest http://localhost:15672/api/queues
+
+# Expected queues:
+# - crawl.queue
+# - scheduler.queue
+# - link-check.queue
+# - analytics.queue
+# - notification.queue
+# - dead-letter.queue
+
+# If missing, restart the services that create them
+make start-crawler    # Creates crawl.queue
+make start-scheduler  # Creates scheduler.queue
+# etc.
+```
+
+#### **Queue Binding Issues**
+```bash
+# Check queue bindings
+curl -u guest:guest http://localhost:15672/api/bindings
+
+# Expected bindings (exchange → queue):
+# crawl.exchange → crawl.queue (routing: crawl.*)
+# scheduler.exchange → scheduler.queue (routing: scheduler.*)
+# link-check.exchange → link-check.queue (routing: link-check.*)
+# analytics.exchange → analytics.queue (routing: analytics.*)
+# notification.exchange → notification.queue (routing: notification.*)
+# dead-letter.exchange → dead-letter.queue (routing: *.dead)
+
+# Manually create missing binding (example):
+curl -u guest:guest -X POST http://localhost:15672/api/bindings/%2F/e/crawl.exchange/q/crawl.queue \
+  -H "content-type:application/json" \
+  -d '{"routing_key":"crawl.*","arguments":{}}'
 ```
 
 #### **Database Connection Error**
@@ -310,6 +581,32 @@ open http://localhost:15672
 curl -X POST http://localhost:3000/crawler/schedule/health-check \
   -H "Content-Type: application/json" \
   -d '{"sourceId": 1}'
+```
+
+#### **Unsupported Event Pattern Warnings**
+```bash
+# If you see warnings like:
+# "An unsupported event was received. It has been negative acknowledged"
+
+# 1. Check the message format being sent to the queue
+# Messages should include a "pattern" field:
+# {"pattern": "read-thread", "data": {"jobID": "...", "endPoint": "..."}}
+
+# 2. Verify the pattern is handled in CrawlerController
+# Supported patterns:
+# - crawl-job
+# - read-thread  
+# - health-check
+# - * (catch-all for unsupported patterns)
+
+# 3. Test message patterns directly
+node scripts/test-message-patterns.js
+
+# 4. Check crawler controller logs for pattern recognition
+# Look for: "Received [pattern] pattern with data:"
+
+# 5. If using a custom pattern, add a new @MessagePattern handler
+# in apps/crawler/src/crawler.controller.ts
 ```
 
 ### **Debug Mode**

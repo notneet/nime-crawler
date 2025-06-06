@@ -1,11 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { HtmlParserService } from '@hanivanrizky/nestjs-html-parser';
+import {
+  AnimeSeason,
+  AnimeStatus,
+  AnimeType,
+} from '@app/common/entities/core/anime.entity';
 import { Source } from '@app/common/entities/core/source.entity';
 import {
-  AnimeType,
-  AnimeStatus,
-  AnimeSeason,
-} from '@app/common/entities/core/anime.entity';
+  HtmlParserService,
+  HtmlParserOptions,
+  HtmlFetchResponse,
+} from '@hanivanrizky/nestjs-html-parser';
+import { Injectable, Logger } from '@nestjs/common';
 
 export interface ScrapedAnimeData {
   title: string;
@@ -64,10 +68,38 @@ export class AnimeScraperService {
       const url = startUrl || source.base_url;
       const config = this.parseSourceConfig(source);
 
-      const response = await this.htmlParser.fetchHtml(url, {
-        headers: config.headers || source.headers,
-        timeout: 30000,
-      });
+      // Prepare request options with proper TypeScript types
+      const requestOptions: HtmlParserOptions = {
+        timeout: 30000, // 30 seconds timeout for scraping
+        headers: {
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate',
+          Connection: 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          ...config.headers,
+          ...source.headers, // Source-specific headers override config headers
+        },
+        useRandomUserAgent: true, // Use random user agent for better success rate
+        retries: 3, // Retry up to 3 times for scraping
+        retryDelay: 1000, // 1 second delay between retries
+        verbose: false, // Disable verbose logging for production
+        rejectUnauthorized: false, // Don't reject self-signed certificates
+        ignoreSSLErrors: true, // Ignore SSL errors for anime sites
+        maxRedirects: 5, // Follow redirects (common for anime sites)
+        retryOnErrors: {
+          ssl: false,
+          timeout: true, // Retry on timeout for scraping
+          dns: true,
+          connectionRefused: false,
+        },
+      };
+
+      const response: HtmlFetchResponse = await this.htmlParser.fetchHtml(
+        url,
+        requestOptions,
+      );
 
       if (response.status !== 200) {
         throw new Error(`HTTP ${response.status}: Failed to fetch ${url}`);
@@ -76,6 +108,7 @@ export class AnimeScraperService {
       const animeElements = this.htmlParser.extractMultiple(
         response.data,
         config.selectors.animeList,
+        'xpath', // Use XPath as default selector type
       );
 
       this.logger.log(`Found ${animeElements.length} anime elements`);
@@ -148,17 +181,19 @@ export class AnimeScraperService {
 
       // Extract optional fields
       if (config.selectors.alternativeTitle) {
-        animeData.alternative_title = this.extractText(
-          html,
-          `${baseSelector}${config.selectors.alternativeTitle}`,
-        ) || undefined;
+        animeData.alternative_title =
+          this.extractText(
+            html,
+            `${baseSelector}${config.selectors.alternativeTitle}`,
+          ) || undefined;
       }
 
       if (config.selectors.synopsis) {
-        animeData.synopsis = this.extractText(
-          html,
-          `${baseSelector}${config.selectors.synopsis}`,
-        ) || undefined;
+        animeData.synopsis =
+          this.extractText(
+            html,
+            `${baseSelector}${config.selectors.synopsis}`,
+          ) || undefined;
       }
 
       if (config.selectors.posterUrl) {
@@ -237,7 +272,8 @@ export class AnimeScraperService {
 
   private extractText(html: string, selector: string): string | null {
     try {
-      return this.htmlParser.extractSingle(html, selector);
+      // Use extractText method for text extraction (default is XPath)
+      return this.htmlParser.extractText(html, selector, 'xpath');
     } catch {
       return null;
     }
@@ -249,7 +285,8 @@ export class AnimeScraperService {
     attribute: string,
   ): string | null {
     try {
-      return this.htmlParser.extractSingle(html, `${selector}/@${attribute}`);
+      // Use extractSingle with attribute parameter
+      return this.htmlParser.extractSingle(html, selector, 'xpath', attribute);
     } catch {
       return null;
     }

@@ -45,7 +45,7 @@ export class QueueModule {
                 'RABBITMQ_URL',
                 'amqp://localhost:5672',
               ),
-            connectionInitOptions: { wait: false },
+            connectionInitOptions: { wait: true },
             enableControllerDiscovery: true,
           }),
           inject: [ConfigService],

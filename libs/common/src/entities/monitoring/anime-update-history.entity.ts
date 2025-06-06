@@ -13,11 +13,11 @@ import { Anime } from '../core/anime.entity';
 @Index(['anime_id'])
 @Index(['updated_at'])
 export class AnimeUpdateHistory {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
+  id: bigint;
 
-  @Column()
-  anime_id: number;
+  @Column({ type: 'bigint' })
+  anime_id: bigint;
 
   @Column({ type: 'json' })
   changes: any; // What fields were changed

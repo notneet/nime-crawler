@@ -12,8 +12,8 @@ import {
 @Index(['expires_at'])
 @Index(['created_at'])
 export class CacheEntry {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
+  id: bigint;
 
   @Column({ length: 255 })
   cache_key: string;

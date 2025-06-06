@@ -1,16 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Source } from '@app/common/entities/core/source.entity';
+import { SourceRepository } from '@app/database/repositories/source.repository';
 
 @Injectable()
 export class ApiGatewayService {
   private readonly logger = new Logger(ApiGatewayService.name);
 
-  constructor(
-    @InjectRepository(Source)
-    private readonly sourceRepository: Repository<Source>,
-  ) {}
+  constructor(private readonly sourceRepository: SourceRepository) {}
 
   async getHealthCheck(): Promise<{
     status: string;

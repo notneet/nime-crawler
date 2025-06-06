@@ -1,14 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { QUEUE_NAMES } from '@app/common/constants/queue.constants';
 import { QueueProducerService } from '@app/queue';
-import {
-  QUEUE_NAMES,
-} from '@app/common/constants/queue.constants';
+import { Injectable, Logger } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import {
   CrawlJobData,
   CrawlJobMessage,
   CrawlJobType,
 } from '../interfaces/crawl-job.interface';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class CrawlJobProducer {
@@ -17,7 +15,7 @@ export class CrawlJobProducer {
   constructor(private readonly queueProducer: QueueProducerService) {}
 
   async scheduleFullCrawl(
-    sourceId: number,
+    sourceId: bigint,
     maxPages: number = 5,
     priority: number = 1,
   ): Promise<string> {
@@ -56,7 +54,7 @@ export class CrawlJobProducer {
   }
 
   async scheduleUpdateCrawl(
-    sourceId: number,
+    sourceId: bigint,
     olderThanHours: number = 24,
     priority: number = 2,
   ): Promise<string> {
@@ -107,7 +105,7 @@ export class CrawlJobProducer {
     try {
       const jobId = uuidv4();
       const jobData: CrawlJobData = {
-        sourceId: 0, // Special case for all sources
+        sourceId: BigInt(0), // Special case for all sources
         jobType: CrawlJobType.FULL_CRAWL,
         priority: 1,
         parameters: {
@@ -143,8 +141,8 @@ export class CrawlJobProducer {
   }
 
   async scheduleSingleAnimeCrawl(
-    sourceId: number,
-    animeId: number,
+    sourceId: bigint,
+    animeId: bigint,
     priority: number = 3,
   ): Promise<string> {
     const jobId = uuidv4();
@@ -184,7 +182,7 @@ export class CrawlJobProducer {
     }
   }
 
-  async scheduleHealthCheck(sourceId: number): Promise<string> {
+  async scheduleHealthCheck(sourceId: bigint): Promise<string> {
     const jobId = uuidv4();
     const jobData: CrawlJobData = {
       sourceId,

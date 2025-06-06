@@ -1,11 +1,10 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { CrawlJobProducer } from './producers/crawl-job.producer';
-import { CrawlJobConsumer } from './consumers/crawl-job.consumer';
-import { QueueMetricsService } from '@app/queue';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Source } from '@app/common/entities/core/source.entity';
-import { CrawlJobType } from './interfaces/crawl-job.interface';
+import { SourceRepository } from '@app/database/repositories/source.repository';
+import { QueueMetricsService } from '@app/queue';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
+import { CrawlJobConsumer } from './consumers/crawl-job.consumer';
+import { CrawlJobProducer } from './producers/crawl-job.producer';
 
 @Injectable()
 export class CrawlerMicroservice implements OnModuleInit {
@@ -15,8 +14,7 @@ export class CrawlerMicroservice implements OnModuleInit {
     private readonly crawlJobProducer: CrawlJobProducer,
     private readonly crawlJobConsumer: CrawlJobConsumer,
     private readonly queueMetrics: QueueMetricsService,
-    @InjectRepository(Source)
-    private readonly sourceRepository: Repository<Source>,
+    private readonly sourceRepository: SourceRepository,
   ) {}
 
   async onModuleInit() {
@@ -41,6 +39,7 @@ export class CrawlerMicroservice implements OnModuleInit {
     }
   }
 
+  @Cron('0 */15 * * * *') // Every 15 minutes
   private async scheduleInitialHealthChecks() {
     try {
       const activeSources = await this.sourceRepository.find({
@@ -65,7 +64,7 @@ export class CrawlerMicroservice implements OnModuleInit {
   // Public API for other microservices to schedule crawl jobs
 
   async requestFullCrawl(
-    sourceId: number,
+    sourceId: bigint,
     maxPages: number = 5,
   ): Promise<string> {
     this.logger.log(
@@ -75,7 +74,7 @@ export class CrawlerMicroservice implements OnModuleInit {
   }
 
   async requestUpdateCrawl(
-    sourceId: number,
+    sourceId: bigint,
     olderThanHours: number = 24,
   ): Promise<string> {
     this.logger.log(
@@ -93,14 +92,14 @@ export class CrawlerMicroservice implements OnModuleInit {
     return this.crawlJobProducer.scheduleAllActiveSources(maxPages);
   }
 
-  async requestAnimeCrawl(sourceId: number, animeId: number): Promise<string> {
+  async requestAnimeCrawl(sourceId: bigint, animeId: bigint): Promise<string> {
     this.logger.log(
       `Received request for single anime crawl - Source: ${sourceId}, Anime: ${animeId}`,
     );
     return this.crawlJobProducer.scheduleSingleAnimeCrawl(sourceId, animeId, 3);
   }
 
-  async requestHealthCheck(sourceId: number): Promise<string> {
+  async requestHealthCheck(sourceId: bigint): Promise<string> {
     this.logger.log(`Received request for health check - Source: ${sourceId}`);
     return this.crawlJobProducer.scheduleHealthCheck(sourceId);
   }
@@ -159,12 +158,12 @@ export class CrawlerMicroservice implements OnModuleInit {
 
   // Scheduler integration - these methods will be called by the scheduler service
 
-  async handleScheduledCrawl(sourceId: number): Promise<string> {
+  async handleScheduledCrawl(sourceId: bigint): Promise<string> {
     this.logger.log(`Handling scheduled crawl for source: ${sourceId}`);
     return this.crawlJobProducer.scheduleFullCrawl(sourceId, 5, 2);
   }
 
-  async handleScheduledHealthCheck(sourceId: number): Promise<string> {
+  async handleScheduledHealthCheck(sourceId: bigint): Promise<string> {
     this.logger.log(`Handling scheduled health check for source: ${sourceId}`);
     return this.crawlJobProducer.scheduleHealthCheck(sourceId);
   }

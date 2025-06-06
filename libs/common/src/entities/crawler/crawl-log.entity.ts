@@ -14,11 +14,11 @@ import { CrawlJob } from './crawl-job.entity';
 @Index(['level'])
 @Index(['created_at'])
 export class CrawlLog {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
+  id: bigint;
 
-  @Column()
-  job_id: number;
+  @Column({ type: 'bigint' })
+  job_id: bigint;
 
   @Column({ type: 'enum', enum: ['info', 'warning', 'error', 'debug'] })
   level: string;

@@ -18,14 +18,14 @@ import { CrawlLog } from './crawl-log.entity';
 @Index(['job_type'])
 @Index(['scheduled_at'])
 export class CrawlJob {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
+  id: bigint;
 
   @Column({ length: 36, unique: true })
   job_id: string;
 
-  @Column()
-  source_id: number;
+  @Column({ type: 'bigint' })
+  source_id: bigint;
 
   @Column({
     type: 'enum',

@@ -88,7 +88,11 @@ export class LinkCheckJobDto extends BaseQueueJobDto {
 }
 
 export class AnalyticsJobDto extends BaseQueueJobDto {
-  declare type: 'track-view' | 'track-download' | 'track-search' | 'aggregate-stats';
+  declare type:
+    | 'track-view'
+    | 'track-download'
+    | 'track-search'
+    | 'aggregate-stats';
 
   declare data: {
     animeId?: number;
@@ -117,7 +121,11 @@ export class NotificationJobDto extends BaseQueueJobDto {
 }
 
 export class SchedulerJobDto extends BaseQueueJobDto {
-  declare type: 'daily-crawl' | 'hourly-check' | 'weekly-cleanup' | 'custom-task';
+  declare type:
+    | 'daily-crawl'
+    | 'hourly-check'
+    | 'weekly-cleanup'
+    | 'custom-task';
 
   declare data: {
     taskName: string;

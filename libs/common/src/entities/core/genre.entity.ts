@@ -10,8 +10,8 @@ import { Anime } from './anime.entity';
 
 @Entity('genres')
 export class Genre {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
+  id: bigint;
 
   @Column({ length: 100, unique: true })
   name: string;

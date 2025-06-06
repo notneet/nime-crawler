@@ -1,11 +1,12 @@
 import { CrawlJobStatus, CrawlJobType } from '@app/common';
 import { Source } from '@app/common/entities/core/source.entity';
 import { CrawlJob } from '@app/common/entities/crawler/crawl-job.entity';
-import { SourceHealth } from '@app/common/entities/monitoring/source-health.entity';
 import { QueueProducerService } from '@app/queue';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindManyOptions, Repository } from 'typeorm';
+import { SourceRepository } from '@app/database/repositories/source.repository';
+import { SourceHealthRepository } from '@app/database/repositories/source-health.repository';
 import {
   CrawlJobQueryDto,
   CrawlJobStatusDto,
@@ -20,22 +21,20 @@ export class CrawlerGatewayService {
   constructor(
     @InjectRepository(CrawlJob)
     private readonly crawlJobRepository: Repository<CrawlJob>,
-    @InjectRepository(Source)
-    private readonly sourceRepository: Repository<Source>,
-    @InjectRepository(SourceHealth)
-    private readonly sourceHealthRepository: Repository<SourceHealth>,
+    private readonly sourceRepository: SourceRepository,
+    private readonly sourceHealthRepository: SourceHealthRepository,
     private readonly queueProducerService: QueueProducerService,
   ) {}
 
   async scheduleFullCrawl(
-    sourceId: number,
+    sourceId: string,
     maxPages: number = 5,
     priority: number = 1,
   ): Promise<string> {
     const jobId = uuidv4();
 
     const source = await this.sourceRepository.findOne({
-      where: { id: sourceId },
+      where: { id: BigInt(sourceId) },
     });
 
     if (!source) {
@@ -64,7 +63,7 @@ export class CrawlerGatewayService {
 
     const crawlJob = this.crawlJobRepository.create({
       job_id: jobId,
-      source_id: sourceId,
+      source_id: BigInt(sourceId),
       job_type: CrawlJobType.FULL_CRAWL,
       status: CrawlJobStatus.PENDING,
       priority,
@@ -84,14 +83,14 @@ export class CrawlerGatewayService {
   }
 
   async scheduleUpdateCrawl(
-    sourceId: number,
+    sourceId: string,
     maxPages: number = 2,
     priority: number = 1,
   ): Promise<string> {
     const jobId = uuidv4();
 
     const source = await this.sourceRepository.findOne({
-      where: { id: sourceId },
+      where: { id: BigInt(sourceId) },
     });
 
     if (!source) {
@@ -120,7 +119,7 @@ export class CrawlerGatewayService {
 
     const crawlJob = this.crawlJobRepository.create({
       job_id: jobId,
-      source_id: sourceId,
+      source_id: BigInt(sourceId),
       job_type: CrawlJobType.UPDATE_CRAWL,
       status: CrawlJobStatus.PENDING,
       priority,
@@ -140,14 +139,14 @@ export class CrawlerGatewayService {
   }
 
   async scheduleSingleAnimeCrawl(
-    sourceId: number,
-    animeId: number,
+    sourceId: string,
+    animeId: string,
     priority: number = 1,
   ): Promise<string> {
     const jobId = uuidv4();
 
     const source = await this.sourceRepository.findOne({
-      where: { id: sourceId },
+      where: { id: BigInt(sourceId) },
     });
 
     if (!source) {
@@ -176,7 +175,7 @@ export class CrawlerGatewayService {
 
     const crawlJob = this.crawlJobRepository.create({
       job_id: jobId,
-      source_id: sourceId,
+      source_id: BigInt(sourceId),
       job_type: CrawlJobType.SINGLE_ANIME,
       status: CrawlJobStatus.PENDING,
       priority,
@@ -196,13 +195,13 @@ export class CrawlerGatewayService {
   }
 
   async scheduleHealthCheck(
-    sourceId: number,
+    sourceId: string,
     priority: number = 1,
   ): Promise<string> {
     const jobId = uuidv4();
 
     const source = await this.sourceRepository.findOne({
-      where: { id: sourceId },
+      where: { id: BigInt(sourceId) },
     });
 
     if (!source) {
@@ -227,7 +226,7 @@ export class CrawlerGatewayService {
 
     const crawlJob = this.crawlJobRepository.create({
       job_id: jobId,
-      source_id: sourceId,
+      source_id: BigInt(sourceId),
       job_type: CrawlJobType.HEALTH_CHECK,
       status: CrawlJobStatus.PENDING,
       priority,
@@ -276,7 +275,7 @@ export class CrawlerGatewayService {
     const where: any = {};
 
     if (sourceId) {
-      where.source_id = sourceId;
+      where.source_id = BigInt(sourceId);
     }
 
     if (jobType) {
@@ -300,7 +299,7 @@ export class CrawlerGatewayService {
 
     const jobsDto: CrawlJobStatusDto[] = jobs.map(job => ({
       jobId: job.job_id,
-      sourceId: job.source_id,
+      sourceId: job.source_id.toString(),
       jobType: job.job_type as CrawlJobType,
       status: job.status as CrawlJobStatus,
       priority: job.priority,
@@ -335,7 +334,7 @@ export class CrawlerGatewayService {
 
     return {
       jobId: job.job_id,
-      sourceId: job.source_id,
+      sourceId: job.source_id.toString(),
       jobType: job.job_type as CrawlJobType,
       status: job.status as CrawlJobStatus,
       priority: job.priority,
@@ -351,9 +350,9 @@ export class CrawlerGatewayService {
     };
   }
 
-  async getSourceHealth(sourceId: number): Promise<SourceHealthDto> {
+  async getSourceHealth(sourceId: string): Promise<SourceHealthDto> {
     const source = await this.sourceRepository.findOne({
-      where: { id: sourceId },
+      where: { id: BigInt(sourceId) },
     });
 
     if (!source) {
@@ -361,19 +360,19 @@ export class CrawlerGatewayService {
     }
 
     const latestHealth = await this.sourceHealthRepository.findOne({
-      where: { source_id: sourceId },
+      where: { source_id: BigInt(sourceId) },
       order: { checked_at: 'DESC' },
     });
 
     const healthDto: SourceHealthDto = {
-      sourceId: source.id,
+      sourceId: source.id.toString(),
       sourceName: source.name,
       sourceUrl: source.base_url,
       isAccessible: latestHealth?.is_accessible ?? false,
       responseTimeMs: latestHealth?.response_time_ms,
       httpStatusCode: latestHealth?.http_status_code,
       errorMessage: latestHealth?.error_message,
-      successRate24h: latestHealth?.success_rate_24h,
+      successRate24h: 0, // Calculate from health checks if needed
       lastCheckedAt: latestHealth?.checked_at ?? new Date(0),
     };
 

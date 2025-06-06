@@ -7,16 +7,21 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { AnimeGatewayService } from '../services/anime-gateway.service';
 import { AnimeQueryDto } from '../dto/anime.dto';
 
-@Controller('anime')
+@ApiTags('anime')
+@Controller({ path: 'anime', version: '1' })
 export class AnimeController {
   private readonly logger = new Logger(AnimeController.name);
 
   constructor(private readonly animeGatewayService: AnimeGatewayService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get anime list with optional filters' })
+  @ApiResponse({ status: 200, description: 'Anime list retrieved successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async getAnimeList(@Query() query: AnimeQueryDto) {
     try {
       this.logger.log('Fetching anime list with filters', query);
@@ -45,6 +50,12 @@ export class AnimeController {
   }
 
   @Get('search')
+  @ApiOperation({ summary: 'Search anime by query string' })
+  @ApiQuery({ name: 'q', description: 'Search query (minimum 2 characters)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Maximum number of results' })
+  @ApiResponse({ status: 200, description: 'Anime search completed successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid search query' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async searchAnime(@Query() query: { q: string; limit?: number }) {
     try {
       if (!query.q || query.q.trim().length < 2) {
@@ -95,7 +106,12 @@ export class AnimeController {
   }
 
   @Get(':id')
-  async getAnimeById(@Param('id') id: number) {
+  @ApiOperation({ summary: 'Get anime by ID' })
+  @ApiParam({ name: 'id', description: 'Anime ID' })
+  @ApiResponse({ status: 200, description: 'Anime retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Anime not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getAnimeById(@Param('id') id: string) {
     try {
       this.logger.log(`Fetching anime with ID: ${id}`);
 
@@ -135,7 +151,11 @@ export class AnimeController {
   }
 
   @Get(':id/episodes')
-  async getAnimeEpisodes(@Param('id') id: number) {
+  @ApiOperation({ summary: 'Get episodes for a specific anime' })
+  @ApiParam({ name: 'id', description: 'Anime ID' })
+  @ApiResponse({ status: 200, description: 'Anime episodes retrieved successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getAnimeEpisodes(@Param('id') id: string) {
     try {
       this.logger.log(`Fetching episodes for anime ID: ${id}`);
 
@@ -167,6 +187,9 @@ export class AnimeController {
   }
 
   @Get('stats/summary')
+  @ApiOperation({ summary: 'Get anime statistics summary' })
+  @ApiResponse({ status: 200, description: 'Anime statistics retrieved successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async getAnimeStats() {
     try {
       this.logger.log('Fetching anime statistics');

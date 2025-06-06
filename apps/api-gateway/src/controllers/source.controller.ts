@@ -7,16 +7,21 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { SourceGatewayService } from '../services/source-gateway.service';
 import { SourceQueryDto } from '../dto/source.dto';
 
-@Controller('sources')
+@ApiTags('sources')
+@Controller({ path: 'sources', version: '1' })
 export class SourceController {
   private readonly logger = new Logger(SourceController.name);
 
   constructor(private readonly sourceGatewayService: SourceGatewayService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get sources with optional filters' })
+  @ApiResponse({ status: 200, description: 'Sources retrieved successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async getSources(@Query() query: SourceQueryDto) {
     try {
       this.logger.log('Fetching sources with filters', query);
@@ -45,7 +50,12 @@ export class SourceController {
   }
 
   @Get(':id')
-  async getSourceById(@Param('id') id: number) {
+  @ApiOperation({ summary: 'Get source by ID' })
+  @ApiParam({ name: 'id', description: 'Source ID' })
+  @ApiResponse({ status: 200, description: 'Source retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Source not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getSourceById(@Param('id') id: string) {
     try {
       this.logger.log(`Fetching source with ID: ${id}`);
 
@@ -88,8 +98,14 @@ export class SourceController {
   }
 
   @Get(':id/anime')
+  @ApiOperation({ summary: 'Get anime from a specific source' })
+  @ApiParam({ name: 'id', description: 'Source ID' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page (default: 20)' })
+  @ApiResponse({ status: 200, description: 'Source anime retrieved successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async getSourceAnime(
-    @Param('id') id: number,
+    @Param('id') id: string,
     @Query() query: { page?: number; limit?: number },
   ) {
     try {
@@ -123,7 +139,11 @@ export class SourceController {
   }
 
   @Get(':id/stats')
-  async getSourceStats(@Param('id') id: number) {
+  @ApiOperation({ summary: 'Get statistics for a specific source' })
+  @ApiParam({ name: 'id', description: 'Source ID' })
+  @ApiResponse({ status: 200, description: 'Source statistics retrieved successfully' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getSourceStats(@Param('id') id: string) {
     try {
       this.logger.log(`Fetching statistics for source ID: ${id}`);
 

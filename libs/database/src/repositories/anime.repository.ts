@@ -35,7 +35,7 @@ export interface PaginationResult<T> {
 export interface AnimeSearchOptions {
   status?: AnimeStatus;
   type?: AnimeType;
-  sourceId?: number;
+  sourceId?: bigint;
   year?: number;
   query?: string;
 }
@@ -67,7 +67,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.findOne(options);
   }
 
-  async findById(id: number, relations?: string[]): Promise<Anime | null> {
+  async findById(id: bigint, relations?: string[]): Promise<Anime | null> {
     const cacheKey = `anime:id:${id}`;
 
     return this.redisService.wrap(
@@ -115,26 +115,31 @@ export class AnimeRepository extends Repository<Anime> {
     return savedAnime;
   }
 
-  async update(
-    criteria: number | FindOptionsWhere<Anime>,
+  async updateAnime(
+    criteria: bigint | FindOptionsWhere<Anime>,
     partialEntity: Partial<Anime>,
   ): Promise<UpdateResult> {
-    const result = await this.update(criteria, partialEntity);
+    const result = await super.update(
+      typeof criteria === 'bigint' ? { id: criteria } : criteria,
+      partialEntity
+    );
 
     // Invalidate caches
-    if (typeof criteria === 'number') {
+    if (typeof criteria === 'bigint') {
       await this.invalidateAnimeCache(criteria);
     }
 
     return result;
   }
 
-  async delete(
-    criteria: number | FindOptionsWhere<Anime>,
+  async deleteAnime(
+    criteria: bigint | FindOptionsWhere<Anime>,
   ): Promise<DeleteResult> {
-    const result = await this.delete(criteria);
+    const result = await super.delete(
+      typeof criteria === 'bigint' ? { id: criteria } : criteria
+    );
 
-    if (typeof criteria === 'number') {
+    if (typeof criteria === 'bigint') {
       await this.invalidateAnimeCache(criteria);
     }
     await this.invalidateListCaches();
@@ -142,12 +147,14 @@ export class AnimeRepository extends Repository<Anime> {
     return result;
   }
 
-  async softDelete(
-    criteria: number | FindOptionsWhere<Anime>,
+  async softDeleteAnime(
+    criteria: bigint | FindOptionsWhere<Anime>,
   ): Promise<UpdateResult> {
-    const result = await this.softDelete(criteria);
+    const result = await super.softDelete(
+      typeof criteria === 'bigint' ? { id: criteria } : criteria
+    );
 
-    if (typeof criteria === 'number') {
+    if (typeof criteria === 'bigint') {
       await this.invalidateAnimeCache(criteria);
     }
     await this.invalidateListCaches();
@@ -158,7 +165,7 @@ export class AnimeRepository extends Repository<Anime> {
   // ============= ADVANCED QUERIES =============
 
   async findBySource(
-    sourceId: number,
+    sourceId: bigint,
     sourceAnimeId: string,
   ): Promise<Anime | null> {
     const cacheKey = `anime:source:${sourceId}:${sourceAnimeId}`;
@@ -435,7 +442,7 @@ export class AnimeRepository extends Repository<Anime> {
 
   // ============= UTILITY METHODS =============
 
-  async updateViewCount(id: number): Promise<void> {
+  async updateViewCount(id: bigint): Promise<void> {
     await this.increment({ id }, 'view_count', 1);
 
     // Update cache counter
@@ -445,7 +452,7 @@ export class AnimeRepository extends Repository<Anime> {
     await this.invalidateAnimeCache(id);
   }
 
-  async updateDownloadCount(id: number): Promise<void> {
+  async updateDownloadCount(id: bigint): Promise<void> {
     await this.increment({ id }, 'download_count', 1);
 
     // Update cache counter
@@ -459,7 +466,7 @@ export class AnimeRepository extends Repository<Anime> {
 
   // ============= CACHE MANAGEMENT =============
 
-  private async invalidateAnimeCache(animeId: number): Promise<void> {
+  private async invalidateAnimeCache(animeId: bigint): Promise<void> {
     try {
       // Get anime to get slug
       const anime = await this.findOne({

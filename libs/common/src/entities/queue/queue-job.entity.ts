@@ -12,8 +12,8 @@ import {
 @Index(['status'])
 @Index(['scheduled_at'])
 export class QueueJob {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
+  id: bigint;
 
   @Column({ length: 100 })
   queue_name: string; // crawler, link_checker, etc.

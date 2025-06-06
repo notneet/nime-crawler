@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Like, In } from 'typeorm';
 import { Anime } from '@app/common/entities/core/anime.entity';
 import { Episode } from '@app/common/entities/core/episode.entity';
+import { AnimeRepository } from '@app/database/repositories/anime.repository';
 import {
   AnimeQueryDto,
   AnimeDto,
@@ -16,8 +17,7 @@ export class AnimeGatewayService {
   private readonly logger = new Logger(AnimeGatewayService.name);
 
   constructor(
-    @InjectRepository(Anime)
-    private readonly animeRepository: Repository<Anime>,
+    private readonly animeRepository: AnimeRepository,
     @InjectRepository(Episode)
     private readonly episodeRepository: Repository<Episode>,
   ) {}
@@ -79,7 +79,7 @@ export class AnimeGatewayService {
     }
 
     if (sourceId) {
-      where.source_id = sourceId;
+      where.source_id = BigInt(sourceId);
     }
 
     findOptions.where = where;
@@ -102,7 +102,7 @@ export class AnimeGatewayService {
     }
 
     const animeDto: AnimeDto[] = animeList.map(anime => ({
-      id: anime.id,
+      id: anime.id.toString(),
       title: anime.title,
       slug: anime.slug,
       alternativeTitle: anime.alternative_title,
@@ -117,7 +117,7 @@ export class AnimeGatewayService {
       rating: anime.rating,
       viewCount: anime.view_count,
       downloadCount: anime.download_count,
-      sourceId: anime.source_id,
+      sourceId: anime.source_id.toString(),
       sourceAnimeId: anime.source_anime_id,
       sourceUrl: anime.source_url,
       lastUpdatedAt: anime.last_updated_at,
@@ -151,7 +151,7 @@ export class AnimeGatewayService {
     });
 
     return animeList.map(anime => ({
-      id: anime.id,
+      id: anime.id.toString(),
       title: anime.title,
       slug: anime.slug,
       alternativeTitle: anime.alternative_title,
@@ -166,7 +166,7 @@ export class AnimeGatewayService {
       rating: anime.rating,
       viewCount: anime.view_count,
       downloadCount: anime.download_count,
-      sourceId: anime.source_id,
+      sourceId: anime.source_id.toString(),
       sourceAnimeId: anime.source_anime_id,
       sourceUrl: anime.source_url,
       lastUpdatedAt: anime.last_updated_at,
@@ -176,9 +176,9 @@ export class AnimeGatewayService {
     }));
   }
 
-  async getAnimeById(id: number): Promise<AnimeDto | null> {
+  async getAnimeById(id: string): Promise<AnimeDto | null> {
     const anime = await this.animeRepository.findOne({
-      where: { id },
+      where: { id: BigInt(id) },
       relations: ['genres', 'source', 'episodes'],
     });
 
@@ -187,7 +187,7 @@ export class AnimeGatewayService {
     }
 
     return {
-      id: anime.id,
+      id: anime.id.toString(),
       title: anime.title,
       slug: anime.slug,
       alternativeTitle: anime.alternative_title,
@@ -202,7 +202,7 @@ export class AnimeGatewayService {
       rating: anime.rating,
       viewCount: anime.view_count,
       downloadCount: anime.download_count,
-      sourceId: anime.source_id,
+      sourceId: anime.source_id.toString(),
       sourceAnimeId: anime.source_anime_id,
       sourceUrl: anime.source_url,
       lastUpdatedAt: anime.last_updated_at,
@@ -211,8 +211,8 @@ export class AnimeGatewayService {
       genres: anime.genres?.map(genre => genre.name) || [],
       episodes:
         anime.episodes?.map(episode => ({
-          id: episode.id,
-          animeId: episode.anime_id,
+          id: episode.id.toString(),
+          animeId: episode.anime_id.toString(),
           episodeNumber: episode.episode_number,
           title: episode.title,
           sourceEpisodeId: episode.source_episode_id,
@@ -231,16 +231,16 @@ export class AnimeGatewayService {
     };
   }
 
-  async getAnimeEpisodes(animeId: number): Promise<EpisodeDto[]> {
+  async getAnimeEpisodes(animeId: string): Promise<EpisodeDto[]> {
     const episodes = await this.episodeRepository.find({
-      where: { anime_id: animeId },
+      where: { anime_id: BigInt(animeId) },
       relations: ['download_links'],
       order: { episode_number: 'ASC' },
     });
 
     return episodes.map(episode => ({
-      id: episode.id,
-      animeId: episode.anime_id,
+      id: episode.id.toString(),
+      animeId: episode.anime_id.toString(),
       episodeNumber: episode.episode_number,
       title: episode.title,
       sourceEpisodeId: episode.source_episode_id,
@@ -257,8 +257,8 @@ export class AnimeGatewayService {
       updatedAt: episode.updated_at,
       downloadLinks:
         episode.download_links?.map(link => ({
-          id: link.id,
-          episodeId: link.episode_id,
+          id: link.id.toString(),
+          episodeId: link.episode_id.toString(),
           provider: link.provider,
           url: link.url,
           quality: link.quality,
@@ -337,7 +337,7 @@ export class AnimeGatewayService {
       averageRating,
       topGenres,
       recentlyAdded: recentlyAdded.map(anime => ({
-        id: anime.id,
+        id: anime.id.toString(),
         title: anime.title,
         slug: anime.slug,
         alternativeTitle: anime.alternative_title,
@@ -352,7 +352,7 @@ export class AnimeGatewayService {
         rating: anime.rating,
         viewCount: anime.view_count,
         downloadCount: anime.download_count,
-        sourceId: anime.source_id,
+        sourceId: anime.source_id.toString(),
         sourceAnimeId: anime.source_anime_id,
         sourceUrl: anime.source_url,
         lastUpdatedAt: anime.last_updated_at,
@@ -361,7 +361,7 @@ export class AnimeGatewayService {
         genres: anime.genres?.map(genre => genre.name) || [],
       })),
       mostPopular: mostPopular.map(anime => ({
-        id: anime.id,
+        id: anime.id.toString(),
         title: anime.title,
         slug: anime.slug,
         alternativeTitle: anime.alternative_title,
@@ -376,7 +376,7 @@ export class AnimeGatewayService {
         rating: anime.rating,
         viewCount: anime.view_count,
         downloadCount: anime.download_count,
-        sourceId: anime.source_id,
+        sourceId: anime.source_id.toString(),
         sourceAnimeId: anime.source_anime_id,
         sourceUrl: anime.source_url,
         lastUpdatedAt: anime.last_updated_at,

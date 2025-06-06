@@ -1,15 +1,16 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { v4 as uuidv4 } from 'uuid';
 import {
+  EXCHANGE_NAMES,
   IQueueJob,
   IQueueProducer,
-  QueueJobStatus,
-  QueueJobPriority,
+  MESSAGE_PATTERNS,
   QUEUE_NAMES,
-  EXCHANGE_NAMES,
+  QueueJobPriority,
+  QueueJobStatus,
   ROUTING_KEYS,
 } from '@app/common';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import { QueueMetricsService } from '../services/queue-metrics.service';
 
 @Injectable()
@@ -234,17 +235,31 @@ export class QueueProducerService implements IQueueProducer {
       const exchange = this.getExchangeByQueueName(queueName);
       const routingKey = this.getRoutingKeyByQueueName(queueName);
 
-      await this.amqpConnection.publish(exchange, routingKey, message, {
-        persistent: true,
-        messageId: message.jobId || uuidv4(),
-        timestamp: Date.now(),
-        headers: {
-          queueName,
-          messageType: 'direct',
-        },
-      });
+      // Wrap message in NestJS microservice format with pattern
+      const microserviceMessage = {
+        pattern: this.getMessagePattern(queueName, message),
+        data: message,
+      };
 
-      this.logger.log(`Message published to queue: ${queueName}`);
+      await this.amqpConnection.publish(
+        exchange,
+        routingKey,
+        microserviceMessage,
+        {
+          persistent: true,
+          messageId: message.jobId || uuidv4(),
+          timestamp: Date.now(),
+          headers: {
+            queueName,
+            messageType: 'microservice',
+            pattern: microserviceMessage.pattern,
+          },
+        },
+      );
+
+      this.logger.log(
+        `Message published to queue: ${queueName} with pattern: ${microserviceMessage.pattern}`,
+      );
     } catch (error) {
       this.logger.error(
         `Failed to publish message to queue ${queueName}: ${error.message}`,
@@ -364,6 +379,44 @@ export class QueueProducerService implements IQueueProducer {
         return ROUTING_KEYS.SCHEDULER.DAILY;
       default:
         return 'default';
+    }
+  }
+
+  /**
+   * Get message pattern for NestJS microservice routing
+   */
+  private getMessagePattern(queueName: string, message: any): string {
+    // Determine pattern based on queue name and message content
+    switch (queueName) {
+      case QUEUE_NAMES.CRAWL:
+        // Check if it's a crawl job message
+        if (message.data?.jobType || message.jobType) {
+          return MESSAGE_PATTERNS.CRAWL_JOB;
+        }
+        return MESSAGE_PATTERNS.CRAWL_JOB;
+
+      case QUEUE_NAMES.LINK_CHECK:
+        return MESSAGE_PATTERNS.LINK_CHECK;
+
+      case QUEUE_NAMES.ANALYTICS:
+        return MESSAGE_PATTERNS.ANALYTICS;
+
+      case QUEUE_NAMES.NOTIFICATION:
+        return MESSAGE_PATTERNS.NOTIFICATION;
+
+      case QUEUE_NAMES.SCHEDULER:
+        // Check if it's a health check
+        if (
+          message.data?.jobType === 'health_check' ||
+          message.jobType === 'health_check'
+        ) {
+          return MESSAGE_PATTERNS.HEALTH_CHECK;
+        }
+        return MESSAGE_PATTERNS.BATCH_PROCESS;
+
+      default:
+        // Fallback to crawl job for unknown queues
+        return MESSAGE_PATTERNS.CRAWL_JOB;
     }
   }
 }
