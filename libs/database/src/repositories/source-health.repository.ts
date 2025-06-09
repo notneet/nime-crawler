@@ -41,14 +41,14 @@ export class SourceHealthRepository extends Repository<SourceHealth> {
   async findAll(
     options?: FindManyOptions<SourceHealth>,
   ): Promise<SourceHealth[]> {
-    const cacheKey = `source-health:all:${JSON.stringify(options)}`;
+    const cacheKey = this.getCacheKeyForQuery(options);
 
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find(options);
+        return super.find(options);
       },
-      { ttl: 300, namespace: 'source-health' }, // 5 minutes cache
+      { ttl: 300, namespace: 'source-health' },
     );
   }
 
@@ -58,13 +58,17 @@ export class SourceHealthRepository extends Repository<SourceHealth> {
     return super.findOne(options);
   }
 
+  private getCacheKeyForQuery(options?: any): string {
+    return `source-health:all:${JSON.stringify(options)}`;
+  }
+
   async findById(id: bigint): Promise<SourceHealth | null> {
     const cacheKey = `source-health:id:${id}`;
 
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.findOne({
+        return super.findOne({
           where: { id },
           relations: ['source'],
         });
@@ -89,7 +93,7 @@ export class SourceHealthRepository extends Repository<SourceHealth> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.findOne({
+        return super.findOne({
           where: { source_id: sourceId },
           order: { checked_at: 'DESC' },
           relations: ['source'],
@@ -108,7 +112,7 @@ export class SourceHealthRepository extends Repository<SourceHealth> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find({
+        return super.find({
           where: { source_id: sourceId },
           order: { checked_at: 'DESC' },
           take: limit,
@@ -186,7 +190,7 @@ export class SourceHealthRepository extends Repository<SourceHealth> {
             .andWhere('sh.checked_at >= :since', { since })
             .getRawOne(),
 
-          this.findOne({
+          super.findOne({
             where: { source_id: sourceId },
             order: { checked_at: 'DESC' },
           }),

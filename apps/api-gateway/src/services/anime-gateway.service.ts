@@ -1,16 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Like, In } from 'typeorm';
+import { AnimeStatus } from '@app/common';
 import { Anime } from '@app/common/entities/core/anime.entity';
 import { Episode } from '@app/common/entities/core/episode.entity';
 import { AnimeRepository } from '@app/database/repositories/anime.repository';
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FindManyOptions, Like, Repository } from 'typeorm';
 import {
-  AnimeQueryDto,
   AnimeDto,
-  EpisodeDto,
+  AnimeQueryDto,
   AnimeStatsDto,
+  EpisodeDto,
 } from '../dto/anime.dto';
-import { AnimeStatus } from '@app/common';
 
 @Injectable()
 export class AnimeGatewayService {

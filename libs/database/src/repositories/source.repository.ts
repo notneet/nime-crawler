@@ -46,15 +46,19 @@ export class SourceRepository extends Repository<Source> {
   // ============= BASIC CRUD OPERATIONS =============
 
   async findAll(options?: FindManyOptions<Source>): Promise<Source[]> {
-    const cacheKey = `source:all:${JSON.stringify(options)}`;
+    const cacheKey = this.getCacheKeyForQuery(options);
 
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find(options);
+        return super.find(options);
       },
       { ttl: 600, namespace: 'source' }, // 10 minutes cache
     );
+  }
+
+  private getCacheKeyForQuery(options?: any): string {
+    return `source:all:${JSON.stringify(options)}`;
   }
 
   async findOne(options: FindOneOptions<Source>): Promise<Source | null> {
@@ -67,7 +71,7 @@ export class SourceRepository extends Repository<Source> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.findOne({
+        return super.findOne({
           where: { id },
           relations,
         });
@@ -82,7 +86,7 @@ export class SourceRepository extends Repository<Source> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.findOne({
+        return super.findOne({
           where: { slug },
           relations: ['animes', 'crawl_jobs'],
         });
@@ -157,7 +161,7 @@ export class SourceRepository extends Repository<Source> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find({
+        return super.find({
           where: { is_active: true },
           order: { priority: 'ASC', name: 'ASC' },
         });
@@ -172,7 +176,7 @@ export class SourceRepository extends Repository<Source> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find({
+        return super.find({
           where: { priority, is_active: true },
           order: { name: 'ASC' },
         });
@@ -187,7 +191,7 @@ export class SourceRepository extends Repository<Source> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find({
+        return super.find({
           where: { is_active: true },
           order: { last_crawled_at: 'DESC' },
           take: limit,
@@ -353,35 +357,49 @@ export class SourceRepository extends Repository<Source> {
   // ============= UTILITY METHODS =============
 
   async updateLastCrawledAt(id: bigint): Promise<void> {
-    await this.update({ id }, { last_crawled_at: new Date() });
-
-    // Invalidate related cache
-    await this.invalidateSourceCache(id);
+    try {
+      await super.update({ id }, { last_crawled_at: new Date() });
+      await this.invalidateSourceCache(id);
+    } catch (error) {
+      console.error(
+        `Error updating last crawled date for source ${id}:`,
+        error.message,
+      );
+    }
   }
 
   async toggleActiveStatus(id: bigint): Promise<UpdateResult> {
-    const source = await this.findOne({ where: { id } });
-    if (!source) {
-      throw new Error(`Source with id ${id} not found`);
+    try {
+      const source = await super.findOne({ where: { id } });
+      if (!source) {
+        throw new Error(`Source with ID ${id} not found`);
+      }
+
+      const result = await super.update(
+        { id },
+        { is_active: !source.is_active },
+      );
+      await this.invalidateSourceCache(id);
+      await this.invalidateListCaches();
+      return result;
+    } catch (error) {
+      console.error(
+        `Error toggling active status for source ${id}:`,
+        error.message,
+      );
+      throw error;
     }
-
-    const result = await this.update({ id }, { is_active: !source.is_active });
-    await this.invalidateSourceCache(id);
-    await this.invalidateListCaches();
-
-    return result;
   }
 
   // ============= CACHE MANAGEMENT =============
 
   private async invalidateSourceCache(sourceId: bigint): Promise<void> {
     try {
-      // Get source to get slug
-      const source = await this.findOne({
+      const source = await super.findOne({
         where: { id: sourceId },
       });
+
       if (source) {
-        // Delete specific cache entries
         await this.redisService.del(`source:id:${sourceId}`, {
           namespace: 'source',
         });
@@ -390,10 +408,12 @@ export class SourceRepository extends Repository<Source> {
         });
       }
 
-      // Invalidate list caches
       await this.invalidateListCaches();
     } catch (error) {
-      console.error('Error invalidating source cache:', error);
+      console.error(
+        `Error invalidating source cache for ID ${sourceId}:`,
+        error.message,
+      );
     }
   }
 

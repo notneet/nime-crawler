@@ -52,19 +52,19 @@ export class AnimeRepository extends Repository<Anime> {
   // ============= BASIC CRUD OPERATIONS =============
 
   async findAll(options?: FindManyOptions<Anime>): Promise<Anime[]> {
-    const cacheKey = `anime:all:${JSON.stringify(options)}`;
+    const cacheKey = this.getCacheKeyForQuery(options);
 
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find(options);
+        return super.find(options);
       },
       { ttl: 300, namespace: 'anime' }, // 5 minutes cache
     );
   }
 
   async findOne(options: FindOneOptions<Anime>): Promise<Anime | null> {
-    return this.findOne(options);
+    return super.findOne(options);
   }
 
   async findById(id: bigint, relations?: string[]): Promise<Anime | null> {
@@ -73,7 +73,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.findOne({
+        return super.findOne({
           where: { id },
           relations,
         });
@@ -88,7 +88,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.findOne({
+        return super.findOne({
           where: { slug },
           relations: ['source', 'genres', 'episodes'],
         });
@@ -103,14 +103,14 @@ export class AnimeRepository extends Repository<Anime> {
   create(
     entityLike?: DeepPartial<Anime> | DeepPartial<Anime>[],
   ): Anime | Anime[] {
-    return this.create(entityLike as any);
+    return super.create(entityLike as any);
   }
 
   async save<T extends DeepPartial<Anime>>(
     entity: T,
     options?: SaveOptions,
   ): Promise<T & Anime> {
-    const savedAnime = await this.save(entity, options);
+    const savedAnime = await super.save(entity, options);
     await this.invalidateListCaches();
     return savedAnime;
   }
@@ -173,7 +173,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.findOne({
+        return super.findOne({
           where: { source_id: sourceId, source_anime_id: sourceAnimeId },
         });
       },
@@ -190,7 +190,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find({
+        return super.find({
           where: { status },
           order: { updated_at: 'DESC' },
           take: limit,
@@ -207,7 +207,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find({
+        return super.find({
           where: { type },
           order: { rating: 'DESC' },
           take: limit,
@@ -223,7 +223,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find({
+        return super.find({
           order: { view_count: 'DESC' },
           take: limit,
           relations: ['source'],
@@ -239,7 +239,7 @@ export class AnimeRepository extends Repository<Anime> {
     return this.redisService.wrap(
       cacheKey,
       async () => {
-        return this.find({
+        return super.find({
           order: { last_updated_at: 'DESC' },
           take: limit,
           relations: ['source'],
@@ -466,14 +466,17 @@ export class AnimeRepository extends Repository<Anime> {
 
   // ============= CACHE MANAGEMENT =============
 
+  private getCacheKeyForQuery(options?: any): string {
+    return `anime:all:${JSON.stringify(options)}`;
+  }
+
   private async invalidateAnimeCache(animeId: bigint): Promise<void> {
     try {
-      // Get anime to get slug
-      const anime = await this.findOne({
+      const anime = await super.findOne({
         where: { id: animeId },
       });
+
       if (anime) {
-        // Delete specific cache entries
         await this.redisService.del(`anime:id:${animeId}`, {
           namespace: 'anime',
         });
@@ -485,11 +488,11 @@ export class AnimeRepository extends Repository<Anime> {
           { namespace: 'anime' },
         );
       }
-
-      // Invalidate list caches
-      await this.invalidateListCaches();
     } catch (error) {
-      console.error('Error invalidating anime cache:', error);
+      console.error(
+        `Error invalidating anime cache for ID ${animeId}:`,
+        error.message,
+      );
     }
   }
 
