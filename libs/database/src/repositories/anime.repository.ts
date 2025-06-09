@@ -121,7 +121,7 @@ export class AnimeRepository extends Repository<Anime> {
   ): Promise<UpdateResult> {
     const result = await super.update(
       typeof criteria === 'bigint' ? { id: criteria } : criteria,
-      partialEntity
+      partialEntity,
     );
 
     // Invalidate caches
@@ -136,7 +136,7 @@ export class AnimeRepository extends Repository<Anime> {
     criteria: bigint | FindOptionsWhere<Anime>,
   ): Promise<DeleteResult> {
     const result = await super.delete(
-      typeof criteria === 'bigint' ? { id: criteria } : criteria
+      typeof criteria === 'bigint' ? { id: criteria } : criteria,
     );
 
     if (typeof criteria === 'bigint') {
@@ -151,7 +151,7 @@ export class AnimeRepository extends Repository<Anime> {
     criteria: bigint | FindOptionsWhere<Anime>,
   ): Promise<UpdateResult> {
     const result = await super.softDelete(
-      typeof criteria === 'bigint' ? { id: criteria } : criteria
+      typeof criteria === 'bigint' ? { id: criteria } : criteria,
     );
 
     if (typeof criteria === 'bigint') {
@@ -374,8 +374,8 @@ export class AnimeRepository extends Repository<Anime> {
           completedCount,
           upcomingCount,
           hiatusCount,
-          airingCount,
           cancelledCount,
+          airingCount,
           tvCount,
           movieCount,
           ovaCount,
@@ -396,8 +396,8 @@ export class AnimeRepository extends Repository<Anime> {
             where: { status: AnimeStatus.UPCOMING },
           }),
           this.count({ where: { status: AnimeStatus.HIATUS } }),
-          this.count({ where: { status: AnimeStatus.AIRING } }),
           this.count({ where: { status: AnimeStatus.CANCELLED } }),
+          this.count({ where: { status: AnimeStatus.AIRING } }),
           this.count({ where: { type: AnimeType.TV } }),
           this.count({ where: { type: AnimeType.MOVIE } }),
           this.count({ where: { type: AnimeType.OVA } }),
@@ -421,8 +421,8 @@ export class AnimeRepository extends Repository<Anime> {
             [AnimeStatus.COMPLETED]: completedCount,
             [AnimeStatus.UPCOMING]: upcomingCount,
             [AnimeStatus.HIATUS]: hiatusCount,
-            [AnimeStatus.AIRING]: airingCount,
             [AnimeStatus.CANCELLED]: cancelledCount,
+            [AnimeStatus.AIRING]: airingCount,
           },
           byType: {
             [AnimeType.TV]: tvCount,

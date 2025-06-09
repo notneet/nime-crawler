@@ -2,7 +2,7 @@ import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 import { PageTypeName } from '../../enums/crawler.enums';
 
 @Entity('page_types')
-@Index(['type_name'])
+@Index(['type_name'], { unique: true })
 export class PageType {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
@@ -10,7 +10,6 @@ export class PageType {
   @Column({
     type: 'enum',
     enum: PageTypeName,
-    unique: true,
   })
   type_name: PageTypeName;
 

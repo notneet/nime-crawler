@@ -3,7 +3,7 @@
 # Microservice Development Commands
 # ===================================
 
-.PHONY: help install build start clean test lint format
+.PHONY: help install build start clean test lint format migration-generate migration-run migration-revert migration-show schema-log schema-sync seed dev-setup dev-reset test-crawler test-api test-scheduler prod-build prod-start
 
 # Default target
 help:
@@ -11,7 +11,8 @@ help:
 	@echo ""
 	@echo "📦 Setup & Dependencies:"
 	@echo "  make install          - Install all dependencies"
-	@echo "  make build            - Build all services"
+	@echo "  make build            - Build root project(crawler)"
+	@echo "  make build-all        - Build all services"
 	@echo "  make clean            - Clean build artifacts"
 	@echo ""
 	@echo "🚀 Service Development:"
@@ -29,9 +30,12 @@ help:
 	@echo "  make queue-health     - Check RabbitMQ queue health"
 	@echo ""
 	@echo "🗄️  Database Operations:"
-	@echo "  make migration-generate ARGS=\"MigrationName\""
+	@echo "  make migration-generate MG_NAME=\"MigrationName\" - Generate new migration"
 	@echo "  make migration-run    - Run pending migrations"
 	@echo "  make migration-revert - Revert last migration"
+	@echo "  make migration-show   - Show migration status"
+	@echo "  make schema-log       - Show schema SQL"
+	@echo "  make schema-sync      - Sync schema (DANGEROUS - dev only)"
 	@echo "  make seed             - Run database seeders"
 	@echo ""
 	@echo "🧪 Testing & Quality:"
@@ -39,6 +43,9 @@ help:
 	@echo "  make test-unit        - Run unit tests only"
 	@echo "  make test-e2e         - Run e2e tests"
 	@echo "  make test-coverage    - Run tests with coverage"
+	@echo "  make test-crawler     - Test crawler service only"
+	@echo "  make test-api         - Test API gateway only"
+	@echo "  make test-scheduler   - Test scheduler service only"
 	@echo "  make lint             - Run linter"
 	@echo "  make format           - Format code"
 	@echo ""
@@ -47,6 +54,14 @@ help:
 	@echo "  make docker-down      - Stop all containers"
 	@echo "  make docker-logs      - Show container logs"
 	@echo "  make docker-clean     - Clean Docker resources"
+	@echo ""
+	@echo "🔧 Development Workflows:"
+	@echo "  make dev-setup        - Complete development setup (install + docker + migrate + seed)"
+	@echo "  make dev-reset        - Reset development environment"
+	@echo ""
+	@echo "🏭 Production Commands:"
+	@echo "  make prod-build       - Build for production"
+	@echo "  make prod-start       - Start in production mode"
 	@echo ""
 
 # ===================================
@@ -60,6 +75,10 @@ install:
 build:
 	@echo "🔨 Building all services..."
 	yarn build
+
+build-all:
+	@echo "🔨 Building all services..."
+	yarn build analytics api-gateway crawler link-checker mailer notification scheduler
 
 clean:
 	@echo "🧹 Cleaning build artifacts..."
@@ -121,16 +140,34 @@ queue-health:
 # ===================================
 
 migration-generate:
-	@echo "📝 Generating migration: $(ARGS)"
-	yarn typeorm:migration:generate libs/database/src/migrations/$(ARGS)
+	@echo "📝 Generating migration: $(MG_NAME)"
+	@if [ -z "$(MG_NAME)" ]; then \
+		echo "❌ Error: MG_NAME is required"; \
+		exit 1; \
+	fi
+
+	@echo "🔨 Building project first..."
+	yarn build && yarn migration:generate libs/database/src/migrations/$(MG_NAME)
 
 migration-run:
 	@echo "🏃 Running pending migrations..."
-	yarn typeorm:migration:run
+	yarn migration:run
 
 migration-revert:
 	@echo "⏪ Reverting last migration..."
-	yarn typeorm:migration:revert
+	yarn migration:revert
+
+migration-show:
+	@echo "📋 Showing migration status..."
+	yarn migration:show
+
+schema-log:
+	@echo "📜 Showing schema SQL..."
+	yarn schema:log
+
+schema-sync:
+	@echo "🔄 Syncing schema (DANGEROUS - use only in development)..."
+	yarn schema:sync
 
 seed:
 	@echo "🌱 Running database seeders..."

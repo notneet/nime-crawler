@@ -22,12 +22,12 @@ import {
   QueueJob,
   Source,
   SourceHealth,
-} from 'proposed.schema';
+} from '@app/common';
 import { DatabaseService } from './database.service';
 import { RedisService } from './redis.service';
 import { AnimeRepository } from './repositories/anime.repository';
-import { SourceRepository } from './repositories/source.repository';
 import { SourceHealthRepository } from './repositories/source-health.repository';
+import { SourceRepository } from './repositories/source.repository';
 
 // Define all entities
 const entities = [

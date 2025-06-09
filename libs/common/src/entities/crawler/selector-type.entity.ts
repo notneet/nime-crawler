@@ -2,7 +2,7 @@ import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 import { SelectorTypeName } from '../../enums/crawler.enums';
 
 @Entity('selector_types')
-@Index(['type_name'])
+@Index(['type_name'], { unique: true })
 export class SelectorType {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
@@ -10,7 +10,6 @@ export class SelectorType {
   @Column({
     type: 'enum',
     enum: SelectorTypeName,
-    unique: true,
   })
   type_name: SelectorTypeName;
 

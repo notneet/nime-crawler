@@ -21,17 +21,17 @@ export class PageSelector {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
 
-  @Column('bigint')
-  source_id: string;
+  @Column({ type: 'bigint', unsigned: true })
+  source_id: bigint;
 
-  @Column('bigint')
-  page_type_id: string;
+  @Column({ type: 'bigint', unsigned: true })
+  page_type_id: bigint;
 
   @Column({ length: 100 })
   field_name: string;
 
-  @Column('bigint')
-  selector_id: string;
+  @Column({ type: 'bigint', unsigned: true })
+  selector_id: bigint;
 
   @Column({ default: false })
   is_required: boolean;

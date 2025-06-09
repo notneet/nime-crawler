@@ -1,12 +1,12 @@
 import { DataSource } from 'typeorm';
-import { AnimeSeeder } from './anime.seeder';
 import AppDataSource from '../data-source';
+import { AnimeSeeder } from './anime.seeder';
 
 export class SeedRunner {
   private dataSource: DataSource;
 
   constructor() {
-    this.dataSource = new DataSource(AppDataSource);
+    this.dataSource = new DataSource(AppDataSource.options);
   }
 
   async run(): Promise<void> {
@@ -27,6 +27,7 @@ export class SeedRunner {
       if (this.dataSource.isInitialized) {
         await this.dataSource.destroy();
         console.log('Database connection closed.');
+        process.exit(0);
       }
     }
   }

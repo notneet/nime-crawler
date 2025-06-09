@@ -18,10 +18,13 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/crawler/test/jest-e2e.json",
-    "typeorm": "typeorm-ts-node-commonjs",
-    "typeorm:migration:generate": "npm run typeorm -- migration:generate -d libs/database/src/data-source.ts",
-    "typeorm:migration:run": "npm run typeorm -- migration:run -d libs/database/src/data-source.ts",
-    "typeorm:migration:revert": "npm run typeorm -- migration:revert -d libs/database/src/data-source.ts",
+    "migration:generate": "ts-node ./node_modules/typeorm/cli migration:generate -d libs/database/src/data-source.ts",
+    "migration:run": "ts-node ./node_modules/typeorm/cli migration:run -d libs/database/src/data-source.ts",
+    "migration:revert": "ts-node ./node_modules/typeorm/cli migration:revert -d libs/database/src/data-source.ts",
+    "migration:show": "ts-node ./node_modules/typeorm/cli migration:show -d libs/database/src/data-source.ts",
+    "schema:sync": "ts-node ./node_modules/typeorm/cli schema:sync -d libs/database/src/data-source.ts",
+    "schema:log": "ts-node ./node_modules/typeorm/cli schema:log -d libs/database/src/data-source.ts",
+    "schema:drop": "ts-node ./node_modules/typeorm/cli schema:drop -d libs/database/src/data-source.ts",
     "seed": "ts-node -r tsconfig-paths/register libs/database/src/seeds/seed.runner.ts"
   },
   "dependencies": {

@@ -20,11 +20,11 @@ export class CrawlStrategy {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
 
-  @Column('bigint')
-  source_id: string;
+  @Column({ type: 'bigint', unsigned: true })
+  source_id: bigint;
 
-  @Column('bigint')
-  page_type_id: string;
+  @Column({ type: 'bigint', unsigned: true })
+  page_type_id: bigint;
 
   @Column({ length: 50 })
   strategy_name: string;

@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CrawlJob } from './crawl-job.entity';
+import { CrawlLogLevel } from '../../types/crawl-log.types';
 
 @Entity('crawl_logs')
 @Index(['job_id'])
@@ -17,11 +18,11 @@ export class CrawlLog {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', unsigned: true })
   job_id: bigint;
 
-  @Column({ type: 'enum', enum: ['info', 'warning', 'error', 'debug'] })
-  level: string;
+  @Column({ type: 'enum', enum: CrawlLogLevel })
+  level: CrawlLogLevel;
 
   @Column({ type: 'text' })
   message: string;

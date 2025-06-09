@@ -1,4 +1,5 @@
-import { QueueJobPriority, QueueJobStatus } from '../dto/queue.dto';
+import { QueueJobPriority, QueueJobStatusDto } from '../dto/queue.dto';
+import { QueueJobStatus } from '../types/queue-job.types';
 
 /**
  * Base interface for queue jobs

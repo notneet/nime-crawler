@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { Source } from '../core/source.entity';
 import { CrawlLog } from './crawl-log.entity';
+import { CrawlJobType, CrawlJobStatus } from '../../types/crawl-job.types';
 
 @Entity('crawl_jobs')
 @Index(['source_id'])
@@ -24,21 +25,21 @@ export class CrawlJob {
   @Column({ length: 36, unique: true })
   job_id: string;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', unsigned: true })
   source_id: bigint;
 
   @Column({
     type: 'enum',
-    enum: ['full_crawl', 'update_check', 'new_episodes', 'fix_broken_links'],
+    enum: CrawlJobType,
   })
-  job_type: string;
+  job_type: CrawlJobType;
 
   @Column({
     type: 'enum',
-    enum: ['pending', 'running', 'completed', 'failed', 'cancelled'],
-    default: 'pending',
+    enum: CrawlJobStatus,
+    default: CrawlJobStatus.PENDING,
   })
-  status: string;
+  status: CrawlJobStatus;
 
   @Column({ type: 'int', default: 0 })
   priority: number;

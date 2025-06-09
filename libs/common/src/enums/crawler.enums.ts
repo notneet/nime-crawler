@@ -1,56 +1,47 @@
-export enum CrawlJobType {
-  FULL_CRAWL = 'full_crawl',
-  UPDATE_CRAWL = 'update_crawl',
-  SINGLE_ANIME = 'single_anime',
-  HEALTH_CHECK = 'health_check',
-  NEW_EPISODES = 'new_episodes',
-  FIX_BROKEN_LINKS = 'fix_broken_links',
-}
-
-export enum CrawlJobStatus {
-  PENDING = 'pending',
-  RUNNING = 'running',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELLED = 'cancelled',
-}
-
-// New crawler-specific enums
-export enum CrawlStatus {
-  PENDING = 'pending',
-  SUCCESS = 'completed',
-  FAILED = 'failed',
-  SKIPPED = 'skipped',
-}
-
-export enum ScrollBehavior {
-  NONE = 'none',
-  BOTTOM = 'bottom',
-  INCREMENTAL = 'incremental',
+export enum ErrorType {
+  NETWORK_ERROR = 'network_error',
+  TIMEOUT = 'timeout',
+  DNS_ERROR = 'dns_error',
+  SSL_ERROR = 'ssl_error',
+  HTTP_ERROR = 'http_error',
+  PARSING_ERROR = 'parsing_error',
+  SELECTOR_ERROR = 'selector_error',
+  VALIDATION_ERROR = 'validation_error',
+  RATE_LIMIT = 'rate_limit',
+  CAPTCHA = 'captcha',
+  BLOCKED = 'blocked',
+  UNKNOWN = 'unknown',
 }
 
 export enum DataType {
   STRING = 'string',
-  INTEGER = 'integer',
-  DECIMAL = 'decimal',
+  NUMBER = 'number',
   BOOLEAN = 'boolean',
   DATE = 'date',
   URL = 'url',
+  EMAIL = 'email',
+  JSON = 'json',
   ARRAY = 'array',
+  HTML = 'html',
+  TEXT = 'text',
 }
 
-export enum ErrorType {
-  TIMEOUT = 'timeout',
-  CONNECTION_ERROR = 'connection_error',
-  HTTP_ERROR = 'http_error',
-  PARSE_ERROR = 'parse_error',
-  BLOCKED = 'blocked',
+export enum ScrollBehavior {
+  NONE = 'none',
+  TOP = 'top',
+  BOTTOM = 'bottom',
+  ELEMENT = 'element',
+  LAZY_LOAD = 'lazy_load',
+  INFINITE_SCROLL = 'infinite_scroll',
 }
 
-export enum PageTypeName {
-  LIST = 'list',
-  DETAIL = 'detail',
-  EPISODE = 'episode',
+export enum CrawlStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  SKIPPED = 'skipped',
+  RATE_LIMITED = 'rate_limited',
 }
 
 export enum SelectorTypeName {
@@ -58,21 +49,21 @@ export enum SelectorTypeName {
   XPATH = 'xpath',
   REGEX = 'regex',
   JSON_PATH = 'json_path',
+  TEXT_CONTAINS = 'text_contains',
+  ATTRIBUTE = 'attribute',
+  PSEUDO = 'pseudo',
 }
 
-export enum VideoQuality {
-  SD_480P = '480p',
-  HD_720P = '720p',
-  FHD_1080P = '1080p',
-  QHD_1440P = '1440p',
-  UHD_4K = '4k',
-  UHD_8K = '8k',
-}
-
-export enum FileFormat {
-  MP4 = 'mp4',
-  MKV = 'mkv',
-  AVI = 'avi',
-  WEBM = 'webm',
-  MOV = 'mov',
+export enum PageTypeName {
+  HOME = 'home',
+  ANIME_LIST = 'anime_list',
+  ANIME_DETAIL = 'anime_detail',
+  EPISODE_LIST = 'episode_list',
+  EPISODE_DETAIL = 'episode_detail',
+  SEARCH_RESULTS = 'search_results',
+  GENRE_PAGE = 'genre_page',
+  POPULAR_PAGE = 'popular_page',
+  LATEST_PAGE = 'latest_page',
+  ONGOING_PAGE = 'ongoing_page',
+  COMPLETED_PAGE = 'completed_page',
 }

@@ -6,6 +6,7 @@ import { SourceRepository } from '@app/database/repositories/source.repository';
 import { AnimeRepository } from '@app/database/repositories/anime.repository';
 import { SourceHealthRepository } from '@app/database/repositories/source-health.repository';
 import { CrawlJob } from '@app/common/entities/crawler/crawl-job.entity';
+import { CrawlJobStatus } from '@app/common';
 import { SourceQueryDto, SourceDto, SourceStatsDto } from '../dto/source.dto';
 import { AnimeDto } from '../dto/anime.dto';
 
@@ -197,14 +198,14 @@ export class SourceGatewayService {
       this.crawlJobRepository.count({
         where: {
           source_id: BigInt(sourceId),
-          status: 'completed',
+          status: CrawlJobStatus.COMPLETED,
           created_at: Between(today, tomorrow),
         },
       }),
       this.crawlJobRepository.count({
         where: {
           source_id: BigInt(sourceId),
-          status: 'failed',
+          status: CrawlJobStatus.FAILED,
           created_at: Between(today, tomorrow),
         },
       }),

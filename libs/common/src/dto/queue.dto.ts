@@ -9,7 +9,7 @@ import {
 import { Type } from 'class-transformer';
 import { IsPositiveInt, IsRetryCount, ParseJson } from '../decorators';
 
-export enum QueueJobStatus {
+export enum QueueJobStatusDto {
   PENDING = 'pending',
   PROCESSING = 'processing',
   COMPLETED = 'completed',
@@ -139,8 +139,8 @@ export class QueueJobResultDto {
   @IsString()
   jobId: string;
 
-  @IsEnum(QueueJobStatus)
-  status: QueueJobStatus;
+  @IsEnum(QueueJobStatusDto)
+  status: QueueJobStatusDto;
 
   @IsOptional()
   @IsObject()

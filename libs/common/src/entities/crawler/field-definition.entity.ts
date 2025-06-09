@@ -3,12 +3,12 @@ import { DataType } from '../../enums/crawler.enums';
 import { JsonObject } from '../../types/crawler.types';
 
 @Entity('field_definitions')
-@Index(['field_name'])
+@Index(['field_name'], { unique: true })
 export class FieldDefinition {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
 
-  @Column({ length: 100, unique: true })
+  @Column({ length: 100 })
   field_name: string;
 
   @Column({

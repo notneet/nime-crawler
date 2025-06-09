@@ -85,7 +85,7 @@ export class Anime {
   download_count: number;
 
   // Source reference
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', unsigned: true })
   source_id: bigint;
 
   @Column({ length: 100 })

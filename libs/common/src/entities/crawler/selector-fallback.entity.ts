@@ -17,11 +17,11 @@ export class SelectorFallback {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
 
-  @Column('bigint')
-  primary_selector_id: string;
+  @Column({ type: 'bigint', unsigned: true })
+  primary_selector_id: bigint;
 
-  @Column('bigint')
-  fallback_selector_id: string;
+  @Column({ type: 'bigint', unsigned: true })
+  fallback_selector_id: bigint;
 
   @Column({ type: 'smallint' })
   fallback_order: number;

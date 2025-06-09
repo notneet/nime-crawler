@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Anime } from '../core/anime.entity';
+import { AnimeUpdateChangeType } from '../../types/anime-update.types';
 
 @Entity('anime_update_history')
 @Index(['anime_id'])
@@ -16,7 +17,7 @@ export class AnimeUpdateHistory {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', unsigned: true })
   anime_id: bigint;
 
   @Column({ type: 'json' })
@@ -24,9 +25,9 @@ export class AnimeUpdateHistory {
 
   @Column({
     type: 'enum',
-    enum: ['new_episode', 'metadata_update', 'status_change', 'links_update'],
+    enum: AnimeUpdateChangeType,
   })
-  change_type: string;
+  change_type: AnimeUpdateChangeType;
 
   @Column({ type: 'text', nullable: true })
   source_trigger: string; // What triggered the update

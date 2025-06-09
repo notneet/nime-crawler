@@ -1,11 +1,13 @@
-import { NestFactory } from '@nestjs/core';
 import { VersioningType } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiGatewayModule } from './api-gateway.module';
 
+let port: number = 3000;
+
 async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule);
-  
+
   app.enableVersioning({
     type: VersioningType.URI,
     prefix: 'v',
@@ -14,7 +16,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('NIME Crawler API')
-    .setDescription('A sophisticated anime aggregation and crawling service API')
+    .setDescription(
+      'A sophisticated anime aggregation and crawling service API',
+    )
     .setVersion('1.0')
     .addTag('anime', 'Anime content management')
     .addTag('crawler', 'Crawling job management')
@@ -23,8 +27,9 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
-  
-  await app.listen(process.env.port ?? 3000);
+  SwaggerModule.setup('docs', app, document);
+
+  await app.listen(port);
+  console.log(`API Gateway is running on port ${port}`);
 }
-bootstrap();
+bootstrap().catch(console.error);

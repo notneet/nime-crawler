@@ -11,8 +11,8 @@ import { CrawlJob } from '../crawler/crawl-job.entity';
 import { Anime } from './anime.entity';
 
 @Entity('sources')
-@Index(['is_active', 'priority'])
-@Index(['slug'])
+@Index(['is_active', 'priority'], { unique: true })
+@Index(['slug'], { unique: true })
 export class Source {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
@@ -20,7 +20,7 @@ export class Source {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ length: 50, unique: true })
+  @Column({ length: 50 })
   slug: string; // samehadaku, otakudesu, huntersekai, kusonime
 
   @Column('text')

@@ -20,7 +20,7 @@ export class Episode {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', unsigned: true })
   anime_id: bigint;
 
   @Column({ type: 'smallint' })

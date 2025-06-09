@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { QueueJobStatus } from '../../types/queue-job.types';
 
 @Entity('queue_jobs')
 @Index(['queue_name'])
@@ -23,10 +24,10 @@ export class QueueJob {
 
   @Column({
     type: 'enum',
-    enum: ['waiting', 'active', 'completed', 'failed', 'delayed'],
-    default: 'waiting',
+    enum: QueueJobStatus,
+    default: QueueJobStatus.WAITING,
   })
-  status: string;
+  status: QueueJobStatus;
 
   @Column({ type: 'int', default: 0 })
   attempts: number;

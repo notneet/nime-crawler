@@ -18,7 +18,7 @@ export class DownloadLink {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: bigint;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', unsigned: true })
   episode_id: bigint;
 
   @Column({ length: 100 })

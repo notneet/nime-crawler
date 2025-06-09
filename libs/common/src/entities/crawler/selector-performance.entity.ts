@@ -1,7 +1,6 @@
 import {
   Column,
   Entity,
-  Generated,
   Index,
   JoinColumn,
   ManyToOne,
@@ -44,12 +43,12 @@ export class SelectorPerformance {
   @Column({ default: 0 })
   average_response_time_ms: number;
 
-  @Generated()
+  // Remove @Generated() and make this a regular calculated column
   @Column({
     type: 'decimal',
     precision: 5,
     scale: 2,
-    asExpression: `CASE WHEN total_attempts > 0 THEN (successful_extractions / total_attempts) * 100 ELSE 0 END`,
+    default: 0.0,
   })
   success_rate: number;
 
