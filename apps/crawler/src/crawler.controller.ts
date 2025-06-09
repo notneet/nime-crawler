@@ -48,31 +48,39 @@ export class CrawlerController implements OnApplicationBootstrap {
       const { jobId, data: jobData } = data;
       const { sourceId, jobType, parameters } = jobData;
 
+      // Convert sourceId from string to bigint
+      const sourceBigInt = BigInt(sourceId);
+
       let result: string;
 
       switch (jobType) {
         case CRAWL_JOB_TYPES.FULL_CRAWL:
           result = await this.crawlerMicroservice.requestFullCrawl(
-            sourceId,
+            sourceBigInt,
             parameters?.maxPages,
           );
           break;
         case CRAWL_JOB_TYPES.UPDATE_CRAWL:
           result = await this.crawlerMicroservice.requestUpdateCrawl(
-            sourceId,
+            sourceBigInt,
             parameters?.olderThanHours,
           );
           break;
         case CRAWL_JOB_TYPES.HEALTH_CHECK:
           this.logger.log(`Processing health check for source ${sourceId}`);
           const healthResult =
-            await this.sourceHealthCheckService.checkSourceHealth(sourceId);
+            await this.sourceHealthCheckService.checkSourceHealth(sourceBigInt);
           result = `Health check completed for source ${sourceId}: ${healthResult.isAccessible ? 'HEALTHY' : 'UNHEALTHY'} (${healthResult.responseTimeMs}ms)`;
           break;
         case CRAWL_JOB_TYPES.SINGLE_ANIME:
+          // Convert animeId from string to bigint or use default
+          const animeBigInt = parameters?.animeId
+            ? BigInt(parameters.animeId)
+            : BigInt(0);
+
           result = await this.crawlerMicroservice.requestAnimeCrawl(
-            sourceId,
-            parameters?.animeId || BigInt(0),
+            sourceBigInt,
+            animeBigInt,
           );
           break;
         default:

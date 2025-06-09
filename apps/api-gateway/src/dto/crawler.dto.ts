@@ -1,16 +1,16 @@
+import { CrawlJobStatus, CrawlJobType } from '@app/common';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
+  IsDateString,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
-  IsEnum,
-  IsDateString,
-  Min,
   Max,
+  Min,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { CrawlJobType, CrawlJobStatus } from '@app/common';
 
 export class ScheduleCrawlJobDto {
   @ApiProperty({ description: 'Source ID to crawl' })
@@ -18,7 +18,12 @@ export class ScheduleCrawlJobDto {
   @IsNotEmpty()
   sourceId: string;
 
-  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 5, description: 'Maximum pages to crawl' })
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: 100,
+    default: 5,
+    description: 'Maximum pages to crawl',
+  })
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
@@ -26,7 +31,12 @@ export class ScheduleCrawlJobDto {
   @Max(100)
   maxPages?: number = 5;
 
-  @ApiPropertyOptional({ minimum: 1, maximum: 10, default: 1, description: 'Job priority (1-10)' })
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: 10,
+    default: 1,
+    description: 'Job priority (1-10)',
+  })
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
@@ -41,12 +51,18 @@ export class CrawlJobQueryDto {
   @IsString()
   sourceId?: string;
 
-  @ApiPropertyOptional({ enum: CrawlJobType, description: 'Filter by job type' })
+  @ApiPropertyOptional({
+    enum: CrawlJobType,
+    description: 'Filter by job type',
+  })
   @IsOptional()
   @IsEnum(CrawlJobType)
   jobType?: CrawlJobType;
 
-  @ApiPropertyOptional({ enum: CrawlJobStatus, description: 'Filter by job status' })
+  @ApiPropertyOptional({
+    enum: CrawlJobStatus,
+    description: 'Filter by job status',
+  })
   @IsOptional()
   @IsEnum(CrawlJobStatus)
   status?: CrawlJobStatus;
@@ -58,7 +74,12 @@ export class CrawlJobQueryDto {
   @Min(1)
   page?: number = 1;
 
-  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 20, description: 'Items per page' })
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: 100,
+    default: 20,
+    description: 'Items per page',
+  })
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
@@ -66,22 +87,30 @@ export class CrawlJobQueryDto {
   @Max(100)
   limit?: number = 20;
 
-  @ApiPropertyOptional({ default: 'createdAt', description: 'Sort field' })
+  @ApiPropertyOptional({ default: 'created_at', description: 'Sort field' })
   @IsOptional()
   @IsString()
-  sortBy?: string = 'createdAt';
+  sortBy?: string = 'created_at';
 
-  @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'DESC', description: 'Sort order' })
+  @ApiPropertyOptional({
+    enum: ['ASC', 'DESC'],
+    default: 'DESC',
+    description: 'Sort order',
+  })
   @IsOptional()
   @IsEnum(['ASC', 'DESC'])
   sortOrder?: 'ASC' | 'DESC' = 'DESC';
 
-  @ApiPropertyOptional({ description: 'Filter jobs created after this date (ISO string)' })
+  @ApiPropertyOptional({
+    description: 'Filter jobs created after this date (ISO string)',
+  })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: 'Filter jobs created before this date (ISO string)' })
+  @ApiPropertyOptional({
+    description: 'Filter jobs created before this date (ISO string)',
+  })
   @IsOptional()
   @IsDateString()
   endDate?: string;

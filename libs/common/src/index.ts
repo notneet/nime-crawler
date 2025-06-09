@@ -49,3 +49,4 @@ export * from './interfaces/queue.interfaces';
 // Utils
 export * from './utils';
 export * from './utils/api-response.utils';
+export * from './utils/serialization.utils';

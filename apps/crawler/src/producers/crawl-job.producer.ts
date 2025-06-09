@@ -1,4 +1,5 @@
 import { QUEUE_NAMES } from '@app/common/constants/queue.constants';
+import { serializeBigInt } from '@app/common/utils/serialization.utils';
 import { QueueProducerService } from '@app/queue';
 import { Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
@@ -24,7 +25,10 @@ export class CrawlJobProducer {
       sourceId,
       jobType: CrawlJobType.FULL_CRAWL,
       priority,
-      parameters: { maxPages },
+      parameters: {
+        maxPages,
+        forceUpdate: false,
+      },
       scheduledAt: new Date(),
       maxRetries: 3,
     };
@@ -38,7 +42,11 @@ export class CrawlJobProducer {
     };
 
     try {
-      await this.queueProducer.publishMessage(QUEUE_NAMES.CRAWL, message);
+      const serializedMessage = serializeBigInt(message);
+      await this.queueProducer.publishMessage(
+        QUEUE_NAMES.CRAWL,
+        serializedMessage,
+      );
 
       this.logger.log(
         `Scheduled full crawl job ${jobId} for source ${sourceId}`,
@@ -83,7 +91,11 @@ export class CrawlJobProducer {
     };
 
     try {
-      await this.queueProducer.publishMessage(QUEUE_NAMES.CRAWL, message);
+      const serializedMessage = serializeBigInt(message);
+      await this.queueProducer.publishMessage(
+        QUEUE_NAMES.CRAWL,
+        serializedMessage,
+      );
 
       this.logger.log(
         `Scheduled update crawl job ${jobId} for source ${sourceId}`,
@@ -124,7 +136,11 @@ export class CrawlJobProducer {
         createdAt: new Date(),
       };
 
-      await this.queueProducer.publishMessage(QUEUE_NAMES.CRAWL, message);
+      const serializedMessage = serializeBigInt(message);
+      await this.queueProducer.publishMessage(
+        QUEUE_NAMES.CRAWL,
+        serializedMessage,
+      );
 
       jobIds.push(jobId);
       this.logger.log(
@@ -167,7 +183,11 @@ export class CrawlJobProducer {
     };
 
     try {
-      await this.queueProducer.publishMessage(QUEUE_NAMES.CRAWL, message);
+      const serializedMessage = serializeBigInt(message);
+      await this.queueProducer.publishMessage(
+        QUEUE_NAMES.CRAWL,
+        serializedMessage,
+      );
 
       this.logger.log(
         `Scheduled single anime crawl job ${jobId} for anime ${animeId} from source ${sourceId}`,
@@ -202,7 +222,11 @@ export class CrawlJobProducer {
     };
 
     try {
-      await this.queueProducer.publishMessage(QUEUE_NAMES.CRAWL, message);
+      const serializedMessage = serializeBigInt(message);
+      await this.queueProducer.publishMessage(
+        QUEUE_NAMES.CRAWL,
+        serializedMessage,
+      );
 
       this.logger.log(
         `Scheduled health check job ${jobId} for source ${sourceId}`,

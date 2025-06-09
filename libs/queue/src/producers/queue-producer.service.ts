@@ -8,6 +8,7 @@ import {
   QueueJobStatus,
   ROUTING_KEYS,
 } from '@app/common';
+import { serializeBigInt } from '@app/common/utils/serialization.utils';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
@@ -235,10 +236,13 @@ export class QueueProducerService implements IQueueProducer {
       const exchange = this.getExchangeByQueueName(queueName);
       const routingKey = this.getRoutingKeyByQueueName(queueName);
 
+      // Ensure all BigInt values are serialized to strings
+      const serializedMessage = serializeBigInt(message);
+
       // Wrap message in NestJS microservice format with pattern
       const microserviceMessage = {
-        pattern: this.getMessagePattern(queueName, message),
-        data: message,
+        pattern: this.getMessagePattern(queueName, serializedMessage),
+        data: serializedMessage,
       };
 
       await this.amqpConnection.publish(

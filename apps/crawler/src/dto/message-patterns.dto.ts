@@ -1,7 +1,5 @@
 import { CRAWL_JOB_TYPES, MESSAGE_STATUS } from '@app/common/constants';
-import { Type } from 'class-transformer';
 import {
-  IsDate,
   IsIn,
   IsNumber,
   IsObject,
@@ -29,16 +27,44 @@ export class CrawlJobDto extends BaseMessageDto {
   @IsIn(Object.values(CRAWL_JOB_TYPES))
   jobType: (typeof CRAWL_JOB_TYPES)[keyof typeof CRAWL_JOB_TYPES];
 
-  @IsNumber()
-  sourceId: bigint;
+  @IsString()
+  sourceId: string;
 
   @IsOptional()
   @IsObject()
   parameters?: {
     maxPages?: number;
     olderThanHours?: number;
-    animeId?: bigint;
+    animeId?: string;
   };
+}
+
+export class CrawlJobDataDto {
+  @IsString()
+  sourceId: string;
+
+  @IsString()
+  @IsIn(Object.values(CRAWL_JOB_TYPES))
+  jobType: string;
+
+  @IsNumber()
+  priority: number;
+
+  @IsOptional()
+  @IsObject()
+  parameters?: {
+    maxPages?: number;
+    olderThanHours?: number;
+    animeId?: string;
+  };
+
+  @IsOptional()
+  @IsString()
+  scheduledAt?: string;
+
+  @IsOptional()
+  @IsNumber()
+  maxRetries?: number;
 }
 
 export class CrawlJobMessageDto {
@@ -46,33 +72,23 @@ export class CrawlJobMessageDto {
   jobId: string;
 
   @IsObject()
-  data: {
-    sourceId: bigint;
-    jobType: (typeof CRAWL_JOB_TYPES)[keyof typeof CRAWL_JOB_TYPES];
-    priority: number;
-    parameters?: {
-      maxPages?: number;
-      olderThanHours?: number;
-      animeId?: bigint;
-    };
-    scheduledAt?: Date;
-    maxRetries?: number;
-  };
-
-  @IsNumber()
-  attemptCount: number;
-
-  @IsNumber()
-  maxAttempts: number;
-
-  @Type(() => Date)
-  @IsDate()
-  createdAt: Date;
+  data: CrawlJobDataDto;
 
   @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  scheduledFor?: Date;
+  @IsNumber()
+  attemptCount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  maxAttempts?: number;
+
+  @IsOptional()
+  @IsString()
+  createdAt?: string;
+
+  @IsOptional()
+  @IsString()
+  scheduledFor?: string;
 
   @IsOptional()
   @IsObject()

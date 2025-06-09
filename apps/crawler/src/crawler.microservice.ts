@@ -27,7 +27,7 @@ export class CrawlerMicroservice implements OnModuleInit {
     await this.startQueueConsumers();
 
     // Schedule initial health checks for all sources
-    await this.scheduleHealthChecksForAllSources();
+    // await this.scheduleHealthChecksForAllSources();
 
     this.logger.log('Crawler Microservice ready - listening for crawl jobs');
   }
