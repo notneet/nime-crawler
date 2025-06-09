@@ -1,4 +1,11 @@
 import {
+  ApiResponse,
+  ApiResponseDto,
+  createHttpException,
+  createPaginatedResponse,
+  createSuccessResponse,
+} from '@app/common';
+import {
   Body,
   Controller,
   Get,
@@ -13,9 +20,8 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
-  ApiQuery,
-  ApiResponse,
   ApiTags,
+  ApiResponse as SwaggerApiResponse,
 } from '@nestjs/swagger';
 import { CrawlJobQueryDto, ScheduleCrawlJobDto } from '../dto/crawler.dto';
 import { CrawlerGatewayService } from '../services/crawler-gateway.service';
@@ -25,19 +31,20 @@ import { CrawlerGatewayService } from '../services/crawler-gateway.service';
 export class CrawlerController {
   private readonly logger = new Logger(CrawlerController.name);
 
-  constructor(
-    private readonly crawlerGatewayService: CrawlerGatewayService,
-  ) {}
+  constructor(private readonly crawlerGatewayService: CrawlerGatewayService) {}
 
   @Post('schedule/full-crawl')
   @ApiOperation({ summary: 'Schedule a full crawl job for a source' })
   @ApiBody({ type: ScheduleCrawlJobDto })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 201,
     description: 'Full crawl job scheduled successfully',
+    type: ApiResponseDto,
   })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  async scheduleFullCrawl(@Body() scheduleDto: ScheduleCrawlJobDto) {
+  @SwaggerApiResponse({ status: 500, description: 'Internal server error' })
+  async scheduleFullCrawl(
+    @Body() scheduleDto: ScheduleCrawlJobDto,
+  ): Promise<ApiResponse> {
     try {
       this.logger.log(
         `Scheduling full crawl for source ${scheduleDto.sourceId}`,
@@ -49,28 +56,21 @@ export class CrawlerController {
         scheduleDto.priority,
       );
 
-      return {
-        success: true,
-        message: 'Full crawl job scheduled successfully',
-        data: {
-          jobId,
-          sourceId: scheduleDto.sourceId,
-          maxPages: scheduleDto.maxPages,
-          priority: scheduleDto.priority,
-          scheduledAt: new Date().toISOString(),
-        },
-      };
+      return createSuccessResponse('Full crawl job scheduled successfully', {
+        jobId,
+        sourceId: scheduleDto.sourceId,
+        maxPages: scheduleDto.maxPages,
+        priority: scheduleDto.priority,
+        scheduledAt: new Date().toISOString(),
+      });
     } catch (error) {
       this.logger.error(
         `Failed to schedule full crawl: ${error.message}`,
         error.stack,
       );
-      throw new HttpException(
-        {
-          success: false,
-          message: 'Failed to schedule full crawl job',
-          error: error.message,
-        },
+      throw createHttpException(
+        'Failed to schedule full crawl job',
+        error.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -79,12 +79,15 @@ export class CrawlerController {
   @Post('schedule/update-crawl')
   @ApiOperation({ summary: 'Schedule an update crawl job for a source' })
   @ApiBody({ type: ScheduleCrawlJobDto })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 201,
     description: 'Update crawl job scheduled successfully',
+    type: ApiResponseDto,
   })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  async scheduleUpdateCrawl(@Body() scheduleDto: ScheduleCrawlJobDto) {
+  @SwaggerApiResponse({ status: 500, description: 'Internal server error' })
+  async scheduleUpdateCrawl(
+    @Body() scheduleDto: ScheduleCrawlJobDto,
+  ): Promise<ApiResponse> {
     try {
       this.logger.log(
         `Scheduling update crawl for source ${scheduleDto.sourceId}`,
@@ -96,28 +99,21 @@ export class CrawlerController {
         scheduleDto.priority,
       );
 
-      return {
-        success: true,
-        message: 'Update crawl job scheduled successfully',
-        data: {
-          jobId,
-          sourceId: scheduleDto.sourceId,
-          maxPages: scheduleDto.maxPages,
-          priority: scheduleDto.priority,
-          scheduledAt: new Date().toISOString(),
-        },
-      };
+      return createSuccessResponse('Update crawl job scheduled successfully', {
+        jobId,
+        sourceId: scheduleDto.sourceId,
+        maxPages: scheduleDto.maxPages,
+        priority: scheduleDto.priority,
+        scheduledAt: new Date().toISOString(),
+      });
     } catch (error) {
       this.logger.error(
         `Failed to schedule update crawl: ${error.message}`,
         error.stack,
       );
-      throw new HttpException(
-        {
-          success: false,
-          message: 'Failed to schedule update crawl job',
-          error: error.message,
-        },
+      throw createHttpException(
+        'Failed to schedule update crawl job',
+        error.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -126,15 +122,16 @@ export class CrawlerController {
   @Post('schedule/anime/:animeId')
   @ApiOperation({ summary: 'Schedule a crawl job for a specific anime' })
   @ApiParam({ name: 'animeId', description: 'Anime ID to crawl' })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 201,
     description: 'Single anime crawl job scheduled successfully',
+    type: ApiResponseDto,
   })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @SwaggerApiResponse({ status: 500, description: 'Internal server error' })
   async scheduleSingleAnimeCrawl(
     @Param('animeId') animeId: string,
     @Body() scheduleDto: Pick<ScheduleCrawlJobDto, 'sourceId' | 'priority'>,
-  ) {
+  ): Promise<ApiResponse> {
     try {
       this.logger.log(
         `Scheduling single anime crawl for anime ${animeId}, source ${scheduleDto.sourceId}`,
@@ -146,28 +143,24 @@ export class CrawlerController {
         scheduleDto.priority,
       );
 
-      return {
-        success: true,
-        message: 'Single anime crawl job scheduled successfully',
-        data: {
+      return createSuccessResponse(
+        'Single anime crawl job scheduled successfully',
+        {
           jobId,
           animeId,
           sourceId: scheduleDto.sourceId,
           priority: scheduleDto.priority,
           scheduledAt: new Date().toISOString(),
         },
-      };
+      );
     } catch (error) {
       this.logger.error(
         `Failed to schedule single anime crawl: ${error.message}`,
         error.stack,
       );
-      throw new HttpException(
-        {
-          success: false,
-          message: 'Failed to schedule single anime crawl job',
-          error: error.message,
-        },
+      throw createHttpException(
+        'Failed to schedule single anime crawl job',
+        error.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -176,15 +169,16 @@ export class CrawlerController {
   @Post('schedule/health-check/:sourceId')
   @ApiOperation({ summary: 'Schedule a health check for a source' })
   @ApiParam({ name: 'sourceId', description: 'Source ID to check' })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 201,
     description: 'Source health check job scheduled successfully',
+    type: ApiResponseDto,
   })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @SwaggerApiResponse({ status: 500, description: 'Internal server error' })
   async scheduleHealthCheck(
     @Param('sourceId') sourceId: string,
     @Body() body: Pick<ScheduleCrawlJobDto, 'priority'> = { priority: 1 },
-  ) {
+  ): Promise<ApiResponse> {
     try {
       this.logger.log(`Scheduling health check for source ${sourceId}`);
 
@@ -193,27 +187,23 @@ export class CrawlerController {
         body.priority,
       );
 
-      return {
-        success: true,
-        message: 'Source health check job scheduled successfully',
-        data: {
+      return createSuccessResponse(
+        'Source health check job scheduled successfully',
+        {
           jobId,
           sourceId,
           priority: body.priority,
           scheduledAt: new Date().toISOString(),
         },
-      };
+      );
     } catch (error) {
       this.logger.error(
         `Failed to schedule health check: ${error.message}`,
         error.stack,
       );
-      throw new HttpException(
-        {
-          success: false,
-          message: 'Failed to schedule health check job',
-          error: error.message,
-        },
+      throw createHttpException(
+        'Failed to schedule health check job',
+        error.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -221,33 +211,33 @@ export class CrawlerController {
 
   @Get('jobs')
   @ApiOperation({ summary: 'Get crawl jobs with optional filters' })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 200,
     description: 'Crawl jobs retrieved successfully',
+    type: ApiResponseDto,
   })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getCrawlJobs(@Query() query: CrawlJobQueryDto) {
+  @SwaggerApiResponse({ status: 500, description: 'Internal server error' })
+  async getCrawlJobs(@Query() query: CrawlJobQueryDto): Promise<ApiResponse> {
     try {
       this.logger.log('Fetching crawl jobs with filters', query);
 
-      const jobs = await this.crawlerGatewayService.getCrawlJobs(query);
+      const result = await this.crawlerGatewayService.getCrawlJobs(query);
 
-      return {
-        success: true,
-        message: 'Crawl jobs retrieved successfully',
-        data: jobs,
-      };
+      return createPaginatedResponse(
+        result.jobs,
+        result.total,
+        result.page,
+        result.limit,
+        'Crawl jobs retrieved successfully',
+      );
     } catch (error) {
       this.logger.error(
         `Failed to fetch crawl jobs: ${error.message}`,
         error.stack,
       );
-      throw new HttpException(
-        {
-          success: false,
-          message: 'Failed to fetch crawl jobs',
-          error: error.message,
-        },
+      throw createHttpException(
+        'Failed to fetch crawl jobs',
+        error.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -256,33 +246,31 @@ export class CrawlerController {
   @Get('jobs/:jobId')
   @ApiOperation({ summary: 'Get crawl job status by job ID' })
   @ApiParam({ name: 'jobId', description: 'Crawl job ID' })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 200,
     description: 'Crawl job status retrieved successfully',
+    type: ApiResponseDto,
   })
-  @ApiResponse({ status: 404, description: 'Crawl job not found' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getCrawlJobStatus(@Param('jobId') jobId: string) {
+  @SwaggerApiResponse({ status: 404, description: 'Crawl job not found' })
+  @SwaggerApiResponse({ status: 500, description: 'Internal server error' })
+  async getCrawlJobStatus(@Param('jobId') jobId: string): Promise<ApiResponse> {
     try {
       this.logger.log(`Fetching status for crawl job ${jobId}`);
 
       const status = await this.crawlerGatewayService.getCrawlJobStatus(jobId);
 
       if (!status) {
-        throw new HttpException(
-          {
-            success: false,
-            message: 'Crawl job not found',
-          },
+        throw createHttpException(
+          'Crawl job not found',
+          'NOT_FOUND',
           HttpStatus.NOT_FOUND,
         );
       }
 
-      return {
-        success: true,
-        message: 'Crawl job status retrieved successfully',
-        data: status,
-      };
+      return createSuccessResponse(
+        'Crawl job status retrieved successfully',
+        status,
+      );
     } catch (error) {
       this.logger.error(
         `Failed to fetch crawl job status: ${error.message}`,
@@ -293,12 +281,9 @@ export class CrawlerController {
         throw error;
       }
 
-      throw new HttpException(
-        {
-          success: false,
-          message: 'Failed to fetch crawl job status',
-          error: error.message,
-        },
+      throw createHttpException(
+        'Failed to fetch crawl job status',
+        error.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -307,36 +292,34 @@ export class CrawlerController {
   @Get('sources/:sourceId/health')
   @ApiOperation({ summary: 'Get health status for a source' })
   @ApiParam({ name: 'sourceId', description: 'Source ID' })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 200,
     description: 'Source health status retrieved successfully',
+    type: ApiResponseDto,
   })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getSourceHealth(@Param('sourceId') sourceId: string) {
+  @SwaggerApiResponse({ status: 500, description: 'Internal server error' })
+  async getSourceHealth(
+    @Param('sourceId') sourceId: string,
+  ): Promise<ApiResponse> {
     try {
       this.logger.log(`Fetching health status for source ${sourceId}`);
 
       const health = await this.crawlerGatewayService.getSourceHealth(sourceId);
 
-      return {
-        success: true,
-        message: 'Source health status retrieved successfully',
-        data: health,
-      };
+      return createSuccessResponse(
+        'Source health status retrieved successfully',
+        health,
+      );
     } catch (error) {
       this.logger.error(
         `Failed to fetch source health: ${error.message}`,
         error.stack,
       );
-      throw new HttpException(
-        {
-          success: false,
-          message: 'Failed to fetch source health status',
-          error: error.message,
-        },
+      throw createHttpException(
+        'Failed to fetch source health status',
+        error.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
-
 }

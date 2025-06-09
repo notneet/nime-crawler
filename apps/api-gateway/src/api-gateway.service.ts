@@ -1,6 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Source } from '@app/common/entities/core/source.entity';
 import { SourceRepository } from '@app/database/repositories/source.repository';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class ApiGatewayService {
@@ -65,6 +64,111 @@ export class ApiGatewayService {
         'GET /sources - List sources',
         'GET /sources/:id - Get source by ID',
         'GET /sources/:id/anime - Get anime for source',
+      ],
+    };
+  }
+
+  async getDetailedApiInfo(): Promise<{
+    name: string;
+    description: string;
+    version: string;
+    environment: string;
+    uptime: number;
+    startTime: string;
+    sourceCount: number;
+    documentation: string;
+    endpoints: Array<{
+      path: string;
+      method: string;
+      description: string;
+    }>;
+  }> {
+    const startTime = new Date(
+      Date.now() - process.uptime() * 1000,
+    ).toISOString();
+    let sourceCount = 0;
+
+    try {
+      sourceCount = await this.sourceRepository.count();
+    } catch (error) {
+      this.logger.error('Failed to get source count', error);
+    }
+
+    return {
+      name: 'NIME Crawler API Gateway',
+      description: 'RESTful API for anime crawling and management system',
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      uptime: process.uptime(),
+      startTime,
+      sourceCount,
+      documentation: '/docs',
+      endpoints: [
+        {
+          path: '/health',
+          method: 'GET',
+          description: 'Health check endpoint',
+        },
+        {
+          path: '/api/info',
+          method: 'GET',
+          description: 'Detailed API information',
+        },
+        {
+          path: '/anime',
+          method: 'GET',
+          description: 'List and filter anime',
+        },
+        {
+          path: '/anime/search',
+          method: 'GET',
+          description: 'Search for anime by query',
+        },
+        {
+          path: '/anime/:id',
+          method: 'GET',
+          description: 'Get anime details by ID',
+        },
+        {
+          path: '/anime/:id/episodes',
+          method: 'GET',
+          description: 'Get episodes for a specific anime',
+        },
+        {
+          path: '/anime/stats/summary',
+          method: 'GET',
+          description: 'Get anime statistics summary',
+        },
+        {
+          path: '/sources',
+          method: 'GET',
+          description: 'List all sources',
+        },
+        {
+          path: '/sources/:id',
+          method: 'GET',
+          description: 'Get source details by ID',
+        },
+        {
+          path: '/sources/:id/anime',
+          method: 'GET',
+          description: 'Get anime from a specific source',
+        },
+        {
+          path: '/crawler/jobs',
+          method: 'GET',
+          description: 'List all crawler jobs',
+        },
+        {
+          path: '/crawler/schedule/full-crawl',
+          method: 'POST',
+          description: 'Schedule a full crawl job',
+        },
+        {
+          path: '/crawler/schedule/update-crawl',
+          method: 'POST',
+          description: 'Schedule an update crawl job',
+        },
       ],
     };
   }

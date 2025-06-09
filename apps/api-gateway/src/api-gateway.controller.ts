@@ -1,5 +1,14 @@
+import {
+  ApiResponse,
+  ApiResponseDto,
+  createSuccessResponse,
+} from '@app/common';
 import { Controller, Get, Logger } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiTags,
+  ApiResponse as SwaggerApiResponse,
+} from '@nestjs/swagger';
 import { ApiGatewayService } from './api-gateway.service';
 
 @ApiTags('health')
@@ -11,47 +20,47 @@ export class ApiGatewayController {
 
   @Get()
   @ApiOperation({ summary: 'Get API information' })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 200,
     description: 'API information retrieved successfully',
+    type: ApiResponseDto,
   })
-  getApiInfo() {
+  getApiInfo(): ApiResponse {
     this.logger.log('API info requested');
-    return {
-      success: true,
-      message: 'NIME Crawler API Gateway is running',
-      data: this.apiGatewayService.getApiInfo(),
-    };
+    return createSuccessResponse(
+      'NIME Crawler API Gateway is running',
+      this.apiGatewayService.getApiInfo(),
+    );
   }
 
   @Get('health')
   @ApiOperation({ summary: 'Health check endpoint' })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 200,
     description: 'Health check completed successfully',
+    type: ApiResponseDto,
   })
-  async getHealthCheck() {
+  async getHealthCheck(): Promise<ApiResponse> {
     this.logger.log('Health check requested');
     const healthData = await this.apiGatewayService.getHealthCheck();
-    return {
-      success: true,
-      message: 'Health check completed',
-      data: healthData,
-    };
+
+    return createSuccessResponse('Health check completed', healthData);
   }
 
   @Get('api/info')
   @ApiOperation({ summary: 'Get detailed API information' })
-  @ApiResponse({
+  @SwaggerApiResponse({
     status: 200,
     description: 'API details retrieved successfully',
+    type: ApiResponseDto,
   })
-  getApiDetails() {
-    this.logger.log('API details requested');
-    return {
-      success: true,
-      message: 'API details retrieved successfully',
-      data: this.apiGatewayService.getApiInfo(),
-    };
+  async getDetailedApiInfo(): Promise<ApiResponse> {
+    this.logger.log('Detailed API info requested');
+    const apiDetails = await this.apiGatewayService.getDetailedApiInfo();
+
+    return createSuccessResponse(
+      'API details retrieved successfully',
+      apiDetails,
+    );
   }
 }
