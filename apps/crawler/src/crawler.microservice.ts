@@ -2,9 +2,11 @@ import { Source } from '@app/common/entities/core/source.entity';
 import { SourceRepository } from '@app/database/repositories/source.repository';
 import { QueueMetricsService } from '@app/queue';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { Cron } from '@nestjs/schedule';
 import { CrawlJobConsumer } from './consumers/crawl-job.consumer';
 import { CrawlJobProducer } from './producers/crawl-job.producer';
+import { CrawlerManager } from './services/crawler-manager.service';
 
 @Injectable()
 export class CrawlerMicroservice implements OnModuleInit {
@@ -15,6 +17,7 @@ export class CrawlerMicroservice implements OnModuleInit {
     private readonly crawlJobConsumer: CrawlJobConsumer,
     private readonly queueMetrics: QueueMetricsService,
     private readonly sourceRepository: SourceRepository,
+    private readonly crawlerManager: CrawlerManager,
   ) {}
 
   async onModuleInit() {
@@ -24,7 +27,7 @@ export class CrawlerMicroservice implements OnModuleInit {
     await this.startQueueConsumers();
 
     // Schedule initial health checks for all sources
-    await this.scheduleInitialHealthChecks();
+    await this.scheduleHealthChecksForAllSources();
 
     this.logger.log('Crawler Microservice ready - listening for crawl jobs');
   }
@@ -40,14 +43,35 @@ export class CrawlerMicroservice implements OnModuleInit {
   }
 
   @Cron('0 */15 * * * *') // Every 15 minutes
-  private async scheduleInitialHealthChecks() {
+  private async schedulePeriodicHealthChecks() {
     try {
       const activeSources = await this.sourceRepository.find({
         where: { is_active: true },
       });
 
       this.logger.log(
-        `Scheduling health checks for ${activeSources.length} active sources`,
+        `Scheduling periodic health checks for ${activeSources.length} active sources`,
+      );
+
+      for (const source of activeSources) {
+        await this.crawlJobProducer.scheduleHealthCheck(source.id);
+      }
+
+      this.logger.log('Periodic health checks scheduled');
+    } catch (error) {
+      this.logger.error('Failed to schedule periodic health checks:', error);
+      // Don't throw here as this is not critical for startup
+    }
+  }
+
+  private async scheduleHealthChecksForAllSources() {
+    try {
+      const activeSources = await this.sourceRepository.find({
+        where: { is_active: true },
+      });
+
+      this.logger.log(
+        `Scheduling initial health checks for ${activeSources.length} active sources`,
       );
 
       for (const source of activeSources) {
@@ -196,5 +220,65 @@ export class CrawlerMicroservice implements OnModuleInit {
 
     this.logger.log(`Scheduled ${jobIds.length} update crawl jobs`);
     return jobIds;
+  }
+
+  @MessagePattern('crawler.source.crawl.advanced')
+  async crawlSourceAdvanced(
+    @Payload() data: { sourceId: number; maxPages?: number },
+  ) {
+    try {
+      this.logger.log(
+        `Received advanced crawl request for source ${data.sourceId}`,
+      );
+
+      const result = await this.crawlerManager.crawlSource(
+        BigInt(data.sourceId),
+        data.maxPages || 5,
+      );
+
+      return {
+        success: true,
+        message: `Advanced crawl completed for source ${data.sourceId}`,
+        data: {
+          animeCount: result.animeDetails.length,
+          episodeCount: Object.values(result.episodes).reduce(
+            (sum, eps) => sum + eps.length,
+            0,
+          ),
+        },
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error in advanced crawl for source ${data.sourceId}:`,
+        error,
+      );
+      return {
+        success: false,
+        message: `Advanced crawl failed: ${error.message}`,
+      };
+    }
+  }
+
+  @MessagePattern('crawler.sources.crawl-all.advanced')
+  async crawlAllSourcesAdvanced(@Payload() data: { maxPages?: number }) {
+    try {
+      this.logger.log('Received advanced crawl-all request');
+
+      const results = await this.crawlerManager.crawlAllActiveSources(
+        data.maxPages || 3,
+      );
+
+      return {
+        success: true,
+        message: 'Advanced crawl-all completed',
+        data: results,
+      };
+    } catch (error) {
+      this.logger.error('Error in advanced crawl-all:', error);
+      return {
+        success: false,
+        message: `Advanced crawl-all failed: ${error.message}`,
+      };
+    }
   }
 }

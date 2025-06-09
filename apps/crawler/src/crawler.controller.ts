@@ -18,6 +18,7 @@ import {
   MessageResponseDto,
   ReadThreadDto,
 } from './dto/message-patterns.dto';
+import { CrawlerManager } from './services/crawler-manager.service';
 import { SourceHealthCheckService } from './services/source-health-check.service';
 
 @Controller()
@@ -27,6 +28,7 @@ export class CrawlerController implements OnApplicationBootstrap {
   constructor(
     private readonly crawlerMicroservice: CrawlerMicroservice,
     private readonly sourceHealthCheckService: SourceHealthCheckService,
+    private readonly crawlerManager: CrawlerManager,
   ) {}
 
   async onApplicationBootstrap() {
@@ -112,8 +114,6 @@ export class CrawlerController implements OnApplicationBootstrap {
     @Payload() data: ReadThreadDto,
     @Ctx() context: RmqContext,
   ): Promise<MessageResponseDto> {
-    this.logger.log(`Received read-thread pattern with data:`, data);
-
     try {
       const { jobID, endPoint } = data;
 
@@ -158,7 +158,6 @@ export class CrawlerController implements OnApplicationBootstrap {
     @Payload() _data: HealthCheckDto,
     @Ctx() context: RmqContext,
   ): Promise<MessageResponseDto> {
-    console.log(_data);
     this.logger.log(`Received health-check pattern`);
 
     try {

@@ -7,6 +7,7 @@ import { DatabaseModule } from '@app/database';
 import { QueueModule } from '@app/queue';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ApiGatewayController } from './api-gateway.controller';
 import { ApiGatewayService } from './api-gateway.service';
@@ -25,6 +26,19 @@ import { SourceGatewayService } from './services/source-gateway.service';
     DatabaseModule,
     QueueModule.forRoot(),
     TypeOrmModule.forFeature([Anime, Source, Episode, CrawlJob, SourceHealth]),
+    ClientsModule.register([
+      {
+        name: 'CRAWLER_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: 'crawler_queue',
+          queueOptions: {
+            durable: true,
+          },
+        },
+      },
+    ]),
   ],
   controllers: [
     ApiGatewayController,

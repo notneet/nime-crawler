@@ -1,4 +1,5 @@
-import { VersioningType } from '@nestjs/common';
+import { initLogger } from '@app/common/utils/logger.utils';
+import { Logger, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiGatewayModule } from './api-gateway.module';
@@ -6,7 +7,9 @@ import { ApiGatewayModule } from './api-gateway.module';
 let port: number = 3000;
 
 async function bootstrap() {
-  const app = await NestFactory.create(ApiGatewayModule);
+  const { logger, configModule, configService } = await initLogger();
+  const app = await NestFactory.create(ApiGatewayModule, { logger });
+  configModule.close();
 
   app.enableVersioning({
     type: VersioningType.URI,
@@ -30,6 +33,6 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   await app.listen(port);
-  console.log(`API Gateway is running on port ${port}`);
+  Logger.log(`🚀 API Gateway is running on port ${port}`);
 }
 bootstrap().catch(console.error);

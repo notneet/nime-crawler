@@ -1,18 +1,19 @@
 import { CrawlJobStatus, CrawlJobType } from '@app/common';
 import { Source } from '@app/common/entities/core/source.entity';
 import { CrawlJob } from '@app/common/entities/crawler/crawl-job.entity';
+import { SourceHealth } from '@app/common/entities/monitoring/source-health.entity';
+import { SourceHealthRepository } from '@app/database/repositories/source-health.repository';
+import { SourceRepository } from '@app/database/repositories/source.repository';
 import { QueueProducerService } from '@app/queue';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindManyOptions, Repository } from 'typeorm';
-import { SourceRepository } from '@app/database/repositories/source.repository';
-import { SourceHealthRepository } from '@app/database/repositories/source-health.repository';
+import { v4 as uuidv4 } from 'uuid';
 import {
   CrawlJobQueryDto,
   CrawlJobStatusDto,
   SourceHealthDto,
 } from '../dto/crawler.dto';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class CrawlerGatewayService {
@@ -377,5 +378,138 @@ export class CrawlerGatewayService {
     };
 
     return healthDto;
+  }
+
+  /**
+   * Get all crawler sources
+   */
+  async getAllSources(): Promise<Source[]> {
+    try {
+      this.logger.log('Fetching all crawler sources');
+      return this.sourceRepository.find({
+        order: { priority: 'ASC', name: 'ASC' },
+      });
+    } catch (error) {
+      this.logger.error('Error fetching all sources:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get crawler source by ID
+   */
+  async getSourceById(sourceId: bigint): Promise<Source> {
+    try {
+      this.logger.log(`Fetching source with ID: ${sourceId}`);
+      const source = await this.sourceRepository.findOne({
+        where: { id: sourceId },
+      });
+
+      if (!source) {
+        throw new Error(`Source with ID ${sourceId} not found`);
+      }
+
+      return source;
+    } catch (error) {
+      this.logger.error(`Error fetching source ${sourceId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Crawl a specific source
+   */
+  async crawlSource(sourceId: bigint, maxPages: number = 5): Promise<string> {
+    try {
+      this.logger.log(
+        `Initiating crawl for source ${sourceId}, max pages: ${maxPages}`,
+      );
+      return this.scheduleFullCrawl(sourceId.toString(), maxPages);
+    } catch (error) {
+      this.logger.error(
+        `Error initiating crawl for source ${sourceId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Crawl all active sources
+   */
+  async crawlAllSources(maxPages: number = 3): Promise<string[]> {
+    try {
+      this.logger.log(
+        `Initiating crawl for all active sources, max pages: ${maxPages}`,
+      );
+
+      const activeSources = await this.sourceRepository.find({
+        where: { is_active: true },
+        order: { priority: 'ASC' },
+      });
+
+      const jobIds: string[] = [];
+
+      for (const source of activeSources) {
+        try {
+          const jobId = await this.scheduleFullCrawl(
+            source.id.toString(),
+            maxPages,
+            source.priority,
+          );
+
+          jobIds.push(jobId);
+        } catch (error) {
+          this.logger.error(
+            `Error scheduling crawl for source ${source.id}:`,
+            error,
+          );
+        }
+      }
+
+      return jobIds;
+    } catch (error) {
+      this.logger.error('Error initiating crawl for all sources:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check the health of a source
+   */
+  async checkSourceHealth(sourceId: bigint): Promise<string> {
+    try {
+      this.logger.log(`Checking health for source ${sourceId}`);
+      return this.scheduleHealthCheck(sourceId.toString());
+    } catch (error) {
+      this.logger.error(`Error checking health for source ${sourceId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get health check history for a source
+   */
+  async getSourceHealthHistory(
+    sourceId: bigint,
+    limit: number = 10,
+  ): Promise<SourceHealth[]> {
+    try {
+      this.logger.log(
+        `Fetching health history for source ${sourceId}, limit: ${limit}`,
+      );
+
+      return this.sourceHealthRepository.find({
+        where: { source_id: sourceId },
+        order: { checked_at: 'DESC' },
+        take: limit,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error fetching health history for source ${sourceId}:`,
+        error,
+      );
+      throw error;
+    }
   }
 }

@@ -1,9 +1,5 @@
+import { AnimeSeason, AnimeStatus, AnimeType } from '@app/common';
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  AnimeType,
-  AnimeStatus,
-  AnimeSeason,
-} from '@app/common/entities/core/anime.entity';
 import { ScrapedAnimeData } from '../scrapers/anime-scraper.service';
 
 export interface ValidationResult {

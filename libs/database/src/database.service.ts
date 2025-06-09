@@ -43,10 +43,10 @@ export class DatabaseService implements OnModuleInit {
         // Don't throw here, as Redis is optional for caching
       }
 
-      // Run migrations in production
-      if (this.configService.get('NODE_ENV') === 'production') {
-        await this.runMigrations();
-      }
+      // Run migrations in production - disabled for now
+      // if (this.configService.get('NODE_ENV') === 'production') {
+      //   await this.runMigrations();
+      // }
     } catch (error) {
       this.logger.error('Failed to initialize database module:', error);
       throw error;
