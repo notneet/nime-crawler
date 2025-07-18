@@ -18,6 +18,13 @@ export interface CrawlResult {
   episodes: { [animeId: string]: ScrapedEpisode[] };
 }
 
+export interface SingleAnimeCrawlResult {
+  animeDetail: ScrapedAnimeDetail | null;
+  episodes: ScrapedEpisode[];
+  success: boolean;
+  message: string;
+}
+
 @Injectable()
 export class CrawlerManager {
   private readonly logger = new Logger(CrawlerManager.name);
@@ -170,6 +177,124 @@ export class CrawlerManager {
         error,
       );
       throw error;
+    }
+  }
+
+  /**
+   * Crawl a single anime by ID
+   * This is used for targeted crawling of specific anime
+   */
+  async crawlSingleAnime(
+    sourceId: bigint,
+    animeId: bigint,
+  ): Promise<SingleAnimeCrawlResult> {
+    try {
+      this.logger.log(
+        `Starting single anime crawl for source ${sourceId}, anime ID ${animeId}`,
+      );
+
+      // Get source configuration
+      const source = await this.sourceRepository.findById(sourceId);
+      if (!source) {
+        throw new Error(`Source with ID ${sourceId} not found`);
+      }
+
+      // First, we need to get the anime URL from the database or construct it
+      // In a real implementation, you would query your database for this anime
+      // or construct the URL based on the source's URL pattern
+
+      // For now, we'll use a placeholder - in a real implementation you'd fetch this
+      // from your database or construct it based on source patterns
+      const animeUrl = `${source.base_url}/anime/${animeId}`;
+      const animeSourceId = animeId.toString();
+
+      this.logger.log(`Crawling anime detail from URL: ${animeUrl}`);
+
+      // Crawl the anime detail
+      const animeDetail = await this.animeDetailScraper.scrapeAnimeDetail(
+        source,
+        animeUrl,
+        animeSourceId,
+      );
+
+      if (!animeDetail) {
+        return {
+          animeDetail: null,
+          episodes: [],
+          success: false,
+          message: `Failed to scrape anime detail for ID ${animeId}`,
+        };
+      }
+
+      this.logger.log(
+        `Successfully crawled anime detail: ${animeDetail.title}`,
+      );
+
+      // Crawl episodes
+      const episodes: ScrapedEpisode[] = [];
+
+      if (animeDetail.episodes_urls && animeDetail.episodes_urls.length > 0) {
+        this.logger.log(
+          `Crawling ${animeDetail.episodes_urls.length} episodes`,
+        );
+
+        for (let i = 0; i < animeDetail.episodes_urls.length; i++) {
+          try {
+            // Add delay between requests
+            if (i > 0) {
+              await this.delay(source.delay_ms);
+            }
+
+            const episodeUrl = animeDetail.episodes_urls[i];
+
+            const episode = await this.episodeScraper.scrapeEpisode(
+              source,
+              episodeUrl,
+              animeSourceId,
+            );
+
+            if (episode) {
+              episodes.push(episode);
+            }
+          } catch (error) {
+            this.logger.error(
+              `Error crawling episode ${i + 1}:`,
+              error.message,
+            );
+          }
+        }
+
+        this.logger.log(`Successfully crawled ${episodes.length} episodes`);
+      } else {
+        this.logger.log(
+          `No episode URLs found for anime: ${animeDetail.title}`,
+        );
+      }
+
+      // Process and save the data
+      const episodesMap: { [animeId: string]: ScrapedEpisode[] } = {};
+      episodesMap[animeSourceId] = episodes;
+
+      await this.processAndSaveCrawledData(source, [animeDetail], episodesMap);
+
+      return {
+        animeDetail,
+        episodes,
+        success: true,
+        message: `Successfully crawled anime ${animeDetail.title} with ${episodes.length} episodes`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error during single anime crawl for source ${sourceId}, anime ${animeId}:`,
+        error,
+      );
+
+      return {
+        animeDetail: null,
+        episodes: [],
+        success: false,
+        message: `Error: ${error.message}`,
+      };
     }
   }
 

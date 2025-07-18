@@ -55,34 +55,63 @@ export class CrawlerController implements OnApplicationBootstrap {
 
       switch (jobType) {
         case CRAWL_JOB_TYPES.FULL_CRAWL:
-          result = await this.crawlerMicroservice.requestFullCrawl(
-            sourceBigInt,
-            parameters?.maxPages,
+          // Directly use CrawlerManager instead of going through message queue again
+          this.logger.log(
+            `Starting direct crawl for source ${sourceId} with max pages ${parameters?.maxPages || 5}`,
           );
+
+          const crawlResult = await this.crawlerManager.crawlSource(
+            sourceBigInt,
+            parameters?.maxPages || 5,
+          );
+
+          result = `Crawl completed successfully. Found ${crawlResult.animeDetails.length} anime and ${Object.values(
+            crawlResult.episodes,
+          ).reduce((sum, eps) => sum + eps.length, 0)} episodes.`;
           break;
+
         case CRAWL_JOB_TYPES.UPDATE_CRAWL:
-          result = await this.crawlerMicroservice.requestUpdateCrawl(
-            sourceBigInt,
-            parameters?.olderThanHours,
+          // For update crawls, we'll still use the CrawlerManager directly
+          this.logger.log(
+            `Starting direct update crawl for source ${sourceId}`,
           );
+
+          const updateResult = await this.crawlerManager.crawlSource(
+            sourceBigInt,
+            parameters?.maxPages || 3,
+          );
+
+          result = `Update crawl completed successfully. Updated ${updateResult.animeDetails.length} anime and ${Object.values(
+            updateResult.episodes,
+          ).reduce((sum, eps) => sum + eps.length, 0)} episodes.`;
           break;
+
         case CRAWL_JOB_TYPES.HEALTH_CHECK:
           this.logger.log(`Processing health check for source ${sourceId}`);
           const healthResult =
             await this.sourceHealthCheckService.checkSourceHealth(sourceBigInt);
           result = `Health check completed for source ${sourceId}: ${healthResult.isAccessible ? 'HEALTHY' : 'UNHEALTHY'} (${healthResult.responseTimeMs}ms)`;
           break;
+
         case CRAWL_JOB_TYPES.SINGLE_ANIME:
           // Convert animeId from string to bigint or use default
           const animeBigInt = parameters?.animeId
             ? BigInt(parameters.animeId)
             : BigInt(0);
 
-          result = await this.crawlerMicroservice.requestAnimeCrawl(
+          this.logger.log(
+            `Processing single anime crawl for source ${sourceId}, anime ${parameters?.animeId}`,
+          );
+
+          // Use the direct crawlSingleAnime method
+          const animeResult = await this.crawlerManager.crawlSingleAnime(
             sourceBigInt,
             animeBigInt,
           );
+
+          result = animeResult.message;
           break;
+
         default:
           this.logger.warn(`Unknown job type: ${jobType}`);
           throw new Error(`Unsupported job type: ${jobType}`);
