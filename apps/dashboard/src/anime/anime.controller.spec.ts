@@ -24,10 +24,23 @@ describe('AnimeController', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('list builds pagination view-model', async () => {
-    animeService.list.mockResolvedValue({ rows: [], total: 45, page: 2, pageSize: 20 });
-    const vm = await controller.list('foo', '2');
-    expect(animeService.list).toHaveBeenCalledWith('foo', 2, 20);
-    expect(vm).toMatchObject({ q: 'foo', page: 2, total: 45, hasPrev: true, hasNext: true, prevPage: 1, nextPage: 3 });
+    animeService.list.mockResolvedValue({ rows: [], total: 45, page: 2, pageSize: 10 });
+    const vm = await controller.list('foo', '2', '');
+    expect(animeService.list).toHaveBeenCalledWith('foo', 2, 10);
+    expect(vm.q).toBe('foo');
+    expect(vm.pager).toMatchObject({ page: 2, total: 45, limit: 10, lastPage: 5, hasPrev: true, hasNext: true });
+  });
+
+  it('list clamps limit to the allowed set (default 10)', async () => {
+    animeService.list.mockResolvedValue({ rows: [], total: 5, page: 1, pageSize: 10 });
+    await controller.list('', '1', '999');
+    expect(animeService.list).toHaveBeenCalledWith('', 1, 10);
+  });
+
+  it('list honors an allowed limit', async () => {
+    animeService.list.mockResolvedValue({ rows: [], total: 5, page: 1, pageSize: 50 });
+    await controller.list('', '1', '50');
+    expect(animeService.list).toHaveBeenCalledWith('', 1, 50);
   });
 
   it('detail returns the detail view-model', async () => {
@@ -42,37 +55,44 @@ describe('AnimeController', () => {
     await expect(controller.detail('999')).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('episodes returns the list view-model', async () => {
-    const data = { anime: { id: 1 } as Anime, episodes: [] };
+  it('episodes returns the list view-model with a pager', async () => {
+    const data = { anime: { id: 1 } as Anime, episodes: [], total: 12 };
     animeService.episodesOf.mockResolvedValue(data);
-    expect(await controller.episodes('1')).toBe(data);
+    const vm = await controller.episodes('1', '2', '10');
+    expect(animeService.episodesOf).toHaveBeenCalledWith(1, 2, 10);
+    expect(vm.anime).toBe(data.anime);
+    expect(vm.pager).toMatchObject({ baseUrl: '/anime/1/episodes', page: 2, limit: 10, total: 12, lastPage: 2 });
   });
 
   it('episodes throws 404 when missing', async () => {
     animeService.episodesOf.mockResolvedValue(null);
-    await expect(controller.episodes('9')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(controller.episodes('9', '1', '')).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('mirrors returns the list view-model', async () => {
-    const data = { anime: { id: 1 } as Anime, rows: [] };
+  it('mirrors returns the list view-model with a pager', async () => {
+    const data = { anime: { id: 1 } as Anime, rows: [], total: 3 };
     animeService.mirrorsOf.mockResolvedValue(data);
-    expect(await controller.mirrors('1')).toBe(data);
+    const vm = await controller.mirrors('1', '1', '');
+    expect(animeService.mirrorsOf).toHaveBeenCalledWith(1, 1, 10);
+    expect(vm.pager).toMatchObject({ baseUrl: '/anime/1/mirrors', total: 3 });
   });
 
   it('mirrors throws 404 when missing', async () => {
     animeService.mirrorsOf.mockResolvedValue(null);
-    await expect(controller.mirrors('9')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(controller.mirrors('9', '1', '')).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('downloads returns the list view-model', async () => {
-    const data = { anime: { id: 1 } as Anime, rows: [] };
+  it('downloads returns the list view-model with a pager', async () => {
+    const data = { anime: { id: 1 } as Anime, rows: [], total: 7 };
     animeService.downloadsOf.mockResolvedValue(data);
-    expect(await controller.downloads('1')).toBe(data);
+    const vm = await controller.downloads('1', '1', '');
+    expect(animeService.downloadsOf).toHaveBeenCalledWith(1, 1, 10);
+    expect(vm.pager).toMatchObject({ baseUrl: '/anime/1/downloads', total: 7 });
   });
 
   it('downloads throws 404 when missing', async () => {
     animeService.downloadsOf.mockResolvedValue(null);
-    await expect(controller.downloads('9')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(controller.downloads('9', '1', '')).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('update returns ok flash', async () => {

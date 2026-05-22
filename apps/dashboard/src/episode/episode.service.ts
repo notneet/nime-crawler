@@ -2,11 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryDeepPartialEntity, Repository } from 'typeorm';
 import { Episode, Mirror, DownloadLink } from '@libs/commons/entities';
+import { DEFAULT_LIMIT } from '../common/pagination';
 
 export interface EpisodeDetail {
   episode: Episode;
   mirrors: Mirror[];
   downloads: DownloadLink[];
+  mirrorsTotal: number;
+  downloadsTotal: number;
 }
 
 @Injectable()
@@ -17,12 +20,28 @@ export class EpisodeService {
     @InjectRepository(DownloadLink) private readonly download: Repository<DownloadLink>,
   ) {}
 
-  async detail(id: number): Promise<EpisodeDetail | null> {
+  async detail(
+    id: number,
+    mPage = 1,
+    mLimit = DEFAULT_LIMIT,
+    dPage = 1,
+    dLimit = DEFAULT_LIMIT,
+  ): Promise<EpisodeDetail | null> {
     const episode = await this.episode.findOneBy({ id });
     if (!episode) return null;
-    const mirrors = await this.mirror.findBy({ episodeUrl: episode.url });
-    const downloads = await this.download.findBy({ ownerUrl: episode.url });
-    return { episode, mirrors, downloads };
+    const [mirrors, mirrorsTotal] = await this.mirror.findAndCount({
+      where: { episodeUrl: episode.url },
+      order: { id: 'ASC' },
+      skip: (mPage - 1) * mLimit,
+      take: mLimit,
+    });
+    const [downloads, downloadsTotal] = await this.download.findAndCount({
+      where: { ownerUrl: episode.url },
+      order: { id: 'ASC' },
+      skip: (dPage - 1) * dLimit,
+      take: dLimit,
+    });
+    return { episode, mirrors, downloads, mirrorsTotal, downloadsTotal };
   }
 
   async update(id: number, patch: Partial<Episode>): Promise<Episode | null> {

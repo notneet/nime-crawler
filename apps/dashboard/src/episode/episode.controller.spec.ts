@@ -21,15 +21,19 @@ describe('EpisodeController', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  it('detail returns the view-model', async () => {
-    const detail = { episode: { id: 1 } as Episode, mirrors: [], downloads: [] };
+  it('detail returns the view-model with mirror and download pagers', async () => {
+    const detail = { episode: { id: 1 } as Episode, mirrors: [], downloads: [], mirrorsTotal: 25, downloadsTotal: 4 };
     episodeService.detail.mockResolvedValue(detail);
-    expect(await controller.detail('1')).toBe(detail);
+    const vm = await controller.detail('1', '2', '10', '1', '20');
+    expect(episodeService.detail).toHaveBeenCalledWith(1, 2, 10, 1, 20);
+    expect(vm.episode).toBe(detail.episode);
+    expect(vm.mirrorsPager).toMatchObject({ baseUrl: '/episode/1', pageParam: 'mp', limitParam: 'ml', page: 2, limit: 10, total: 25 });
+    expect(vm.downloadsPager).toMatchObject({ baseUrl: '/episode/1', pageParam: 'dp', limitParam: 'dl', page: 1, limit: 20, total: 4 });
   });
 
   it('detail throws 404 when missing', async () => {
     episodeService.detail.mockResolvedValue(null);
-    await expect(controller.detail('9')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(controller.detail('9', '1', '', '1', '')).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('update returns ok flash', async () => {

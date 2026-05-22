@@ -1,18 +1,29 @@
-<h1>{{anime.title}} — Downloads ({{rows.length}})</h1>
-<p><a href="/anime/{{anime.id}}">← back to anime</a></p>
-<table>
-  <thead><tr><th>Episode</th><th>Kind</th><th>Quality</th><th>Host</th><th>Size</th><th>URL</th><th></th></tr></thead>
-  <tbody>
-    {{#each rows}}
-      <tr>
-        <td><a href="/episode/{{this.episodeId}}">{{this.episodeTitle}}</a></td>
-        <td>{{this.kind}}</td>
-        <td>{{this.quality}}</td>
-        <td>{{this.host}}</td>
-        <td>{{this.size}}</td>
-        <td><a href="{{this.url}}">{{this.url}}</a></td>
-        <td><button hx-delete="/episode/download/{{this.id}}" hx-confirm="Delete this download?" hx-target="closest tr" hx-swap="outerHTML">Delete</button></td>
-      </tr>
-    {{/each}}
-  </tbody>
-</table>
+<div class="crumb"><a href="/anime">Anime</a><span>/</span><a href="/anime/{{anime.id}}">{{anime.id}}</a><span>/</span><span class="text-fg">downloads</span></div>
+
+<div class="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+  <h1>{{anime.title}} <span class="text-mute">/ downloads</span></h1>
+  <span class="pill">{{pager.total}} total</span>
+</div>
+
+<div class="card overflow-hidden">
+  <table class="tbl">
+    <thead><tr><th>Episode</th><th class="w-24">Kind</th><th class="w-24">Quality</th><th class="w-32">Host</th><th class="w-24">Size</th><th>URL</th><th class="w-20"></th></tr></thead>
+    <tbody>
+      {{#each rows}}
+        <tr>
+          <td><a href="/episode/{{this.episodeId}}">{{this.episodeTitle}}</a></td>
+          <td><span class="pill">{{this.kind}}</span></td>
+          <td><span class="pill">{{this.quality}}</span></td>
+          <td>{{this.host}}</td>
+          <td class="text-mute">{{this.size}}</td>
+          <td class="break-all"><a href="{{this.url}}">{{this.url}}</a></td>
+          <td><button class="btn btn-danger !px-2.5 !py-1.5" hx-delete="/episode/download/{{this.id}}" hx-confirm="Delete this download?" hx-target="closest tr" hx-swap="outerHTML">Del</button></td>
+        </tr>
+      {{else}}
+        <tr><td colspan="7" class="py-10 text-center text-mute">no downloads</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+{{> pager pager}}

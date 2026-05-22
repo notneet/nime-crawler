@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, QueryDeepPartialEntity, Repository } from 'typeorm';
 import { Anime, AnimeGenre, Genre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
+import { DEFAULT_LIMIT } from '../common/pagination';
 
 export interface AnimeList {
   rows: Anime[];
@@ -19,6 +20,7 @@ export interface AnimeDetail {
 export interface AnimeEpisodeList {
   anime: Anime;
   episodes: Episode[];
+  total: number;
 }
 
 export interface AnimeMirrorRow {
@@ -33,6 +35,7 @@ export interface AnimeMirrorRow {
 export interface AnimeMirrorList {
   anime: Anime;
   rows: AnimeMirrorRow[];
+  total: number;
 }
 
 export interface AnimeDownloadRow {
@@ -49,6 +52,7 @@ export interface AnimeDownloadRow {
 export interface AnimeDownloadList {
   anime: Anime;
   rows: AnimeDownloadRow[];
+  total: number;
 }
 
 @Injectable()
@@ -62,7 +66,7 @@ export class AnimeService {
     @InjectRepository(DownloadLink) private readonly download: Repository<DownloadLink>,
   ) {}
 
-  async list(q: string, page: number, pageSize = 20): Promise<AnimeList> {
+  async list(q: string, page: number, pageSize = DEFAULT_LIMIT): Promise<AnimeList> {
     const where = q ? { title: Like(`%${q}%`) } : {};
     const [rows, total] = await this.anime.findAndCount({
       where,
@@ -83,20 +87,31 @@ export class AnimeService {
     return { anime, episodes, genres };
   }
 
-  async episodesOf(id: number): Promise<AnimeEpisodeList | null> {
+  async episodesOf(id: number, page = 1, limit = DEFAULT_LIMIT): Promise<AnimeEpisodeList | null> {
     const anime = await this.anime.findOneBy({ id });
     if (!anime) return null;
-    const episodes = await this.episode.findBy({ animeUrl: anime.url });
-    return { anime, episodes };
+    const [episodes, total] = await this.episode.findAndCount({
+      where: { animeUrl: anime.url },
+      order: { id: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return { anime, episodes, total };
   }
 
-  async mirrorsOf(id: number): Promise<AnimeMirrorList | null> {
+  async mirrorsOf(id: number, page = 1, limit = DEFAULT_LIMIT): Promise<AnimeMirrorList | null> {
     const anime = await this.anime.findOneBy({ id });
     if (!anime) return null;
     const episodes = await this.episode.findBy({ animeUrl: anime.url });
     const byUrl = new Map(episodes.map((e) => [e.url, e]));
     const urls = episodes.map((e) => e.url);
-    const mirrors = urls.length ? await this.mirror.findBy({ episodeUrl: In(urls) }) : [];
+    if (!urls.length) return { anime, rows: [], total: 0 };
+    const [mirrors, total] = await this.mirror.findAndCount({
+      where: { episodeUrl: In(urls) },
+      order: { id: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
     const rows = mirrors.map((m) => {
       const ep = byUrl.get(m.episodeUrl);
       return {
@@ -108,16 +123,22 @@ export class AnimeService {
         episodeTitle: ep?.title ?? '',
       };
     });
-    return { anime, rows };
+    return { anime, rows, total };
   }
 
-  async downloadsOf(id: number): Promise<AnimeDownloadList | null> {
+  async downloadsOf(id: number, page = 1, limit = DEFAULT_LIMIT): Promise<AnimeDownloadList | null> {
     const anime = await this.anime.findOneBy({ id });
     if (!anime) return null;
     const episodes = await this.episode.findBy({ animeUrl: anime.url });
     const byUrl = new Map(episodes.map((e) => [e.url, e]));
     const urls = episodes.map((e) => e.url);
-    const downloads = urls.length ? await this.download.findBy({ ownerUrl: In(urls) }) : [];
+    if (!urls.length) return { anime, rows: [], total: 0 };
+    const [downloads, total] = await this.download.findAndCount({
+      where: { ownerUrl: In(urls) },
+      order: { id: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
     const rows = downloads.map((d) => {
       const ep = byUrl.get(d.ownerUrl);
       return {
@@ -131,7 +152,7 @@ export class AnimeService {
         episodeTitle: ep?.title ?? '',
       };
     });
-    return { anime, rows };
+    return { anime, rows, total };
   }
 
   async update(id: number, patch: Partial<Anime>): Promise<Anime | null> {

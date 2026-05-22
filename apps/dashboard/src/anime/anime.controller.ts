@@ -16,8 +16,7 @@ import type { Response } from 'express';
 import { AnimeService } from './anime.service';
 import { AnimeEditDto } from './anime-edit.dto';
 import { RecrawlService } from '../recrawl/recrawl.service';
-
-const PAGE_SIZE = 20;
+import { buildPager, parseLimit, parsePage } from '../common/pagination';
 
 @Controller('anime')
 export class AnimeController {
@@ -28,20 +27,16 @@ export class AnimeController {
 
   @Get()
   @Render('anime-list')
-  async list(@Query('q') q = '', @Query('page') pageParam = '1') {
-    const page = Math.max(1, Number(pageParam) || 1);
-    const { rows, total, pageSize } = await this.anime.list(q, page, PAGE_SIZE);
-    const lastPage = Math.max(1, Math.ceil(total / pageSize));
-    return {
-      rows,
-      total,
-      q,
-      page,
-      hasPrev: page > 1,
-      hasNext: page < lastPage,
-      prevPage: page - 1,
-      nextPage: page + 1,
-    };
+  async list(
+    @Query('q') q = '',
+    @Query('page') pageParam = '1',
+    @Query('limit') limitParam = '',
+  ) {
+    const page = parsePage(pageParam);
+    const limit = parseLimit(limitParam);
+    const { rows, total } = await this.anime.list(q, page, limit);
+    const pager = buildPager({ baseUrl: '/anime', page, limit, total, preserved: { q } });
+    return { rows, q, pager };
   }
 
   @Get(':id')
@@ -54,26 +49,47 @@ export class AnimeController {
 
   @Get(':id/episodes')
   @Render('anime-episodes')
-  async episodes(@Param('id') id: string) {
-    const data = await this.anime.episodesOf(Number(id));
+  async episodes(
+    @Param('id') id: string,
+    @Query('page') pageParam = '1',
+    @Query('limit') limitParam = '',
+  ) {
+    const page = parsePage(pageParam);
+    const limit = parseLimit(limitParam);
+    const data = await this.anime.episodesOf(Number(id), page, limit);
     if (!data) throw new NotFoundException('anime not found');
-    return data;
+    const pager = buildPager({ baseUrl: `/anime/${id}/episodes`, page, limit, total: data.total });
+    return { ...data, pager };
   }
 
   @Get(':id/mirrors')
   @Render('anime-mirrors')
-  async mirrors(@Param('id') id: string) {
-    const data = await this.anime.mirrorsOf(Number(id));
+  async mirrors(
+    @Param('id') id: string,
+    @Query('page') pageParam = '1',
+    @Query('limit') limitParam = '',
+  ) {
+    const page = parsePage(pageParam);
+    const limit = parseLimit(limitParam);
+    const data = await this.anime.mirrorsOf(Number(id), page, limit);
     if (!data) throw new NotFoundException('anime not found');
-    return data;
+    const pager = buildPager({ baseUrl: `/anime/${id}/mirrors`, page, limit, total: data.total });
+    return { ...data, pager };
   }
 
   @Get(':id/downloads')
   @Render('anime-downloads')
-  async downloads(@Param('id') id: string) {
-    const data = await this.anime.downloadsOf(Number(id));
+  async downloads(
+    @Param('id') id: string,
+    @Query('page') pageParam = '1',
+    @Query('limit') limitParam = '',
+  ) {
+    const page = parsePage(pageParam);
+    const limit = parseLimit(limitParam);
+    const data = await this.anime.downloadsOf(Number(id), page, limit);
     if (!data) throw new NotFoundException('anime not found');
-    return data;
+    const pager = buildPager({ baseUrl: `/anime/${id}/downloads`, page, limit, total: data.total });
+    return { ...data, pager };
   }
 
   @Post(':id')

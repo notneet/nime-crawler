@@ -7,6 +7,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Query,
   Render,
   Res,
   UsePipes,
@@ -16,6 +17,7 @@ import type { Response } from 'express';
 import { EpisodeService } from './episode.service';
 import { EpisodeEditDto } from './episode-edit.dto';
 import { RecrawlService } from '../recrawl/recrawl.service';
+import { buildPager, parseLimit, parsePage } from '../common/pagination';
 
 @Controller('episode')
 export class EpisodeController {
@@ -26,10 +28,39 @@ export class EpisodeController {
 
   @Get(':id')
   @Render('episode-detail')
-  async detail(@Param('id') id: string) {
-    const detail = await this.episode.detail(Number(id));
+  async detail(
+    @Param('id') id: string,
+    @Query('mp') mpParam = '1',
+    @Query('ml') mlParam = '',
+    @Query('dp') dpParam = '1',
+    @Query('dl') dlParam = '',
+  ) {
+    const mPage = parsePage(mpParam);
+    const mLimit = parseLimit(mlParam);
+    const dPage = parsePage(dpParam);
+    const dLimit = parseLimit(dlParam);
+    const detail = await this.episode.detail(Number(id), mPage, mLimit, dPage, dLimit);
     if (!detail) throw new NotFoundException('episode not found');
-    return detail;
+    const base = `/episode/${id}`;
+    const mirrorsPager = buildPager({
+      baseUrl: base,
+      pageParam: 'mp',
+      limitParam: 'ml',
+      page: mPage,
+      limit: mLimit,
+      total: detail.mirrorsTotal,
+      preserved: { dp: dPage, dl: dLimit },
+    });
+    const downloadsPager = buildPager({
+      baseUrl: base,
+      pageParam: 'dp',
+      limitParam: 'dl',
+      page: dPage,
+      limit: dLimit,
+      total: detail.downloadsTotal,
+      preserved: { mp: mPage, ml: mLimit },
+    });
+    return { ...detail, mirrorsPager, downloadsPager };
   }
 
   @Post(':id')

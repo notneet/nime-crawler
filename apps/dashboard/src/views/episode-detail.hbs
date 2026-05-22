@@ -1,24 +1,52 @@
-<h1>{{episode.title}}</h1>
-<form hx-post="/episode/{{episode.id}}" hx-target="#flash" hx-swap="innerHTML">
-  <p>Title: <input name="title" value="{{episode.title}}" /></p>
-  <p>Number: <input name="number" value="{{episode.number}}" /></p>
-  <p>Stream URL: <input name="streamUrl" value="{{episode.streamUrl}}" /></p>
-  <p>Posted by: <input name="postedBy" value="{{episode.postedBy}}" /></p>
-  <p>Release info: <input name="releaseInfo" value="{{episode.releaseInfo}}" /></p>
-  <button type="submit">Save</button>
+<div class="crumb"><a href="/anime">Anime</a><span>/</span><a href="/episode/{{episode.id}}">episode</a><span>/</span><span class="text-fg">{{episode.id}}</span></div>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <h1 class="max-w-3xl">{{episode.title}}</h1>
+  <div class="flex flex-wrap gap-2">
+    <button class="btn btn-ghost" hx-post="/episode/{{episode.id}}/recrawl" hx-target="#flash" hx-swap="innerHTML">Re-crawl</button>
+    <button class="btn btn-danger" hx-delete="/episode/{{episode.id}}" hx-confirm="Delete this episode?" hx-target="body">Delete</button>
+  </div>
+</div>
+
+<div id="flash" class="empty:hidden mb-4"></div>
+
+<form class="card p-6 space-y-4" hx-post="/episode/{{episode.id}}" hx-target="#flash" hx-swap="innerHTML">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div><label class="label">Title</label><input name="title" value="{{episode.title}}" class="input" /></div>
+    <div><label class="label">Number</label><input name="number" value="{{episode.number}}" class="input" /></div>
+    <div class="sm:col-span-2"><label class="label">Stream URL</label><input name="streamUrl" value="{{episode.streamUrl}}" class="input" /></div>
+    <div><label class="label">Posted by</label><input name="postedBy" value="{{episode.postedBy}}" class="input" /></div>
+    <div><label class="label">Release info</label><input name="releaseInfo" value="{{episode.releaseInfo}}" class="input" /></div>
+  </div>
+  <button type="submit" class="btn btn-acid">Save</button>
 </form>
-<div id="flash"></div>
-<button hx-post="/episode/{{episode.id}}/recrawl" hx-target="#flash" hx-swap="innerHTML">Re-crawl</button>
-<button hx-delete="/episode/{{episode.id}}" hx-confirm="Delete this episode?" hx-target="body">Delete</button>
 
-<h2>Mirrors</h2>
-<table>
-  <thead><tr><th>Quality</th><th>Host</th><th>Stream URL</th></tr></thead>
-  <tbody>{{#each mirrors}}<tr><td>{{this.quality}}</td><td>{{this.host}}</td><td>{{this.streamUrl}}</td></tr>{{/each}}</tbody>
-</table>
+<h2 class="mt-10 mb-3">Mirrors <span class="text-mute">/ {{mirrorsPager.total}}</span></h2>
+<div class="card overflow-hidden">
+  <table class="tbl">
+    <thead><tr><th>Quality</th><th>Host</th><th>Stream URL</th></tr></thead>
+    <tbody>
+      {{#each mirrors}}
+        <tr><td><span class="pill">{{this.quality}}</span></td><td>{{this.host}}</td><td class="break-all">{{#if this.streamUrl}}<a href="{{this.streamUrl}}" target="_blank" rel="noopener noreferrer">{{this.streamUrl}}</a>{{/if}}</td></tr>
+      {{else}}
+        <tr><td colspan="3" class="py-8 text-center text-mute">no mirrors</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{> pager mirrorsPager}}
 
-<h2>Downloads</h2>
-<table>
-  <thead><tr><th>Quality</th><th>Host</th><th>Size</th><th>URL</th></tr></thead>
-  <tbody>{{#each downloads}}<tr><td>{{this.quality}}</td><td>{{this.host}}</td><td>{{this.size}}</td><td>{{this.url}}</td></tr>{{/each}}</tbody>
-</table>
+<h2 class="mt-8 mb-3">Downloads <span class="text-mute">/ {{downloadsPager.total}}</span></h2>
+<div class="card overflow-hidden">
+  <table class="tbl">
+    <thead><tr><th>Quality</th><th>Host</th><th>Size</th><th>URL</th></tr></thead>
+    <tbody>
+      {{#each downloads}}
+        <tr><td><span class="pill">{{this.quality}}</span></td><td>{{this.host}}</td><td class="text-mute">{{this.size}}</td><td class="break-all"><a href="{{this.url}}">{{this.url}}</a></td></tr>
+      {{else}}
+        <tr><td colspan="4" class="py-8 text-center text-mute">no downloads</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{> pager downloadsPager}}

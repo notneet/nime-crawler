@@ -1,14 +1,25 @@
-<h1>{{anime.title}} — Episodes ({{episodes.length}})</h1>
-<p><a href="/anime/{{anime.id}}">← back to anime</a></p>
-<table>
-  <thead><tr><th>ID</th><th>Number</th><th>Title</th></tr></thead>
-  <tbody>
-    {{#each episodes}}
-      <tr>
-        <td><a href="/episode/{{this.id}}">{{this.id}}</a></td>
-        <td>{{this.number}}</td>
-        <td>{{this.title}}</td>
-      </tr>
-    {{/each}}
-  </tbody>
-</table>
+<div class="crumb"><a href="/anime">Anime</a><span>/</span><a href="/anime/{{anime.id}}">{{anime.id}}</a><span>/</span><span class="text-fg">episodes</span></div>
+
+<div class="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+  <h1>{{anime.title}} <span class="text-mute">/ episodes</span></h1>
+  <span class="pill">{{pager.total}} total</span>
+</div>
+
+<div class="card overflow-hidden">
+  <table class="tbl">
+    <thead><tr><th class="w-20">ID</th><th class="w-28">Number</th><th>Title</th></tr></thead>
+    <tbody>
+      {{#each episodes}}
+        <tr>
+          <td><a href="/episode/{{this.id}}" class="font-bold">{{this.id}}</a></td>
+          <td><span class="pill">{{this.number}}</span></td>
+          <td class="text-fg">{{this.title}}</td>
+        </tr>
+      {{else}}
+        <tr><td colspan="3" class="py-10 text-center text-mute">no episodes</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+{{> pager pager}}

@@ -1,18 +1,110 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>nime dashboard</title>
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-    <style>
-      body { font-family: system-ui, sans-serif; margin: 1.5rem; }
-      table { border-collapse: collapse; width: 100%; }
-      th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; }
-      nav a { margin-right: 1rem; }
-      .gap { color: #b00; }
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style type="text/tailwindcss">
+      @theme {
+        --color-ink: #0a0b0d;
+        --color-panel: #131519;
+        --color-panel-2: #1a1d23;
+        --color-edge: #262a32;
+        --color-edge-2: #343a45;
+        --color-mute: #7b8492;
+        --color-fg: #e6e9ee;
+        --color-acid: #c6f432;
+        --color-acid-dim: #98bd1f;
+        --color-warn: #ff5d5d;
+        --font-display: "Archivo", sans-serif;
+        --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      }
+
+      @layer base {
+        body {
+          background-color: var(--color-ink);
+          color: var(--color-fg);
+          font-family: var(--font-mono);
+          background-image:
+            linear-gradient(to right, color-mix(in srgb, var(--color-edge) 28%, transparent) 1px, transparent 1px),
+            linear-gradient(to bottom, color-mix(in srgb, var(--color-edge) 28%, transparent) 1px, transparent 1px);
+          background-size: 32px 32px;
+        }
+        h1 {
+          font-family: var(--font-display);
+          font-weight: 900;
+          letter-spacing: -0.02em;
+          line-height: 1.0;
+          text-transform: uppercase;
+          font-size: clamp(1.6rem, 3vw, 2.4rem);
+        }
+        h2 {
+          font-family: var(--font-display);
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          font-size: 0.85rem;
+          color: var(--color-mute);
+        }
+        a { color: var(--color-acid); text-decoration: none; }
+        a:hover { text-decoration: underline; text-underline-offset: 3px; }
+      }
+
+      @layer components {
+        .shell { @apply mx-auto max-w-6xl px-5 py-8; }
+        .card {
+          @apply rounded-none border border-edge bg-panel/80 backdrop-blur-sm;
+          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 18px 40px -24px rgba(0, 0, 0, 0.9);
+        }
+        .label { @apply block text-[0.62rem] font-bold uppercase tracking-[0.18em] text-mute mb-1; }
+        .input {
+          @apply w-full rounded-none border border-edge bg-ink px-3 py-2 text-sm text-fg outline-none transition;
+          @apply focus:border-acid focus:ring-1 focus:ring-acid/40;
+        }
+        textarea.input { @apply min-h-28 resize-y leading-relaxed; }
+        .btn {
+          @apply inline-flex items-center gap-1.5 rounded-none border px-3.5 py-2 text-xs font-bold uppercase tracking-wider transition active:translate-y-px cursor-pointer;
+        }
+        .btn-acid { @apply border-acid bg-acid text-ink hover:bg-acid-dim hover:border-acid-dim; }
+        .btn-ghost { @apply border-edge-2 bg-transparent text-fg hover:border-acid hover:text-acid; }
+        .btn-danger { @apply border-warn/40 bg-transparent text-warn hover:bg-warn hover:text-ink hover:border-warn; }
+        .pill {
+          @apply inline-flex items-center rounded-none border border-edge bg-panel-2 px-2 py-0.5 text-[0.68rem] font-medium text-mute;
+        }
+        .tbl { @apply w-full border-collapse text-sm; }
+        .tbl thead th {
+          @apply border-b border-edge-2 px-3 py-2.5 text-left text-[0.62rem] font-bold uppercase tracking-[0.16em] text-mute;
+        }
+        .tbl tbody td { @apply border-b border-edge px-3 py-2.5 align-top; }
+        .tbl tbody tr { @apply transition hover:bg-panel-2/60; }
+        .gap { @apply text-warn; }
+        .crumb { @apply mb-6 flex items-center gap-2 text-xs text-mute; }
+      }
     </style>
   </head>
-  <body>
-    <nav><a href="/">Stats</a><a href="/anime">Anime</a></nav>
-    {{{body}}}
+  <body class="min-h-screen">
+    <header class="sticky top-0 z-20 border-b border-edge bg-ink/85 backdrop-blur">
+      <div class="shell !py-0">
+        <nav class="flex items-center gap-1 py-3">
+          <span class="mr-4 font-display text-lg font-900 uppercase tracking-tight">
+            <span class="text-acid">nime</span><span class="text-mute">/</span>dash
+          </span>
+          <a href="/" class="btn btn-ghost !no-underline">Stats</a>
+          <a href="/anime" class="btn btn-ghost !no-underline">Anime</a>
+          <span class="ml-auto hidden text-[0.62rem] uppercase tracking-[0.2em] text-mute sm:block">
+            crawl ops console
+          </span>
+        </nav>
+      </div>
+    </header>
+    <main class="shell">{{{body}}}</main>
   </body>
 </html>

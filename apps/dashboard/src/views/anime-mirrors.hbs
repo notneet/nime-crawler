@@ -1,16 +1,27 @@
-<h1>{{anime.title}} — Mirrors ({{rows.length}})</h1>
-<p><a href="/anime/{{anime.id}}">← back to anime</a></p>
-<table>
-  <thead><tr><th>Episode</th><th>Quality</th><th>Host</th><th>Stream URL</th><th></th></tr></thead>
-  <tbody>
-    {{#each rows}}
-      <tr>
-        <td><a href="/episode/{{this.episodeId}}">{{this.episodeTitle}}</a></td>
-        <td>{{this.quality}}</td>
-        <td>{{this.host}}</td>
-        <td>{{this.streamUrl}}</td>
-        <td><button hx-delete="/episode/mirror/{{this.id}}" hx-confirm="Delete this mirror?" hx-target="closest tr" hx-swap="outerHTML">Delete</button></td>
-      </tr>
-    {{/each}}
-  </tbody>
-</table>
+<div class="crumb"><a href="/anime">Anime</a><span>/</span><a href="/anime/{{anime.id}}">{{anime.id}}</a><span>/</span><span class="text-fg">mirrors</span></div>
+
+<div class="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+  <h1>{{anime.title}} <span class="text-mute">/ mirrors</span></h1>
+  <span class="pill">{{pager.total}} total</span>
+</div>
+
+<div class="card overflow-hidden">
+  <table class="tbl">
+    <thead><tr><th>Episode</th><th class="w-24">Quality</th><th class="w-32">Host</th><th>Stream URL</th><th class="w-20"></th></tr></thead>
+    <tbody>
+      {{#each rows}}
+        <tr>
+          <td><a href="/episode/{{this.episodeId}}">{{this.episodeTitle}}</a></td>
+          <td><span class="pill">{{this.quality}}</span></td>
+          <td>{{this.host}}</td>
+          <td class="break-all">{{#if this.streamUrl}}<a href="{{this.streamUrl}}" target="_blank" rel="noopener noreferrer">{{this.streamUrl}}</a>{{/if}}</td>
+          <td><button class="btn btn-danger !px-2.5 !py-1.5" hx-delete="/episode/mirror/{{this.id}}" hx-confirm="Delete this mirror?" hx-target="closest tr" hx-swap="outerHTML">Del</button></td>
+        </tr>
+      {{else}}
+        <tr><td colspan="5" class="py-10 text-center text-mute">no mirrors</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+{{> pager pager}}

@@ -1,0 +1,15 @@
+<div class="mt-5 flex flex-wrap items-center justify-between gap-3 text-xs">
+  <form method="get" action="{{baseUrl}}" class="flex items-center gap-2">
+    {{#each hidden}}<input type="hidden" name="{{name}}" value="{{value}}" />{{/each}}
+    <label class="label !mb-0" for="{{limitParam}}-sel">Rows</label>
+    <select id="{{limitParam}}-sel" name="{{limitParam}}" class="input !w-auto !py-1.5" onchange="this.form.submit()">
+      {{#each limits}}<option value="{{value}}"{{#if selected}} selected{{/if}}>{{value}}</option>{{/each}}
+    </select>
+  </form>
+  <span class="pill">{{from}}–{{to}} / {{total}}</span>
+  <div class="flex items-center gap-2">
+    {{#if hasPrev}}<a href="{{prevHref}}" class="btn btn-ghost !no-underline">← Prev</a>{{else}}<span class="btn btn-ghost pointer-events-none opacity-30">← Prev</span>{{/if}}
+    <span class="pill">pg {{page}}/{{lastPage}}</span>
+    {{#if hasNext}}<a href="{{nextHref}}" class="btn btn-ghost !no-underline">Next →</a>{{else}}<span class="btn btn-ghost pointer-events-none opacity-30">Next →</span>{{/if}}
+  </div>
+</div>
