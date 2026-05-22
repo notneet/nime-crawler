@@ -4,12 +4,7 @@ import { Nack, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { EXCHANGES } from '@libs/commons/messaging/exchanges';
 import { ParsedResultDto } from '@libs/commons/messaging/parsed-result.dto';
 import { TimingInterceptor } from '@libs/commons/interceptors/timing/timing.interceptor';
-import { Anime } from './entities/anime.entity';
-import { Genre } from './entities/genre.entity';
-import { AnimeGenre } from './entities/anime-genre.entity';
-import { Episode } from './entities/episode.entity';
-import { Mirror } from './entities/mirror.entity';
-import { DownloadLink } from './entities/download-link.entity';
+import { Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
 import { ResultMapper } from './result.mapper';
 
 @Injectable()

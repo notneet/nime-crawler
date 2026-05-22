@@ -1,0 +1,23 @@
+<h1>Anime ({{total}})</h1>
+<form method="get" action="/anime">
+  <input type="text" name="q" value="{{q}}" placeholder="search title" />
+  <button type="submit">Search</button>
+</form>
+<table>
+  <thead><tr><th>ID</th><th>Title</th><th>Status</th><th>Score</th></tr></thead>
+  <tbody>
+    {{#each rows}}
+      <tr>
+        <td><a href="/anime/{{this.id}}">{{this.id}}</a></td>
+        <td>{{this.title}}</td>
+        <td>{{this.status}}</td>
+        <td>{{this.score}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>
+<div>
+  {{#if hasPrev}}<a href="/anime?q={{q}}&page={{prevPage}}">Prev</a>{{/if}}
+  Page {{page}}
+  {{#if hasNext}}<a href="/anime?q={{q}}&page={{nextPage}}">Next</a>{{/if}}
+</div>

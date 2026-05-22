@@ -28,6 +28,15 @@
         "tsConfigPath": "apps/control/tsconfig.app.json"
       }
     },
+    "dashboard": {
+      "type": "application",
+      "root": "apps/dashboard",
+      "entryFile": "main",
+      "sourceRoot": "apps/dashboard/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/dashboard/tsconfig.app.json"
+      }
+    },
     "result-sink": {
       "type": "application",
       "root": "apps/result-sink",

@@ -1,11 +1,6 @@
 import { DataSource } from 'typeorm';
 import { ParsedResultDto } from '@libs/commons/messaging/parsed-result.dto';
-import { Anime } from './entities/anime.entity';
-import { Genre } from './entities/genre.entity';
-import { AnimeGenre } from './entities/anime-genre.entity';
-import { Episode } from './entities/episode.entity';
-import { Mirror } from './entities/mirror.entity';
-import { DownloadLink } from './entities/download-link.entity';
+import { Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
 import { ResultMapper } from './result.mapper';
 import { ResultStoreService } from './result-store.service';
 

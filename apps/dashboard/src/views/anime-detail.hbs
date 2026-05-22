@@ -1,0 +1,20 @@
+<h1>{{anime.title}}</h1>
+<form hx-post="/anime/{{anime.id}}" hx-target="#flash" hx-swap="innerHTML">
+  <p>Title: <input name="title" value="{{anime.title}}" /></p>
+  <p>Title JP: <input name="titleJP" value="{{anime.titleJP}}" /></p>
+  <p>Status: <input name="status" value="{{anime.status}}" /></p>
+  <p>Score: <input name="score" value="{{anime.score}}" /></p>
+  <p>Studio: <input name="studio" value="{{anime.studio}}" /></p>
+  <p>Total Episodes: <input name="totalEpisodes" value="{{anime.totalEpisodes}}" /></p>
+  <p>Synopsis:<br /><textarea name="synopsis">{{anime.synopsis}}</textarea></p>
+  <button type="submit">Save</button>
+</form>
+<div id="flash"></div>
+<button hx-post="/anime/{{anime.id}}/recrawl" hx-target="#flash" hx-swap="innerHTML">Re-crawl</button>
+<button hx-delete="/anime/{{anime.id}}" hx-confirm="Delete this anime?" hx-target="body">Delete</button>
+
+<h2>Genres</h2>
+<ul>{{#each genres}}<li>{{this.name}}</li>{{/each}}</ul>
+
+<h2>Episodes</h2>
+<ul>{{#each episodes}}<li><a href="/episode/{{this.id}}">{{this.title}}</a></li>{{/each}}</ul>

@@ -3,12 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { buildRabbitConfig } from '@libs/commons';
-import { Anime } from './entities/anime.entity';
-import { Genre } from './entities/genre.entity';
-import { AnimeGenre } from './entities/anime-genre.entity';
-import { Episode } from './entities/episode.entity';
-import { Mirror } from './entities/mirror.entity';
-import { DownloadLink } from './entities/download-link.entity';
+import { Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
 import { ResultMapper } from './result.mapper';
 import { ResultStoreService } from './result-store.service';
 

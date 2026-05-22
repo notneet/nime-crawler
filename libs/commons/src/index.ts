@@ -11,3 +11,4 @@ export * from './engine/engine.service';
 export * from './engine/engine.module';
 export * from './rabbit/rabbit.config';
 export * from './interceptors/timing/timing.interceptor';
+export * from './entities';
