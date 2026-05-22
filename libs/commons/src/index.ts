@@ -10,3 +10,4 @@ export * from './crawl/job-builder';
 export * from './engine/engine.service';
 export * from './engine/engine.module';
 export * from './rabbit/rabbit.config';
+export * from './interceptors/timing/timing.interceptor';

@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/nime-crawler/src",
+  "sourceRoot": "apps/control/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/nime-crawler/tsconfig.app.json"
+    "tsConfigPath": "apps/control/tsconfig.app.json"
   },
   "monorepo": true,
-  "root": "apps/nime-crawler",
+  "root": "apps/control",
   "projects": {
     "commons": {
       "type": "library",
@@ -19,13 +19,13 @@
         "tsConfigPath": "libs/commons/tsconfig.lib.json"
       }
     },
-    "nime-crawler": {
+    "control": {
       "type": "application",
-      "root": "apps/nime-crawler",
+      "root": "apps/control",
       "entryFile": "main",
-      "sourceRoot": "apps/nime-crawler/src",
+      "sourceRoot": "apps/control/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/nime-crawler/tsconfig.app.json"
+        "tsConfigPath": "apps/control/tsconfig.app.json"
       }
     },
     "result-sink": {
@@ -35,6 +35,15 @@
       "sourceRoot": "apps/result-sink/src",
       "compilerOptions": {
         "tsConfigPath": "apps/result-sink/tsconfig.app.json"
+      }
+    },
+    "result-store": {
+      "type": "application",
+      "root": "apps/result-store",
+      "entryFile": "main",
+      "sourceRoot": "apps/result-store/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/result-store/tsconfig.app.json"
       }
     },
     "scheduler": {

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UseInterceptors } from '@nestjs/common';
 import { AmqpConnection, Nack, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import {
   buildNextJobs,
@@ -8,6 +8,7 @@ import {
   EXCHANGES,
   routingKey,
   SiteRegistry,
+  TimingInterceptor,
 } from '@libs/commons';
 
 @Injectable()
@@ -20,6 +21,7 @@ export class WorkerService {
     private readonly registry: SiteRegistry,
   ) {}
 
+  @UseInterceptors(TimingInterceptor)
   @RabbitSubscribe({
     exchange: EXCHANGES.crawl,
     routingKey: 'crawl.#',
@@ -41,15 +43,20 @@ export class WorkerService {
       return new Nack(false);
     }
 
+    this.logger.log(`[${job.source}/${job.stage}] parsing ${job.url}`);
     try {
       const parsed = await this.engine.parse(stageConfig, job.url);
 
-      for (const next of buildNextJobs(adapter, job.stage, parsed)) {
+      const nextJobs = buildNextJobs(adapter, job.stage, parsed);
+      for (const next of nextJobs) {
         await this.amqp.publish(EXCHANGES.crawl, routingKey('crawl', next.stage, next.source), next);
       }
 
       const result = buildParsedResult(job.source, job.stage, job.url, parsed);
       await this.amqp.publish(EXCHANGES.parsed, routingKey('parsed', job.stage, job.source), result);
+      this.logger.log(
+        `[${job.source}/${job.stage}] done ${job.url} — ${Object.keys(parsed).length} fields, ${nextJobs.length} next jobs published`,
+      );
     } catch (err) {
       this.logger.error(`parse failed for ${job.url}: ${(err as Error).message}`);
       return new Nack(false);

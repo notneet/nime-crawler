@@ -2,6 +2,12 @@
 /dist
 /node_modules
 /build
+
+# sqlite result store
+/data
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
 /docs/superpowers
 /docs/pull-requests
 /docs/todos

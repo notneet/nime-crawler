@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UseInterceptors } from '@nestjs/common';
 import { AmqpConnection, Nack, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { EXCHANGES, ParsedResultDto, routingKey } from '@libs/commons';
+import { EXCHANGES, ParsedResultDto, routingKey, TimingInterceptor } from '@libs/commons';
 
 @Injectable()
 export class SinkService {
@@ -8,6 +8,7 @@ export class SinkService {
 
   constructor(private readonly amqp: AmqpConnection) {}
 
+  @UseInterceptors(TimingInterceptor)
   @RabbitSubscribe({
     exchange: EXCHANGES.parsed,
     routingKey: 'parsed.#',
@@ -25,6 +26,7 @@ export class SinkService {
         routingKey('result', result.stage, result.source),
         result,
       );
+      this.logger.log(`[${result.source}/${result.stage}] published result: ${result.url}`);
     } catch (err) {
       this.logger.error(`publish failed for ${result.source}/${result.stage}: ${(err as Error).message}`);
       return new Nack(false);

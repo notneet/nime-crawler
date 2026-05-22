@@ -5,6 +5,11 @@ import { StageConfig } from '../adapters/site-adapter.types';
 
 @Injectable()
 export class EngineService {
+  // BrowserActionService shares a single mutable PageService instance, so
+  // concurrent scrapeWithWorkflow calls clobber each other's page (ERR_ABORTED).
+  // Serialize browser scrapes through this chain; xpath stays concurrent.
+  private browserChain: Promise<unknown> = Promise.resolve();
+
   constructor(
     private readonly xpath: ScraperHtmlService,
     private readonly browser: BrowserActionService,
@@ -22,7 +27,19 @@ export class EngineService {
     if (!config.workflow) {
       throw new Error('browser stage requires a workflow');
     }
-    const res = await this.browser.scrapeWithWorkflow(url, config.workflow);
+    const workflow = config.workflow;
+    const res = await this.runBrowserExclusive(() =>
+      this.browser.scrapeWithWorkflow(url, workflow),
+    );
     return res.data;
+  }
+
+  private runBrowserExclusive<T>(fn: () => Promise<T>): Promise<T> {
+    const result = this.browserChain.then(fn, fn);
+    this.browserChain = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
   }
 }

@@ -31,14 +31,36 @@ a public results exchange. Sites are declarative `SiteAdapter` config objects
 
 ## Running the crawler
 
-Start RabbitMQ, copy `.env.example` to `.env`, then run each app:
+Start RabbitMQ, copy `.env.example` to `.env`, then run each app.
+
+**Startup order matters.** The crawl/parsed exchanges are RabbitMQ topic
+exchanges, which silently drop messages that have no bound queue. Start the
+consumers first so their durable queues are declared and bound before any
+producer publishes:
 
 ```bash
-pnpm exec nest start scheduler        # cron seeder
-pnpm exec nest start scraper-worker   # parse worker (scale this one)
-pnpm exec nest start result-sink      # results publisher
-pnpm exec nest start nime-crawler     # control plane (crawl.trigger)
+pnpm run start:worker     # 1. scraper-worker — binds anime.crawl.worker (scale this one)
+pnpm run start:sink       # 2. result-sink    — binds anime.parsed.sink
+pnpm run start:store      # 3. result-store   — binds anime.results.store, writes SQLite
+pnpm run start:control    # 4. control        — control plane (crawl.trigger)
+pnpm run start:scheduler  # 5. scheduler      — cron seeder, starts publishing jobs
 ```
+
+Bring the scheduler up last; once it runs (or you emit `crawl.trigger`), index
+jobs flow into the already-bound worker queue. Queues are durable, so a
+consumer that restarts later still drains anything published while it was down —
+only messages published *before a queue ever existed* are lost.
+
+## Architecture & per-app docs
+
+See [`docs/infra/`](./docs/infra/) for the full breakdown:
+
+- [architecture](./docs/infra/architecture.md) — overview, exchanges, where results are stored
+- [scheduler](./docs/infra/scheduler.md) — cron seeder
+- [scraper-worker](./docs/infra/scraper-worker.md) — parse worker
+- [result-sink](./docs/infra/result-sink.md) — results publisher
+- [result-store](./docs/infra/result-store.md) — SQLite persistence
+- [control](./docs/infra/control.md) — on-demand trigger
 
 ## Project setup
 
