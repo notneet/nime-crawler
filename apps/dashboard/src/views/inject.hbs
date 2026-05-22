@@ -1,0 +1,73 @@
+<div class="crumb"><span class="text-fg">Inject</span></div>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <h1>Inject link</h1>
+  <button type="button" class="btn btn-ghost" onclick="document.getElementById('inject-help').showModal()">How to inject</button>
+</div>
+
+<div id="flash" class="empty:hidden mb-4"></div>
+
+{{#if sources.length}}
+  <form class="card max-w-2xl p-6 space-y-4" hx-post="/inject" hx-target="#flash" hx-swap="innerHTML"
+    hx-on::after-request="if(event.detail.successful) this.reset(); window.injectSyncStages && window.injectSyncStages()">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="label">Source</label>
+        <select name="source" id="inject-source" class="input" onchange="window.injectSyncStages()">
+          {{#each sources}}<option value="{{this.source}}">{{this.source}}</option>{{/each}}
+        </select>
+      </div>
+      <div>
+        <label class="label">Stage</label>
+        <select name="stage" id="inject-stage" class="input"></select>
+      </div>
+    </div>
+    <div>
+      <label class="label">URL</label>
+      <input name="url" id="inject-url" class="input" placeholder="https://…" required />
+      <p id="inject-hint" class="mt-1 text-[0.68rem] text-mute"></p>
+    </div>
+    <button type="submit" class="btn btn-acid">Inject</button>
+  </form>
+{{else}}
+  <div class="card p-6 text-sm text-mute">No enabled adapters. Inject is unavailable until a site adapter is registered.</div>
+{{/if}}
+
+<dialog id="inject-help" class="card max-w-lg p-0 text-fg backdrop:bg-ink/70 backdrop:backdrop-blur-sm">
+  <div class="border-b border-edge px-6 py-4 flex items-center justify-between">
+    <h2 class="!text-fg">How to inject</h2>
+    <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" onclick="document.getElementById('inject-help').close()">Close</button>
+  </div>
+  <div class="px-6 py-5 space-y-3 text-sm leading-relaxed">
+    <p>Inject pushes a single URL into the crawl pipeline, the same path a scheduled crawl uses.</p>
+    <ol class="list-decimal space-y-1.5 pl-5">
+      <li><span class="text-fg">Source</span> — pick a registered adapter. Only enabled adapters appear.</li>
+      <li><span class="text-fg">Stage</span> — choose the entry stage. <span class="pill">index</span> seeds a listing page, <span class="pill">detail</span> an anime page, <span class="pill">episode</span> an episode page.</li>
+      <li><span class="text-fg">URL</span> — must begin with the selected source's base URL, otherwise it's rejected.</li>
+    </ol>
+    <p class="text-mute">The job is published to <span class="font-mono text-fg">anime.crawl</span> and processed asynchronously by the scraper worker. Watch Stats for results.</p>
+  </div>
+</dialog>
+
+<script>
+  (function () {
+    var sources = {{{sourcesJson}}};
+    var bySource = {};
+    sources.forEach(function (s) { bySource[s.source] = s; });
+    window.injectSyncStages = function () {
+      var src = document.getElementById('inject-source');
+      var stage = document.getElementById('inject-stage');
+      var hint = document.getElementById('inject-hint');
+      if (!src || !stage) return;
+      var s = bySource[src.value];
+      while (stage.firstChild) stage.removeChild(stage.firstChild);
+      (s ? s.stages : []).forEach(function (st) {
+        var o = document.createElement('option');
+        o.value = st; o.textContent = st;
+        stage.appendChild(o);
+      });
+      if (hint && s) hint.textContent = 'must start with ' + s.baseUrl;
+    };
+    window.injectSyncStages();
+  })();
+</script>

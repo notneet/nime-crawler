@@ -22,7 +22,7 @@ describe('EpisodeController', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('detail returns the view-model with mirror and download pagers', async () => {
-    const detail = { episode: { id: 1 } as Episode, mirrors: [], downloads: [], mirrorsTotal: 25, downloadsTotal: 4 };
+    const detail = { episode: { id: 1 } as Episode, mirrors: [], downloads: [], mirrorsTotal: 25, downloadsTotal: 4, player: null };
     episodeService.detail.mockResolvedValue(detail);
     const vm = await controller.detail('1', '2', '10', '1', '20');
     expect(episodeService.detail).toHaveBeenCalledWith(1, 2, 10, 1, 20);
@@ -40,14 +40,14 @@ describe('EpisodeController', () => {
     episodeService.update.mockResolvedValue({ id: 1 } as Episode);
     const vm = await controller.update('1', { title: 'X' });
     expect(episodeService.update).toHaveBeenCalledWith(1, { title: 'X' });
-    expect(vm).toEqual({ ok: true, message: 'Saved' });
+    expect(vm).toEqual({ ok: true, message: 'Saved', layout: false });
   });
 
   it('recrawl publishes and returns ok flash', async () => {
     episodeService.detail.mockResolvedValue({ episode: { source: 'otakudesu', url: 'https://e/1' } as Episode, mirrors: [], downloads: [] });
     const vm = await controller.recrawl('1');
     expect(recrawl.episode).toHaveBeenCalledWith('otakudesu', 'https://e/1');
-    expect(vm).toEqual({ ok: true, message: 'Re-crawl queued' });
+    expect(vm).toEqual({ ok: true, message: 'Re-crawl queued', layout: false });
   });
 
   it('deleteMirror deletes and returns empty body', async () => {

@@ -99,14 +99,14 @@ describe('AnimeController', () => {
     animeService.update.mockResolvedValue({ id: 1 } as Anime);
     const vm = await controller.update('1', { title: 'New' });
     expect(animeService.update).toHaveBeenCalledWith(1, { title: 'New' });
-    expect(vm).toEqual({ ok: true, message: 'Saved' });
+    expect(vm).toEqual({ ok: true, message: 'Saved', layout: false });
   });
 
   it('recrawl publishes and returns ok flash', async () => {
     animeService.detail.mockResolvedValue({ anime: { source: 'otakudesu', url: 'https://a/1' } as Anime, episodes: [], genres: [] });
     const vm = await controller.recrawl('1');
     expect(recrawl.anime).toHaveBeenCalledWith('otakudesu', 'https://a/1');
-    expect(vm).toEqual({ ok: true, message: 'Re-crawl queued' });
+    expect(vm).toEqual({ ok: true, message: 'Re-crawl queued', layout: false });
   });
 
   it('remove deletes and redirects to /anime', async () => {

@@ -98,7 +98,7 @@ export class AnimeController {
   async update(@Param('id') id: string, @Body() patch: AnimeEditDto) {
     const updated = await this.anime.update(Number(id), patch);
     if (!updated) throw new NotFoundException('anime not found');
-    return { ok: true, message: 'Saved' };
+    return { ok: true, message: 'Saved', layout: false };
   }
 
   @Post(':id/recrawl')
@@ -107,7 +107,7 @@ export class AnimeController {
     const detail = await this.anime.detail(Number(id));
     if (!detail) throw new NotFoundException('anime not found');
     await this.recrawlService.anime(detail.anime.source, detail.anime.url);
-    return { ok: true, message: 'Re-crawl queued' };
+    return { ok: true, message: 'Re-crawl queued', layout: false };
   }
 
   @Delete(':id')

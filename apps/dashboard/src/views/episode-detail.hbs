@@ -10,6 +10,18 @@
 
 <div id="flash" class="empty:hidden mb-4"></div>
 
+{{#if player}}
+  <div class="card mb-6 overflow-hidden">
+    <div class="flex items-center justify-between border-b border-edge px-4 py-2.5">
+      <h2 class="!text-fg">Player</h2>
+      <span class="pill">{{player.quality}} · {{player.host}}</span>
+    </div>
+    <div class="aspect-video bg-ink">
+      <iframe src="{{player.streamUrl}}" class="h-full w-full border-0" allowfullscreen referrerpolicy="no-referrer"></iframe>
+    </div>
+  </div>
+{{/if}}
+
 <form class="card p-6 space-y-4" hx-post="/episode/{{episode.id}}" hx-target="#flash" hx-swap="innerHTML">
   <div class="grid gap-4 sm:grid-cols-2">
     <div><label class="label">Title</label><input name="title" value="{{episode.title}}" class="input" /></div>

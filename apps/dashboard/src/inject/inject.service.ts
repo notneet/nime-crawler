@@ -1,0 +1,46 @@
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { CrawlJobDto } from '@libs/commons/messaging/crawl-job.dto';
+import { EXCHANGES, routingKey, Stage } from '@libs/commons/messaging/exchanges';
+import { SiteRegistry } from '@libs/commons/adapters/site-registry';
+
+export interface InjectSource {
+  source: string;
+  baseUrl: string;
+  stages: Stage[];
+}
+
+@Injectable()
+export class InjectService {
+  constructor(
+    private readonly registry: SiteRegistry,
+    private readonly amqp: AmqpConnection,
+  ) {}
+
+  sources(): InjectSource[] {
+    return this.registry.enabledSources().map((source) => {
+      const adapter = this.registry.getOrThrow(source);
+      return {
+        source,
+        baseUrl: adapter.baseUrl,
+        stages: Object.keys(adapter.stages) as Stage[],
+      };
+    });
+  }
+
+  async inject(source: string, stage: string, url: string): Promise<void> {
+    const adapter = this.registry.get(source);
+    if (!adapter || !adapter.enabled) {
+      throw new BadRequestException(`no adapter for source "${source}"`);
+    }
+    if (!(stage in adapter.stages)) {
+      throw new BadRequestException(`adapter "${source}" has no "${stage}" stage`);
+    }
+    const trimmed = url.trim();
+    if (!trimmed.startsWith(adapter.baseUrl)) {
+      throw new BadRequestException(`url must start with ${adapter.baseUrl}`);
+    }
+    const job: CrawlJobDto = { source, stage: stage as Stage, url: trimmed };
+    await this.amqp.publish(EXCHANGES.crawl, routingKey('crawl', stage as Stage, source), job);
+  }
+}

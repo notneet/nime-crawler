@@ -10,6 +10,19 @@ export interface EpisodeDetail {
   downloads: DownloadLink[];
   mirrorsTotal: number;
   downloadsTotal: number;
+  player: Mirror | null;
+}
+
+function pickBestMirror(mirrors: Mirror[]): Mirror | null {
+  // Highest resolution wins; ties break to the latest (highest id) row.
+  return (
+    mirrors
+      .filter((m) => m.streamUrl)
+      .sort(
+        (a, b) =>
+          (parseInt(b.quality, 10) || 0) - (parseInt(a.quality, 10) || 0) || b.id - a.id,
+      )[0] ?? null
+  );
 }
 
 @Injectable()
@@ -41,7 +54,9 @@ export class EpisodeService {
       skip: (dPage - 1) * dLimit,
       take: dLimit,
     });
-    return { episode, mirrors, downloads, mirrorsTotal, downloadsTotal };
+    const allMirrors = await this.mirror.findBy({ episodeUrl: episode.url });
+    const player = pickBestMirror(allMirrors);
+    return { episode, mirrors, downloads, mirrorsTotal, downloadsTotal, player };
   }
 
   async update(id: number, patch: Partial<Episode>): Promise<Episode | null> {

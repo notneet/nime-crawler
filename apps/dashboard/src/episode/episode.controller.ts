@@ -69,7 +69,7 @@ export class EpisodeController {
   async update(@Param('id') id: string, @Body() patch: EpisodeEditDto) {
     const updated = await this.episode.update(Number(id), patch);
     if (!updated) throw new NotFoundException('episode not found');
-    return { ok: true, message: 'Saved' };
+    return { ok: true, message: 'Saved', layout: false };
   }
 
   @Post(':id/recrawl')
@@ -78,7 +78,7 @@ export class EpisodeController {
     const detail = await this.episode.detail(Number(id));
     if (!detail) throw new NotFoundException('episode not found');
     await this.recrawlService.episode(detail.episode.source, detail.episode.url);
-    return { ok: true, message: 'Re-crawl queued' };
+    return { ok: true, message: 'Re-crawl queued', layout: false };
   }
 
   @Delete('mirror/:id')
