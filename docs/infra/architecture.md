@@ -16,6 +16,12 @@ A `SiteAdapter` config object declares, per stage, which engine to use and how
 to discover the next stage's URLs. `otakudesu` is the reference adapter
 (`libs/commons/src/adapters/otakudesu.adapter.ts`).
 
+**Freshness skip:** before fetching a `detail`/`episode` page, the worker skips
+it if a stored row for `(source, url)` was updated within `SKIP_FRESH_HOURS`
+(default 72; `0` disables). This avoids re-fetching unchanged leaf pages on every
+cron pass. Manual dashboard re-crawls publish `force: true` to bypass it. See
+[scraper-worker](./scraper-worker.md).
+
 ## Engines
 
 - **xpath** — fetches the page over HTTP and evaluates XPath patterns

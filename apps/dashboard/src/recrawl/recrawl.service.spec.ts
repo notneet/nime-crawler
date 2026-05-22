@@ -14,6 +14,7 @@ describe('RecrawlService', () => {
       source: 'otakudesu',
       stage: 'detail',
       url: 'https://otakudesu.blog/anime/foo/',
+      force: true,
     });
   });
 
@@ -23,6 +24,7 @@ describe('RecrawlService', () => {
       source: 'otakudesu',
       stage: 'episode',
       url: 'https://otakudesu.blog/episode/foo-11/',
+      force: true,
     });
   });
 });

@@ -1,4 +1,7 @@
 import { Injectable, Logger, UseInterceptors } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { AmqpConnection, Nack, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import {
   buildNextJobs,
@@ -10,16 +13,43 @@ import {
   SiteRegistry,
   TimingInterceptor,
 } from '@libs/commons';
+import { Anime, Episode } from '@libs/commons/entities';
 
 @Injectable()
 export class WorkerService {
   private readonly logger = new Logger(WorkerService.name);
+  private readonly freshMs: number;
 
   constructor(
     private readonly amqp: AmqpConnection,
     private readonly engine: EngineService,
     private readonly registry: SiteRegistry,
-  ) {}
+    private readonly config: ConfigService,
+    @InjectRepository(Anime) private readonly animeRepo: Repository<Anime>,
+    @InjectRepository(Episode) private readonly episodeRepo: Repository<Episode>,
+  ) {
+    this.freshMs = Number(this.config.get<string>('SKIP_FRESH_HOURS', '72')) * 3_600_000;
+  }
+
+  // A leaf record (detail/episode) is fresh when it already exists and was updated
+  // within SKIP_FRESH_HOURS. Fail open: any lookup error → not fresh → fetch as usual.
+  private async isFresh(job: CrawlJobDto): Promise<boolean> {
+    if (!(this.freshMs > 0)) return false;
+    if (job.stage !== 'detail' && job.stage !== 'episode') return false;
+    try {
+      const repo: Repository<Anime | Episode> =
+        job.stage === 'detail' ? this.animeRepo : this.episodeRepo;
+      const row = await repo.findOne({
+        where: { source: job.source, url: job.url },
+        select: { updatedAt: true },
+      });
+      if (!row?.updatedAt) return false;
+      return Date.now() - new Date(row.updatedAt).getTime() < this.freshMs;
+    } catch (err) {
+      this.logger.warn(`skip-check failed for ${job.url}: ${(err as Error).message}`);
+      return false;
+    }
+  }
 
   @UseInterceptors(TimingInterceptor)
   @RabbitSubscribe({
@@ -41,6 +71,11 @@ export class WorkerService {
     if (!adapter || !stageConfig) {
       this.logger.error(`no config for ${job.source}/${job.stage}; dead-lettering`);
       return new Nack(false);
+    }
+
+    if (!job.force && (await this.isFresh(job))) {
+      this.logger.log(`[${job.source}/${job.stage}] skip (fresh): ${job.url}`);
+      return;
     }
 
     this.logger.log(`[${job.source}/${job.stage}] parsing ${job.url}`);

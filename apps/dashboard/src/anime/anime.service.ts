@@ -55,6 +55,20 @@ export interface AnimeDownloadList {
   total: number;
 }
 
+export interface AnimeBatchRow {
+  id: number;
+  quality: string;
+  host: string;
+  size: string;
+  url: string;
+}
+
+export interface AnimeBatchList {
+  anime: Anime;
+  rows: AnimeBatchRow[];
+  total: number;
+}
+
 @Injectable()
 export class AnimeService {
   constructor(
@@ -152,6 +166,33 @@ export class AnimeService {
         episodeTitle: ep?.title ?? '',
       };
     });
+    return { anime, rows, total };
+  }
+
+  // Batch downloads key on the /batch/ page URL, which has no DB link to the anime.
+  // The only bridge is the detail-page discover output, persisted in anime.raw.batchLinks.
+  async batchOf(id: number, page = 1, limit = DEFAULT_LIMIT): Promise<AnimeBatchList | null> {
+    const anime = await this.anime.findOneBy({ id });
+    if (!anime) return null;
+    const raw = anime.raw as Record<string, unknown> | null | undefined;
+    const linksRaw = raw?.['batchLinks'];
+    const batchUrls = Array.isArray(linksRaw)
+      ? linksRaw.filter((u): u is string => typeof u === 'string')
+      : [];
+    if (!batchUrls.length) return { anime, rows: [], total: 0 };
+    const [downloads, total] = await this.download.findAndCount({
+      where: { ownerUrl: In(batchUrls), kind: 'batch' },
+      order: { id: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    const rows = downloads.map((d) => ({
+      id: d.id,
+      quality: d.quality ?? '',
+      host: d.host ?? '',
+      size: d.size ?? '',
+      url: d.url,
+    }));
     return { anime, rows, total };
   }
 

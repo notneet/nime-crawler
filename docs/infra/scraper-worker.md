@@ -20,13 +20,19 @@ Per job:
 
 1. Look up the site adapter + stage config. Missing config → `Nack(false)`
    (dead-letter, no requeue).
-2. Parse via `EngineService`:
+2. **Freshness skip-check** (`detail`/`episode` only). If a row already exists for
+   `(source, url)` and was updated within `SKIP_FRESH_HOURS`, skip the fetch and
+   ack — no parse, no next-stage jobs, no parsed payload. Jobs with `force: true`
+   (manual dashboard re-crawls) bypass this. Set `SKIP_FRESH_HOURS=0` to disable.
+   The check reads SQLite directly (`synchronize: false`; result-store owns the
+   schema) and fails open — any lookup error falls through to a normal fetch.
+3. Parse via `EngineService`:
    - `xpath` stages → HTTP fetch + XPath (`index`, `detail`, `batch`).
    - `browser` stages → headless Chromium workflow (`episode`), serialized.
-3. Discover next-stage URLs from the parsed data (`discover` rules) and publish
+4. Discover next-stage URLs from the parsed data (`discover` rules) and publish
    a `crawl.<nextStage>.<source>` job per URL back to `anime.crawl`.
-4. Publish the parsed payload as `parsed.<stage>.<source>` to `anime.parsed`.
-5. Any parse/engine error → `Nack(false)` (dead-letter).
+5. Publish the parsed payload as `parsed.<stage>.<source>` to `anime.parsed`.
+6. Any parse/engine error → `Nack(false)` (dead-letter).
 
 ## Inputs / outputs
 
@@ -46,3 +52,8 @@ result-sink to forward. See
   concurrently.
 - `app.enableShutdownHooks()` is set so the browser pool cleans up on Ctrl+C.
 - Failed jobs land in `anime.crawl.dlx` for inspection/replay.
+- **Skip caveat:** skipping a fresh `detail` page also skips re-discovering that
+  anime's episode jobs (no parse → no `discover`). That is intended — a fresh
+  detail implies its episodes were already enqueued on the prior crawl. To force a
+  full re-walk, lower/zero `SKIP_FRESH_HOURS` or use the dashboard re-crawl
+  (`force: true`). `index` and `batch` stages are never skipped.

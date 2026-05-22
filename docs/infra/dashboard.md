@@ -21,7 +21,8 @@ GET    /anime?q=&page=      list: title search, paginate
 GET    /anime/:id           detail: fields + genres + episodes
 GET    /anime/:id/episodes  list episodes of the anime
 GET    /anime/:id/mirrors   list mirrors across the anime's episodes (delete per row)
-GET    /anime/:id/downloads list downloads across the anime's episodes (delete per row)
+GET    /anime/:id/downloads list episode downloads across the anime's episodes (delete per row)
+GET    /anime/:id/batch     list batch downloads (kind='batch', ownerUrl=anime.url; delete per row)
 POST   /anime/:id           edit fields (inline htmx)
 DELETE /anime/:id           delete (cascades anime_genre rows)
 POST   /anime/:id/recrawl   publish detail job for anime.url
@@ -79,3 +80,6 @@ re-injects a stage job for an existing URL.
   `start:dashboard`) to type-check this app.
 - Inline edits go through a `ValidationPipe` (`transform` + `whitelist`) over
   per-field edit DTOs, so unknown fields are stripped.
+- Downloads are split by `kind`: `/anime/:id/downloads` shows episode-kind links
+  (`ownerUrl` = an episode URL); `/anime/:id/batch` shows batch-kind links
+  (`ownerUrl` = the anime URL). Both delete via `DELETE /episode/download/:id`.

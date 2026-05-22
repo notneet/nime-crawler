@@ -6,6 +6,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
+import ms from 'ms';
 
 interface JobLike {
   source?: string;
@@ -25,8 +26,9 @@ export class TimingInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap({
-        next: () => this.logger.log(`${tag} took ${Date.now() - start}ms`),
-        error: () => this.logger.error(`${tag} failed after ${Date.now() - start}ms`),
+        next: () => this.logger.log(`${tag} took ${ms(Date.now() - start, { long: true })}`),
+        error: () =>
+          this.logger.error(`${tag} failed after ${ms(Date.now() - start, { long: true })}`),
       }),
     );
   }

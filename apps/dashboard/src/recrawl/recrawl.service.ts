@@ -8,12 +8,12 @@ export class RecrawlService {
   constructor(private readonly amqp: AmqpConnection) {}
 
   async anime(source: string, url: string): Promise<void> {
-    const job: CrawlJobDto = { source, stage: 'detail', url };
+    const job: CrawlJobDto = { source, stage: 'detail', url, force: true };
     await this.amqp.publish(EXCHANGES.crawl, routingKey('crawl', 'detail', source), job);
   }
 
   async episode(source: string, url: string): Promise<void> {
-    const job: CrawlJobDto = { source, stage: 'episode', url };
+    const job: CrawlJobDto = { source, stage: 'episode', url, force: true };
     await this.amqp.publish(EXCHANGES.crawl, routingKey('crawl', 'episode', source), job);
   }
 }

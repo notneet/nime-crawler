@@ -1,0 +1,27 @@
+<div class="crumb"><a href="/anime">Anime</a><span>/</span><a href="/anime/{{anime.id}}">{{anime.id}}</a><span>/</span><span class="text-fg">batch</span></div>
+
+<div class="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+  <h1>{{anime.title}} <span class="text-mute">/ batch</span></h1>
+  <span class="pill">{{pager.total}} total</span>
+</div>
+
+<div class="card overflow-hidden">
+  <table class="tbl">
+    <thead><tr><th class="w-24">Quality</th><th class="w-32">Host</th><th class="w-24">Size</th><th>URL</th><th class="w-20"></th></tr></thead>
+    <tbody>
+      {{#each rows}}
+        <tr>
+          <td><span class="pill">{{this.quality}}</span></td>
+          <td>{{this.host}}</td>
+          <td class="text-mute">{{this.size}}</td>
+          <td class="break-all"><a href="{{this.url}}">{{this.url}}</a></td>
+          <td><button class="btn btn-danger !px-2.5 !py-1.5" hx-delete="/episode/download/{{this.id}}" hx-confirm="Delete this batch download?" hx-target="closest tr" hx-swap="outerHTML">Del</button></td>
+        </tr>
+      {{else}}
+        <tr><td colspan="5" class="py-10 text-center text-mute">no batch downloads</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+{{> pager pager}}

@@ -92,6 +92,21 @@ export class AnimeController {
     return { ...data, pager };
   }
 
+  @Get(':id/batch')
+  @Render('anime-batch')
+  async batch(
+    @Param('id') id: string,
+    @Query('page') pageParam = '1',
+    @Query('limit') limitParam = '',
+  ) {
+    const page = parsePage(pageParam);
+    const limit = parseLimit(limitParam);
+    const data = await this.anime.batchOf(Number(id), page, limit);
+    if (!data) throw new NotFoundException('anime not found');
+    const pager = buildPager({ baseUrl: `/anime/${id}/batch`, page, limit, total: data.total });
+    return { ...data, pager };
+  }
+
   @Post(':id')
   @Render('partials/flash')
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))

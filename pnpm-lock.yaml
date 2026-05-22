@@ -59,6 +59,9 @@ importers:
       hbs:
         specifier: ^4.2.1
         version: 4.2.1
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
