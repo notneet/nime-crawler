@@ -20,6 +20,14 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@libs/commons": [
+        "libs/commons/src"
+      ],
+      "@libs/commons/*": [
+        "libs/commons/src/*"
+      ]
+    }
   }
 }

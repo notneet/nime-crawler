@@ -1,3 +1,14 @@
 allowBuilds:
-  '@nestjs/core': true
-  unrs-resolver: true
+  '@nestjs/core': set this to true or false
+  libxmljs2: true
+  puppeteer: set this to true or false
+  unrs-resolver: set this to true or false
+minimumReleaseAgeExclude:
+  - '@hanivanrizky/nestjs-browser-action@0.10.0'
+  - '@hanivanrizky/nestjs-xpath-parser@0.3.1'
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - libxmljs2
+  - unrs-resolver
+overrides:
+  puppeteer: npm:puppeteer-core@^24.38.0

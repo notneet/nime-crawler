@@ -23,7 +23,22 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Multi-site anime crawler on a NestJS monorepo. A cron seeder publishes crawl jobs
+to a RabbitMQ topic exchange; a worker parses pages (XPath or headless browser) and
+recursively re-publishes next-stage jobs; a sink publishes final structured data to
+a public results exchange. Sites are declarative `SiteAdapter` config objects
+(otakudesu is the reference). All apps are headless RMQ microservices — no HTTP.
+
+## Running the crawler
+
+Start RabbitMQ, copy `.env.example` to `.env`, then run each app:
+
+```bash
+pnpm exec nest start scheduler        # cron seeder
+pnpm exec nest start scraper-worker   # parse worker (scale this one)
+pnpm exec nest start result-sink      # results publisher
+pnpm exec nest start nime-crawler     # control plane (crawl.trigger)
+```
 
 ## Project setup
 

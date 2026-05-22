@@ -2,6 +2,9 @@
 /dist
 /node_modules
 /build
+/docs/superpowers
+/docs/pull-requests
+/docs/todos
 
 # Logs
 logs
