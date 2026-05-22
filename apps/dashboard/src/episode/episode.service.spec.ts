@@ -65,4 +65,28 @@ describe('EpisodeService', () => {
   it('delete returns false for missing id', async () => {
     expect(await service.remove(999)).toBe(false);
   });
+
+  it('deleteMirror removes a single mirror by id', async () => {
+    const e = await seedEpisode();
+    const m = await ds.getRepository(Mirror).save({ episodeUrl: e.url, quality: '720p', host: 'mega' } as Mirror);
+    expect(await service.deleteMirror(m.id)).toBe(true);
+    expect(await ds.getRepository(Mirror).findOneBy({ id: m.id })).toBeNull();
+  });
+
+  it('deleteMirror returns false for missing id', async () => {
+    expect(await service.deleteMirror(999)).toBe(false);
+  });
+
+  it('deleteDownload removes a single download by id', async () => {
+    const e = await seedEpisode();
+    const d = await ds
+      .getRepository(DownloadLink)
+      .save({ source: 'otakudesu', ownerUrl: e.url, kind: 'episode', url: 'https://dl/1' } as DownloadLink);
+    expect(await service.deleteDownload(d.id)).toBe(true);
+    expect(await ds.getRepository(DownloadLink).findOneBy({ id: d.id })).toBeNull();
+  });
+
+  it('deleteDownload returns false for missing id', async () => {
+    expect(await service.deleteDownload(999)).toBe(false);
+  });
 });

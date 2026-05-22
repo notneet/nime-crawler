@@ -1,0 +1,18 @@
+<h1>{{anime.title}} — Downloads ({{rows.length}})</h1>
+<p><a href="/anime/{{anime.id}}">← back to anime</a></p>
+<table>
+  <thead><tr><th>Episode</th><th>Kind</th><th>Quality</th><th>Host</th><th>Size</th><th>URL</th><th></th></tr></thead>
+  <tbody>
+    {{#each rows}}
+      <tr>
+        <td><a href="/episode/{{this.episodeId}}">{{this.episodeTitle}}</a></td>
+        <td>{{this.kind}}</td>
+        <td>{{this.quality}}</td>
+        <td>{{this.host}}</td>
+        <td>{{this.size}}</td>
+        <td><a href="{{this.url}}">{{this.url}}</a></td>
+        <td><button hx-delete="/episode/download/{{this.id}}" hx-confirm="Delete this download?" hx-target="closest tr" hx-swap="outerHTML">Delete</button></td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>

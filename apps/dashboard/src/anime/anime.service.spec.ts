@@ -19,6 +19,8 @@ describe('AnimeService', () => {
       ds.getRepository(AnimeGenre),
       ds.getRepository(Genre),
       ds.getRepository(Episode),
+      ds.getRepository(Mirror),
+      ds.getRepository(DownloadLink),
     );
   });
 
@@ -63,6 +65,52 @@ describe('AnimeService', () => {
 
   it('detail returns null for missing id', async () => {
     expect(await service.detail(999)).toBeNull();
+  });
+
+  it('episodesOf returns the anime and its episodes', async () => {
+    const a = await seedAnime();
+    await ds.getRepository(Episode).save({ source: 'otakudesu', url: 'https://e/1', animeUrl: a.url } as Episode);
+    const res = await service.episodesOf(a.id);
+    expect(res?.anime.id).toBe(a.id);
+    expect(res?.episodes).toHaveLength(1);
+  });
+
+  it('episodesOf returns null for missing id', async () => {
+    expect(await service.episodesOf(999)).toBeNull();
+  });
+
+  it('mirrorsOf gathers mirrors across the anime episodes with episode linkage', async () => {
+    const a = await seedAnime();
+    const e = await ds
+      .getRepository(Episode)
+      .save({ source: 'otakudesu', url: 'https://e/1', animeUrl: a.url, title: 'Ep 1' } as Episode);
+    await ds.getRepository(Mirror).save({ episodeUrl: e.url, quality: '720p', host: 'mega' } as Mirror);
+    const res = await service.mirrorsOf(a.id);
+    expect(res?.rows).toHaveLength(1);
+    expect(res?.rows[0]).toMatchObject({ quality: '720p', host: 'mega', episodeId: e.id, episodeTitle: 'Ep 1' });
+  });
+
+  it('mirrorsOf returns empty rows when the anime has no episodes', async () => {
+    const a = await seedAnime();
+    const res = await service.mirrorsOf(a.id);
+    expect(res?.rows).toEqual([]);
+  });
+
+  it('downloadsOf gathers downloads across the anime episodes with episode linkage', async () => {
+    const a = await seedAnime();
+    const e = await ds
+      .getRepository(Episode)
+      .save({ source: 'otakudesu', url: 'https://e/1', animeUrl: a.url, title: 'Ep 1' } as Episode);
+    await ds
+      .getRepository(DownloadLink)
+      .save({ source: 'otakudesu', ownerUrl: e.url, kind: 'episode', url: 'https://dl/1', quality: '480p' } as DownloadLink);
+    const res = await service.downloadsOf(a.id);
+    expect(res?.rows).toHaveLength(1);
+    expect(res?.rows[0]).toMatchObject({ kind: 'episode', quality: '480p', url: 'https://dl/1', episodeId: e.id, episodeTitle: 'Ep 1' });
+  });
+
+  it('downloadsOf returns null for missing id', async () => {
+    expect(await service.downloadsOf(999)).toBeNull();
   });
 
   it('update patches fields and returns the row', async () => {

@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   NotFoundException,
   Param,
   Post,
@@ -47,6 +48,20 @@ export class EpisodeController {
     if (!detail) throw new NotFoundException('episode not found');
     await this.recrawlService.episode(detail.episode.source, detail.episode.url);
     return { ok: true, message: 'Re-crawl queued' };
+  }
+
+  @Delete('mirror/:id')
+  @Header('Content-Type', 'text/html')
+  async deleteMirror(@Param('id') id: string): Promise<string> {
+    await this.episode.deleteMirror(Number(id));
+    return '';
+  }
+
+  @Delete('download/:id')
+  @Header('Content-Type', 'text/html')
+  async deleteDownload(@Param('id') id: string): Promise<string> {
+    await this.episode.deleteDownload(Number(id));
+    return '';
   }
 
   @Delete(':id')

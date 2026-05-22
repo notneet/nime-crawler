@@ -1,0 +1,16 @@
+<h1>{{anime.title}} — Mirrors ({{rows.length}})</h1>
+<p><a href="/anime/{{anime.id}}">← back to anime</a></p>
+<table>
+  <thead><tr><th>Episode</th><th>Quality</th><th>Host</th><th>Stream URL</th><th></th></tr></thead>
+  <tbody>
+    {{#each rows}}
+      <tr>
+        <td><a href="/episode/{{this.episodeId}}">{{this.episodeTitle}}</a></td>
+        <td>{{this.quality}}</td>
+        <td>{{this.host}}</td>
+        <td>{{this.streamUrl}}</td>
+        <td><button hx-delete="/episode/mirror/{{this.id}}" hx-confirm="Delete this mirror?" hx-target="closest tr" hx-swap="outerHTML">Delete</button></td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>

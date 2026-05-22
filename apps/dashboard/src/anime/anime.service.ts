@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, QueryDeepPartialEntity, Repository } from 'typeorm';
-import { Anime, AnimeGenre, Genre, Episode } from '@libs/commons/entities';
+import { Anime, AnimeGenre, Genre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
 
 export interface AnimeList {
   rows: Anime[];
@@ -16,6 +16,41 @@ export interface AnimeDetail {
   genres: Genre[];
 }
 
+export interface AnimeEpisodeList {
+  anime: Anime;
+  episodes: Episode[];
+}
+
+export interface AnimeMirrorRow {
+  id: number;
+  quality: string;
+  host: string;
+  streamUrl: string;
+  episodeId: number | null;
+  episodeTitle: string;
+}
+
+export interface AnimeMirrorList {
+  anime: Anime;
+  rows: AnimeMirrorRow[];
+}
+
+export interface AnimeDownloadRow {
+  id: number;
+  kind: string;
+  quality: string;
+  host: string;
+  size: string;
+  url: string;
+  episodeId: number | null;
+  episodeTitle: string;
+}
+
+export interface AnimeDownloadList {
+  anime: Anime;
+  rows: AnimeDownloadRow[];
+}
+
 @Injectable()
 export class AnimeService {
   constructor(
@@ -23,6 +58,8 @@ export class AnimeService {
     @InjectRepository(AnimeGenre) private readonly animeGenre: Repository<AnimeGenre>,
     @InjectRepository(Genre) private readonly genre: Repository<Genre>,
     @InjectRepository(Episode) private readonly episode: Repository<Episode>,
+    @InjectRepository(Mirror) private readonly mirror: Repository<Mirror>,
+    @InjectRepository(DownloadLink) private readonly download: Repository<DownloadLink>,
   ) {}
 
   async list(q: string, page: number, pageSize = 20): Promise<AnimeList> {
@@ -44,6 +81,57 @@ export class AnimeService {
     const genreIds = links.map((l) => l.genreId);
     const genres = genreIds.length ? await this.genre.findBy({ id: In(genreIds) }) : [];
     return { anime, episodes, genres };
+  }
+
+  async episodesOf(id: number): Promise<AnimeEpisodeList | null> {
+    const anime = await this.anime.findOneBy({ id });
+    if (!anime) return null;
+    const episodes = await this.episode.findBy({ animeUrl: anime.url });
+    return { anime, episodes };
+  }
+
+  async mirrorsOf(id: number): Promise<AnimeMirrorList | null> {
+    const anime = await this.anime.findOneBy({ id });
+    if (!anime) return null;
+    const episodes = await this.episode.findBy({ animeUrl: anime.url });
+    const byUrl = new Map(episodes.map((e) => [e.url, e]));
+    const urls = episodes.map((e) => e.url);
+    const mirrors = urls.length ? await this.mirror.findBy({ episodeUrl: In(urls) }) : [];
+    const rows = mirrors.map((m) => {
+      const ep = byUrl.get(m.episodeUrl);
+      return {
+        id: m.id,
+        quality: m.quality,
+        host: m.host,
+        streamUrl: m.streamUrl ?? '',
+        episodeId: ep?.id ?? null,
+        episodeTitle: ep?.title ?? '',
+      };
+    });
+    return { anime, rows };
+  }
+
+  async downloadsOf(id: number): Promise<AnimeDownloadList | null> {
+    const anime = await this.anime.findOneBy({ id });
+    if (!anime) return null;
+    const episodes = await this.episode.findBy({ animeUrl: anime.url });
+    const byUrl = new Map(episodes.map((e) => [e.url, e]));
+    const urls = episodes.map((e) => e.url);
+    const downloads = urls.length ? await this.download.findBy({ ownerUrl: In(urls) }) : [];
+    const rows = downloads.map((d) => {
+      const ep = byUrl.get(d.ownerUrl);
+      return {
+        id: d.id,
+        kind: d.kind,
+        quality: d.quality ?? '',
+        host: d.host ?? '',
+        size: d.size ?? '',
+        url: d.url,
+        episodeId: ep?.id ?? null,
+        episodeTitle: ep?.title ?? '',
+      };
+    });
+    return { anime, rows };
   }
 
   async update(id: number, patch: Partial<Anime>): Promise<Anime | null> {

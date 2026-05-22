@@ -52,6 +52,30 @@ export class AnimeController {
     return detail;
   }
 
+  @Get(':id/episodes')
+  @Render('anime-episodes')
+  async episodes(@Param('id') id: string) {
+    const data = await this.anime.episodesOf(Number(id));
+    if (!data) throw new NotFoundException('anime not found');
+    return data;
+  }
+
+  @Get(':id/mirrors')
+  @Render('anime-mirrors')
+  async mirrors(@Param('id') id: string) {
+    const data = await this.anime.mirrorsOf(Number(id));
+    if (!data) throw new NotFoundException('anime not found');
+    return data;
+  }
+
+  @Get(':id/downloads')
+  @Render('anime-downloads')
+  async downloads(@Param('id') id: string) {
+    const data = await this.anime.downloadsOf(Number(id));
+    if (!data) throw new NotFoundException('anime not found');
+    return data;
+  }
+
   @Post(':id')
   @Render('partials/flash')
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))

@@ -1,0 +1,14 @@
+<h1>{{anime.title}} — Episodes ({{episodes.length}})</h1>
+<p><a href="/anime/{{anime.id}}">← back to anime</a></p>
+<table>
+  <thead><tr><th>ID</th><th>Number</th><th>Title</th></tr></thead>
+  <tbody>
+    {{#each episodes}}
+      <tr>
+        <td><a href="/episode/{{this.id}}">{{this.id}}</a></td>
+        <td>{{this.number}}</td>
+        <td>{{this.title}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>

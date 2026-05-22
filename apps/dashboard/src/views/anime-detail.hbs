@@ -13,6 +13,12 @@
 <button hx-post="/anime/{{anime.id}}/recrawl" hx-target="#flash" hx-swap="innerHTML">Re-crawl</button>
 <button hx-delete="/anime/{{anime.id}}" hx-confirm="Delete this anime?" hx-target="body">Delete</button>
 
+<p>
+  <a href="/anime/{{anime.id}}/episodes">Episodes</a> ·
+  <a href="/anime/{{anime.id}}/mirrors">Mirrors</a> ·
+  <a href="/anime/{{anime.id}}/downloads">Downloads</a>
+</p>
+
 <h2>Genres</h2>
 <ul>{{#each genres}}<li>{{this.name}}</li>{{/each}}</ul>
 

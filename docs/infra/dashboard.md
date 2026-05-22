@@ -19,6 +19,9 @@ normal pipeline (`scraper-worker → result-sink → result-store`).
 GET    /                    stats dashboard (counts + coverage gaps)
 GET    /anime?q=&page=      list: title search, paginate
 GET    /anime/:id           detail: fields + genres + episodes
+GET    /anime/:id/episodes  list episodes of the anime
+GET    /anime/:id/mirrors   list mirrors across the anime's episodes (delete per row)
+GET    /anime/:id/downloads list downloads across the anime's episodes (delete per row)
 POST   /anime/:id           edit fields (inline htmx)
 DELETE /anime/:id           delete (cascades anime_genre rows)
 POST   /anime/:id/recrawl   publish detail job for anime.url
@@ -26,6 +29,8 @@ GET    /episode/:id         detail: fields + mirrors + downloads
 POST   /episode/:id         edit
 DELETE /episode/:id         delete (cascades mirrors by episodeUrl)
 POST   /episode/:id/recrawl publish episode job for episode.url
+DELETE /episode/mirror/:id  delete one mirror (htmx row swap)
+DELETE /episode/download/:id delete one download (htmx row swap)
 ```
 
 ## Auth

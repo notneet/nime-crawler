@@ -6,7 +6,13 @@ import { RecrawlService } from '../recrawl/recrawl.service';
 import { Episode } from '@libs/commons/entities';
 
 describe('EpisodeController', () => {
-  const episodeService = { detail: jest.fn(), update: jest.fn(), remove: jest.fn() };
+  const episodeService = {
+    detail: jest.fn(),
+    update: jest.fn(),
+    remove: jest.fn(),
+    deleteMirror: jest.fn(),
+    deleteDownload: jest.fn(),
+  };
   const recrawl = { episode: jest.fn() };
   const controller = new EpisodeController(
     episodeService as unknown as EpisodeService,
@@ -38,6 +44,18 @@ describe('EpisodeController', () => {
     const vm = await controller.recrawl('1');
     expect(recrawl.episode).toHaveBeenCalledWith('otakudesu', 'https://e/1');
     expect(vm).toEqual({ ok: true, message: 'Re-crawl queued' });
+  });
+
+  it('deleteMirror deletes and returns empty body', async () => {
+    episodeService.deleteMirror.mockResolvedValue(true);
+    expect(await controller.deleteMirror('5')).toBe('');
+    expect(episodeService.deleteMirror).toHaveBeenCalledWith(5);
+  });
+
+  it('deleteDownload deletes and returns empty body', async () => {
+    episodeService.deleteDownload.mockResolvedValue(true);
+    expect(await controller.deleteDownload('7')).toBe('');
+    expect(episodeService.deleteDownload).toHaveBeenCalledWith(7);
   });
 
   it('remove deletes and redirects to /anime', async () => {

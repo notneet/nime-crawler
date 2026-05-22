@@ -37,4 +37,14 @@ export class EpisodeService {
     await this.episode.delete(id);
     return true;
   }
+
+  async deleteMirror(id: number): Promise<boolean> {
+    const res = await this.mirror.delete(id);
+    return (res.affected ?? 0) > 0;
+  }
+
+  async deleteDownload(id: number): Promise<boolean> {
+    const res = await this.download.delete(id);
+    return (res.affected ?? 0) > 0;
+  }
 }

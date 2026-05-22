@@ -9,6 +9,9 @@ describe('AnimeController', () => {
   const animeService = {
     list: jest.fn(),
     detail: jest.fn(),
+    episodesOf: jest.fn(),
+    mirrorsOf: jest.fn(),
+    downloadsOf: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
   };
@@ -37,6 +40,39 @@ describe('AnimeController', () => {
   it('detail throws 404 when missing', async () => {
     animeService.detail.mockResolvedValue(null);
     await expect(controller.detail('999')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('episodes returns the list view-model', async () => {
+    const data = { anime: { id: 1 } as Anime, episodes: [] };
+    animeService.episodesOf.mockResolvedValue(data);
+    expect(await controller.episodes('1')).toBe(data);
+  });
+
+  it('episodes throws 404 when missing', async () => {
+    animeService.episodesOf.mockResolvedValue(null);
+    await expect(controller.episodes('9')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('mirrors returns the list view-model', async () => {
+    const data = { anime: { id: 1 } as Anime, rows: [] };
+    animeService.mirrorsOf.mockResolvedValue(data);
+    expect(await controller.mirrors('1')).toBe(data);
+  });
+
+  it('mirrors throws 404 when missing', async () => {
+    animeService.mirrorsOf.mockResolvedValue(null);
+    await expect(controller.mirrors('9')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('downloads returns the list view-model', async () => {
+    const data = { anime: { id: 1 } as Anime, rows: [] };
+    animeService.downloadsOf.mockResolvedValue(data);
+    expect(await controller.downloads('1')).toBe(data);
+  });
+
+  it('downloads throws 404 when missing', async () => {
+    animeService.downloadsOf.mockResolvedValue(null);
+    await expect(controller.downloads('9')).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('update returns ok flash', async () => {
