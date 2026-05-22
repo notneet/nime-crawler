@@ -1,7 +1,9 @@
 # Architecture
 
 Multi-site anime crawler on a NestJS monorepo. Five headless RabbitMQ
-microservices pass crawl work down a staged pipeline. No HTTP server.
+microservices pass crawl work down a staged pipeline. A sixth app,
+[dashboard](./dashboard.md), is an HTTP tool for browsing/editing the stored
+data and triggering re-crawls — it is the only HTTP server in the monorepo.
 
 ## Stages
 
@@ -78,3 +80,4 @@ must be running (queue declared) before a crawl publishes results.
 - [result-sink](./result-sink.md) — results publisher
 - [result-store](./result-store.md) — SQLite persistence
 - [control](./control.md) — on-demand trigger
+- [dashboard](./dashboard.md) — HTTP UI to browse/edit/re-crawl stored data

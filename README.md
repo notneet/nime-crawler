@@ -51,6 +51,12 @@ jobs flow into the already-bound worker queue. Queues are durable, so a
 consumer that restarts later still drains anything published while it was down —
 only messages published *before a queue ever existed* are lost.
 
+The HTTP dashboard is independent of the pipeline and can run any time:
+
+```bash
+DASH_USER=admin DASH_PASS=admin pnpm run start:dashboard  # HTTP UI on :3001
+```
+
 ## Architecture & per-app docs
 
 See [`docs/infra/`](./docs/infra/) for the full breakdown:
@@ -61,6 +67,7 @@ See [`docs/infra/`](./docs/infra/) for the full breakdown:
 - [result-sink](./docs/infra/result-sink.md) — results publisher
 - [result-store](./docs/infra/result-store.md) — SQLite persistence
 - [control](./docs/infra/control.md) — on-demand trigger
+- [dashboard](./docs/infra/dashboard.md) — HTTP UI to browse/edit/re-crawl stored data
 
 ## Project setup
 
