@@ -1,5 +1,8 @@
 jest.mock('@hanivanrizky/nestjs-xpath-parser', () => ({ ScraperHtmlService: class {} }));
-jest.mock('@hanivanrizky/nestjs-browser-action', () => ({ BrowserActionService: class {} }));
+jest.mock('@hanivanrizky/nestjs-browser-action', () => ({
+  BrowserActionService: class {},
+  PageService: class {},
+}));
 
 import { EngineService } from './engine.service';
 import { StageConfig } from '../adapters/site-adapter.types';
@@ -7,9 +10,11 @@ import { StageConfig } from '../adapters/site-adapter.types';
 describe('EngineService', () => {
   const xpath = { evaluateWebsite: jest.fn() };
   const browser = { scrapeWithWorkflow: jest.fn() };
+  const pages = { getCurrentBrowser: jest.fn(() => undefined), getCurrentPage: jest.fn(() => undefined) };
   const service = new EngineService(
     xpath as unknown as ScraperHtmlService,
     browser as unknown as BrowserActionService,
+    pages as unknown as PageService,
   );
 
   beforeEach(() => jest.clearAllMocks());

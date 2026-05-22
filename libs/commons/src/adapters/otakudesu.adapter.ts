@@ -185,6 +185,17 @@ export const otakudesuAdapter: SiteAdapter = {
         // its real player URL (clicking POSTs the base64 data-content and swaps
         // the iframe via ajax — only then does the concrete stream URL exist).
         actions: [
+          // Mirror clicks are trusted gestures that trip the page's popunder ad
+          // script (it calls window.open to spawn shopee/affiliate tabs). Lock
+          // window.open to a no-op up front so those tabs never open; pruneStrayPages
+          // in EngineService stays as a backstop for anything that slips through.
+          {
+            id: 'neutralizeAds',
+            action: 'evaluate',
+            value:
+              "() => { try { Object.defineProperty(window, 'open', { value: () => null, writable: false, configurable: false }); } catch { window.open = () => null; } }",
+            onError: 'continue',
+          },
           {
             id: 'title',
             action: 'extract',
