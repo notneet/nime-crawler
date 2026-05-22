@@ -11,9 +11,9 @@
     <tbody>
       {{#each episodes}}
         <tr>
-          <td><a href="/episode/{{this.id}}" class="font-bold">{{this.id}}</a></td>
+          <td class="text-mute">{{this.id}}</td>
           <td><span class="pill">{{this.number}}</span></td>
-          <td class="text-fg">{{this.title}}</td>
+          <td><a href="/episode/{{this.id}}" class="font-bold">{{this.title}}</a></td>
         </tr>
       {{else}}
         <tr><td colspan="3" class="py-10 text-center text-mute">no episodes</td></tr>

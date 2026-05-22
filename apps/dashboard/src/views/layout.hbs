@@ -9,103 +9,205 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800;900&family=DM+Sans:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
     <style type="text/tailwindcss">
       @theme {
-        --color-ink: #0a0b0d;
-        --color-panel: #131519;
-        --color-panel-2: #1a1d23;
-        --color-edge: #262a32;
-        --color-edge-2: #343a45;
-        --color-mute: #7b8492;
-        --color-fg: #e6e9ee;
-        --color-acid: #c6f432;
-        --color-acid-dim: #98bd1f;
-        --color-warn: #ff5d5d;
-        --font-display: "Archivo", sans-serif;
+        /* AKARI palette — token names kept stable so every view flips in place */
+        --color-ink: #1a1626;
+        --color-cream: #fbf6ec;
+        --color-blush: #fde4e1;
+        --color-yolk: #f5c542;
+        --color-deep: #c0303a;
+        --color-panel: #fffdf8;
+        --color-panel-2: #fde4e1;
+        --color-edge: #1a1626;
+        --color-edge-2: #1a1626;
+        --color-mute: #6f6a7d;
+        --color-fg: #1a1626;
+        --color-acid: #f04a55;
+        --color-acid-dim: #c0303a;
+        --color-warn: #c0303a;
+        --font-display: "Unbounded", system-ui, sans-serif;
+        --font-body: "DM Sans", system-ui, sans-serif;
+        --font-jp: "Noto Sans JP", system-ui, sans-serif;
         --font-mono: "JetBrains Mono", ui-monospace, monospace;
       }
 
       @layer base {
+        html { scroll-behavior: smooth; }
         body {
-          background-color: var(--color-ink);
+          background-color: var(--color-cream);
           color: var(--color-fg);
-          font-family: var(--font-mono);
-          background-image:
-            linear-gradient(to right, color-mix(in srgb, var(--color-edge) 28%, transparent) 1px, transparent 1px),
-            linear-gradient(to bottom, color-mix(in srgb, var(--color-edge) 28%, transparent) 1px, transparent 1px);
-          background-size: 32px 32px;
+          font-family: var(--font-body);
+          background-image: radial-gradient(var(--color-ink) 1px, transparent 1px);
+          background-size: 22px 22px;
+          background-position: -11px -11px;
+        }
+        body::before {
+          content: "";
+          position: fixed;
+          inset: 0;
+          background: var(--color-cream);
+          opacity: 0.82;
+          z-index: -1;
         }
         h1 {
           font-family: var(--font-display);
           font-weight: 900;
-          letter-spacing: -0.02em;
-          line-height: 1.0;
+          letter-spacing: -0.04em;
+          line-height: 0.85;
           text-transform: uppercase;
-          font-size: clamp(1.6rem, 3vw, 2.4rem);
+          font-size: clamp(1.9rem, 4vw, 3rem);
         }
         h2 {
           font-family: var(--font-display);
           font-weight: 800;
-          letter-spacing: 0.04em;
+          letter-spacing: -0.01em;
           text-transform: uppercase;
-          font-size: 0.85rem;
-          color: var(--color-mute);
+          font-size: 1.1rem;
+          color: var(--color-ink);
         }
-        a { color: var(--color-acid); text-decoration: none; }
-        a:hover { text-decoration: underline; text-underline-offset: 3px; }
+        a { color: var(--color-deep); text-decoration: none; }
+        a:hover { color: var(--color-acid); text-decoration: underline; text-underline-offset: 3px; }
       }
 
       @layer components {
-        .shell { @apply mx-auto max-w-6xl px-5 py-8; }
+        .shell { @apply mx-auto max-w-6xl px-5 py-10; }
         .card {
-          @apply rounded-none border border-edge bg-panel/80 backdrop-blur-sm;
-          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 18px 40px -24px rgba(0, 0, 0, 0.9);
+          @apply rounded-none border-2 border-ink bg-panel;
+          box-shadow: 8px 8px 0 0 var(--color-ink);
         }
-        .label { @apply block text-[0.62rem] font-bold uppercase tracking-[0.18em] text-mute mb-1; }
+        .label {
+          @apply block font-mono text-[0.62rem] font-bold uppercase tracking-[0.22em] text-mute mb-1.5;
+        }
         .input {
-          @apply w-full rounded-none border border-edge bg-ink px-3 py-2 text-sm text-fg outline-none transition;
-          @apply focus:border-acid focus:ring-1 focus:ring-acid/40;
+          @apply w-full rounded-none border-2 border-ink bg-cream px-3 py-2 text-sm text-fg outline-none transition;
+          @apply focus:border-acid focus:ring-2 focus:ring-acid/30;
         }
         textarea.input { @apply min-h-28 resize-y leading-relaxed; }
         .btn {
-          @apply inline-flex items-center gap-1.5 rounded-none border px-3.5 py-2 text-xs font-bold uppercase tracking-wider transition active:translate-y-px cursor-pointer;
+          @apply inline-flex items-center gap-1.5 rounded-none border-2 px-4 py-2 font-display text-[0.72rem] font-bold uppercase tracking-[0.14em] transition active:translate-x-px active:translate-y-px cursor-pointer;
+          box-shadow: 4px 4px 0 0 var(--color-ink);
         }
-        .btn-acid { @apply border-acid bg-acid text-ink hover:bg-acid-dim hover:border-acid-dim; }
-        .btn-ghost { @apply border-edge-2 bg-transparent text-fg hover:border-acid hover:text-acid; }
-        .btn-danger { @apply border-warn/40 bg-transparent text-warn hover:bg-warn hover:text-ink hover:border-warn; }
+        .btn:active { box-shadow: 2px 2px 0 0 var(--color-ink); }
+        .btn-acid { @apply border-ink bg-acid text-cream hover:bg-deep; }
+        .btn-ghost { @apply border-ink bg-cream text-ink hover:bg-ink hover:text-cream; }
+        .btn-danger { @apply border-deep bg-cream text-deep hover:bg-deep hover:text-cream; }
         .pill {
-          @apply inline-flex items-center rounded-none border border-edge bg-panel-2 px-2 py-0.5 text-[0.68rem] font-medium text-mute;
+          @apply inline-flex items-center rounded-none border-2 border-ink bg-blush px-2 py-0.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.12em] text-ink;
         }
         .tbl { @apply w-full border-collapse text-sm; }
         .tbl thead th {
-          @apply border-b border-edge-2 px-3 py-2.5 text-left text-[0.62rem] font-bold uppercase tracking-[0.16em] text-mute;
+          @apply border-b-2 border-ink px-3 py-2.5 text-left font-mono text-[0.62rem] font-bold uppercase tracking-[0.18em] text-ink;
         }
-        .tbl tbody td { @apply border-b border-edge px-3 py-2.5 align-top; }
-        .tbl tbody tr { @apply transition hover:bg-panel-2/60; }
-        .gap { @apply text-warn; }
-        .crumb { @apply mb-6 flex items-center gap-2 text-xs text-mute; }
+        .tbl tbody td { @apply border-b border-ink/15 px-3 py-2.5 align-top; }
+        .tbl tbody tr { @apply transition hover:bg-blush/60; }
+        .gap { @apply text-deep; }
+        .crumb { @apply mb-6 flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-mute; }
+
+        /* AKARI texture helpers */
+        .font-jp { font-family: var(--font-jp); }
+        .stripes-pink {
+          background-image: repeating-linear-gradient(135deg, #fdd0d0 0 14px, #fbbfbf 14px 28px);
+        }
+        .stripes-cream {
+          background-image: repeating-linear-gradient(135deg, #f3ead8 0 12px, #ede3cd 12px 24px);
+        }
       }
+
+      @keyframes marquee {
+        from { transform: translateX(0); }
+        to { transform: translateX(-50%); }
+      }
+      .marquee-track { animation: marquee 40s linear infinite; will-change: transform; }
     </style>
   </head>
   <body class="min-h-screen">
-    <header class="sticky top-0 z-20 border-b border-edge bg-ink/85 backdrop-blur">
+    <!-- announcement marquee -->
+    <div class="overflow-hidden border-b-2 border-ink bg-ink text-cream">
+      <div class="marquee-track flex whitespace-nowrap py-2 font-mono text-[11px] uppercase tracking-[0.25em]">
+        <div class="flex shrink-0 gap-12 px-6">
+          <span>★ crawl ops console</span>
+          <span class="text-acid">●</span>
+          <span class="font-jp">▲ アニメ クロール 管理コンソール</span>
+          <span class="text-yolk">●</span>
+          <span>★ inject · re-crawl · mirrors · downloads</span>
+          <span class="text-acid">●</span>
+        </div>
+        <div class="flex shrink-0 gap-12 px-6" aria-hidden="true">
+          <span>★ crawl ops console</span>
+          <span class="text-acid">●</span>
+          <span class="font-jp">▲ アニメ クロール 管理コンソール</span>
+          <span class="text-yolk">●</span>
+          <span>★ inject · re-crawl · mirrors · downloads</span>
+          <span class="text-acid">●</span>
+        </div>
+      </div>
+    </div>
+
+    <header class="sticky top-0 z-40 border-b-2 border-ink bg-cream/95 backdrop-blur">
       <div class="shell !py-0">
-        <nav class="flex items-center gap-1 py-3">
-          <span class="mr-4 font-display text-lg font-900 uppercase tracking-tight">
-            <span class="text-acid">nime</span><span class="text-mute">/</span>dash
-          </span>
-          <a href="/" class="btn btn-ghost !no-underline">Stats</a>
-          <a href="/anime" class="btn btn-ghost !no-underline">Anime</a>
-          <a href="/inject" class="btn btn-ghost !no-underline">Inject</a>
-          <span class="ml-auto hidden text-[0.62rem] uppercase tracking-[0.2em] text-mute sm:block">
-            crawl ops console
+        <nav class="flex items-center gap-2 py-3">
+          <a href="/" class="group flex items-center gap-3 !no-underline">
+            <span class="grid h-10 w-10 place-items-center rounded-full bg-acid font-display text-lg font-black text-cream" style="box-shadow: 3px 3px 0 0 var(--color-ink);">n</span>
+            <span class="leading-none">
+              <span class="block font-display text-[20px] font-black tracking-[-0.03em] text-ink">
+                nime<span class="text-acid">/</span>dash
+              </span>
+              <span class="mt-1 block font-jp text-[10px] tracking-[0.3em] text-mute">アニメ / CRAWL OPS</span>
+            </span>
+          </a>
+          <div class="ml-6 hidden items-center gap-1 sm:flex">
+            <a href="/" class="btn btn-ghost !no-underline">Stats</a>
+            <a href="/anime" class="btn btn-ghost !no-underline">Anime</a>
+            <a href="/inject" class="btn btn-acid !no-underline">Inject</a>
+          </div>
+          <span class="ml-auto hidden font-mono text-[0.62rem] uppercase tracking-[0.25em] text-mute lg:block">
+            Ver. 4.2 · JP / EN
           </span>
         </nav>
       </div>
     </header>
     <main class="shell">{{{body}}}</main>
+
+    <!-- shared confirm modal: replaces native window.confirm for every hx-confirm -->
+    <dialog id="confirm-modal" class="card fixed left-1/2 top-1/2 m-0 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 p-0 text-fg backdrop:bg-ink/70 backdrop:backdrop-blur-sm">
+      <div class="border-b-2 border-ink px-6 py-4">
+        <h2>Confirm</h2>
+      </div>
+      <p id="confirm-message" class="px-6 py-5 text-sm leading-relaxed"></p>
+      <div class="flex justify-end gap-2 border-t-2 border-ink px-6 py-4">
+        <button type="button" id="confirm-cancel" class="btn btn-ghost">Cancel</button>
+        <button type="button" id="confirm-ok" class="btn btn-danger">Delete</button>
+      </div>
+    </dialog>
+    <script>
+      (function () {
+        var modal = document.getElementById('confirm-modal');
+        var msg = document.getElementById('confirm-message');
+        var ok = document.getElementById('confirm-ok');
+        var cancel = document.getElementById('confirm-cancel');
+        var pending = null;
+        document.addEventListener('htmx:confirm', function (e) {
+          if (!e.detail.question) return; // no hx-confirm → proceed normally
+          e.preventDefault();
+          pending = e.detail;
+          msg.textContent = e.detail.question;
+          var label = (e.detail.elt && e.detail.elt.getAttribute('data-confirm-label')) || 'Delete';
+          var danger = label === 'Delete';
+          ok.textContent = label;
+          ok.className = 'btn ' + (danger ? 'btn-danger' : 'btn-acid');
+          modal.showModal();
+        });
+        ok.addEventListener('click', function () {
+          modal.close();
+          if (pending) { pending.issueRequest(true); pending = null; }
+        });
+        cancel.addEventListener('click', function () { pending = null; modal.close(); });
+        modal.addEventListener('cancel', function () { pending = null; }); // Esc key
+      })();
+    </script>
   </body>
 </html>

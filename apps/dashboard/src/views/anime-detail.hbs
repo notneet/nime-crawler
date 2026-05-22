@@ -1,9 +1,10 @@
 <div class="crumb"><a href="/anime">Anime</a><span>/</span><span class="text-fg">{{anime.id}}</span></div>
 
-<div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+<div class="mb-6">
   <h1 class="max-w-3xl">{{anime.title}}</h1>
-  <div class="flex flex-wrap gap-2">
-    <button class="btn btn-ghost" hx-post="/anime/{{anime.id}}/recrawl" hx-target="#flash" hx-swap="innerHTML">Re-crawl</button>
+  <div class="mt-4 flex flex-wrap gap-2">
+    {{#if anime.url}}<a href="{{anime.url}}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost !no-underline">Source ↗</a>{{/if}}
+    <button class="btn btn-ghost" hx-post="/anime/{{anime.id}}/recrawl" hx-confirm="Re-crawl this anime from source?" data-confirm-label="Re-crawl" hx-target="#flash" hx-swap="innerHTML">Re-crawl</button>
     <button class="btn btn-danger" hx-delete="/anime/{{anime.id}}" hx-confirm="Delete this anime?" hx-target="body">Delete</button>
   </div>
 </div>
@@ -25,6 +26,14 @@
   </form>
 
   <div class="space-y-6">
+    {{#if anime.thumbnailUrl}}
+      <div class="card overflow-hidden">
+        <img src="{{anime.thumbnailUrl}}" alt="{{anime.title}}" loading="lazy" referrerpolicy="no-referrer"
+             class="aspect-[3/4] w-full border-b-2 border-ink bg-blush object-cover" />
+        {{#if anime.titleJP}}<div class="px-4 py-2.5 font-jp text-sm text-mute">{{anime.titleJP}}</div>{{/if}}
+      </div>
+    {{/if}}
+
     <div class="card p-6">
       <h2 class="mb-3">Browse</h2>
       <div class="flex flex-wrap gap-2">

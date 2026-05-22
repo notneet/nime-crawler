@@ -3,7 +3,7 @@
 <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
   <h1 class="max-w-3xl">{{episode.title}}</h1>
   <div class="flex flex-wrap gap-2">
-    <button class="btn btn-ghost" hx-post="/episode/{{episode.id}}/recrawl" hx-target="#flash" hx-swap="innerHTML">Re-crawl</button>
+    <button class="btn btn-ghost" hx-post="/episode/{{episode.id}}/recrawl" hx-confirm="Re-crawl this episode from source?" data-confirm-label="Re-crawl" hx-target="#flash" hx-swap="innerHTML">Re-crawl</button>
     <button class="btn btn-danger" hx-delete="/episode/{{episode.id}}" hx-confirm="Delete this episode?" hx-target="body">Delete</button>
   </div>
 </div>
