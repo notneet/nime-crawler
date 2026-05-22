@@ -14,10 +14,10 @@
   <div class="card mb-6 overflow-hidden">
     <div class="flex items-center justify-between border-b border-edge px-4 py-2.5">
       <h2 class="!text-fg">Player</h2>
-      <span class="pill">{{player.quality}} · {{player.host}}</span>
+      <span id="player-label" class="pill">{{player.quality}} · {{player.host}}</span>
     </div>
     <div class="aspect-video bg-ink">
-      <iframe src="{{player.streamUrl}}" class="h-full w-full border-0" allowfullscreen referrerpolicy="no-referrer"></iframe>
+      <iframe id="player-frame" src="{{player.streamUrl}}" class="h-full w-full border-0" allowfullscreen referrerpolicy="no-referrer"></iframe>
     </div>
   </div>
 {{/if}}
@@ -36,12 +36,17 @@
 <h2 class="mt-10 mb-3">Mirrors <span class="text-mute">/ {{mirrorsPager.total}}</span></h2>
 <div class="card overflow-hidden">
   <table class="tbl">
-    <thead><tr><th>Quality</th><th>Host</th><th>Stream URL</th></tr></thead>
+    <thead><tr><th>Quality</th><th>Host</th><th>Stream URL</th><th class="w-20"></th></tr></thead>
     <tbody>
       {{#each mirrors}}
-        <tr><td><span class="pill">{{this.quality}}</span></td><td>{{this.host}}</td><td class="break-all">{{#if this.streamUrl}}<a href="{{this.streamUrl}}" target="_blank" rel="noopener noreferrer">{{this.streamUrl}}</a>{{/if}}</td></tr>
+        <tr data-mirror-id="{{this.id}}">
+          <td><span class="pill">{{this.quality}}</span></td>
+          <td>{{this.host}}</td>
+          <td class="break-all">{{#if this.streamUrl}}<a href="{{this.streamUrl}}" target="_blank" rel="noopener noreferrer">{{this.streamUrl}}</a>{{/if}}</td>
+          <td>{{#if this.streamUrl}}<button type="button" class="btn btn-ghost !px-2.5 !py-1.5 js-play" data-stream="{{this.streamUrl}}" data-quality="{{this.quality}}" data-host="{{this.host}}">Play</button>{{else}}<span class="text-mute">—</span>{{/if}}</td>
+        </tr>
       {{else}}
-        <tr><td colspan="3" class="py-8 text-center text-mute">no mirrors</td></tr>
+        <tr><td colspan="4" class="py-8 text-center text-mute">no mirrors</td></tr>
       {{/each}}
     </tbody>
   </table>
@@ -62,3 +67,30 @@
   </table>
 </div>
 {{> pager downloadsPager}}
+
+<style>
+  tr.is-playing > td { background: var(--color-blush); }
+  tr.is-playing > td:first-child { box-shadow: inset 3px 0 0 0 var(--color-acid); }
+</style>
+<script>
+  (function () {
+    var frame = document.getElementById('player-frame');
+    if (!frame) return;
+    var label = document.getElementById('player-label');
+    function activate(row) {
+      document.querySelectorAll('tr[data-mirror-id].is-playing').forEach(function (r) {
+        r.classList.remove('is-playing');
+      });
+      if (row) row.classList.add('is-playing');
+    }
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.js-play');
+      if (!btn) return;
+      frame.src = btn.dataset.stream;
+      if (label) label.textContent = btn.dataset.quality + ' · ' + btn.dataset.host;
+      activate(btn.closest('tr[data-mirror-id]'));
+    });
+    var initial = {{#if player}}{{player.id}}{{else}}null{{/if}};
+    if (initial != null) activate(document.querySelector('tr[data-mirror-id="' + initial + '"]'));
+  })();
+</script>
