@@ -3,7 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { buildRabbitConfig } from '@libs/commons';
-import { CrawlResult } from './crawl-result.entity';
+import { Anime } from './entities/anime.entity';
+import { Genre } from './entities/genre.entity';
+import { AnimeGenre } from './entities/anime-genre.entity';
+import { Episode } from './entities/episode.entity';
+import { Mirror } from './entities/mirror.entity';
+import { DownloadLink } from './entities/download-link.entity';
+import { ResultMapper } from './result.mapper';
 import { ResultStoreService } from './result-store.service';
 
 @Module({
@@ -15,11 +21,11 @@ import { ResultStoreService } from './result-store.service';
       useFactory: (cfg: ConfigService) => ({
         type: 'better-sqlite3',
         database: cfg.get<string>('SQLITE_PATH', 'data/results.sqlite'),
-        entities: [CrawlResult],
+        entities: [Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink],
         synchronize: cfg.get<string>('NODE_ENV') === 'development',
       }),
     }),
-    TypeOrmModule.forFeature([CrawlResult]),
+    TypeOrmModule.forFeature([Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink]),
     RabbitMQModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -27,6 +33,6 @@ import { ResultStoreService } from './result-store.service';
         buildRabbitConfig(cfg.get<string>('RMQ_URI', 'amqp://guest:guest@localhost:5672')),
     }),
   ],
-  providers: [ResultStoreService],
+  providers: [ResultStoreService, ResultMapper],
 })
 export class ResultStoreModule {}

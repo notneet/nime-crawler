@@ -11,6 +11,7 @@ async function bootstrap() {
       queueOptions: { durable: true },
     },
   });
+  app.enableShutdownHooks();
   await app.listen();
 }
 bootstrap();

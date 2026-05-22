@@ -4,7 +4,10 @@ jest.mock('@hanivanrizky/nestjs-xpath-parser', () => ({
   ScraperHtmlModule: { forRoot: () => ({ module: class ScraperHtmlModule {} }) },
 }));
 jest.mock('@hanivanrizky/nestjs-browser-action', () => ({
-  BrowserActionModule: { forRoot: () => ({ module: class BrowserActionModule {} }) },
+  BrowserActionModule: {
+    forRoot: () => ({ module: class BrowserActionModule {} }),
+    forRootAsync: () => ({ module: class BrowserActionModule {} }),
+  },
 }));
 
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';

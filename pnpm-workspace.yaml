@@ -1,12 +1,13 @@
 allowBuilds:
-  '@nestjs/core': set this to true or false
+  '@nestjs/core': true
   better-sqlite3: true
   libxmljs2: true
   puppeteer: set this to true or false
-  unrs-resolver: set this to true or false
+  unrs-resolver: true
 minimumReleaseAgeExclude:
   - '@hanivanrizky/nestjs-browser-action@0.10.0'
   - '@hanivanrizky/nestjs-xpath-parser@0.3.1'
+  - '@hanivanrizky/nestjs-browser-action@0.10.1'
 onlyBuiltDependencies:
   - '@nestjs/core'
   - better-sqlite3

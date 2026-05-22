@@ -12,6 +12,8 @@ export interface StageConfig {
   patterns?: PatternField[];
   workflow?: WorkflowDefinition;
   discover?: DiscoverRule[];
+  // when set on xpath stage, return { [collect]: results[] }
+  collect?: string;
 }
 
 export interface SiteAdapter {

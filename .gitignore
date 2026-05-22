@@ -5,6 +5,7 @@
 
 # sqlite result store
 /data
+/raw
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal

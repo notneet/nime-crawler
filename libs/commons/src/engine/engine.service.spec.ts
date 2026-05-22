@@ -42,6 +42,20 @@ describe('EngineService', () => {
     expect(out).toEqual({ video: 'v' });
   });
 
+  it('returns { [collect]: results[] } when collect is set', async () => {
+    xpath.evaluateWebsite.mockResolvedValue({ results: [{ a: 1 }, { a: 2 }], document: {} });
+    const cfg: StageConfig = { engine: 'xpath', patterns: [{ key: 'a' }], collect: 'rows' };
+    const out = await service.parse(cfg, 'https://x.test');
+    expect(out).toEqual({ rows: [{ a: 1 }, { a: 2 }] });
+  });
+
+  it('returns first result when collect is not set', async () => {
+    xpath.evaluateWebsite.mockResolvedValue({ results: [{ a: 1 }, { a: 2 }], document: {} });
+    const cfg: StageConfig = { engine: 'xpath', patterns: [{ key: 'a' }] };
+    const out = await service.parse(cfg, 'https://x.test');
+    expect(out).toEqual({ a: 1 });
+  });
+
   it('throws when xpath stage has no patterns', async () => {
     await expect(service.parse({ engine: 'xpath' }, 'https://x.test')).rejects.toThrow(/patterns/);
   });

@@ -21,6 +21,7 @@ export class EngineService {
         throw new Error('xpath stage requires patterns');
       }
       const res = await this.xpath.evaluateWebsite({ url, patterns: config.patterns });
+      if (config.collect) return { [config.collect]: res.results };
       return res.results[0] ?? {};
     }
 

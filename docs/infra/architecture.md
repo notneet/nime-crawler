@@ -47,7 +47,7 @@ scheduler/control ──crawl.*──▶ anime.crawl ──▶ scraper-worker
                                                        result.* ──────────▶ anime.results ──▶ result-store
                                                                                                   │
                                                                                                   ▼
-                                                                                          SQLite (crawl_results)
+                                                                                          SQLite (normalized tables)
 ```
 
 ## Where results are stored
@@ -55,8 +55,11 @@ scheduler/control ──crawl.*──▶ anime.crawl ──▶ scraper-worker
 `result-store` persists final structured data to a **SQLite** database via
 TypeORM. `result-sink` publishes each item to the `anime.results` topic
 exchange (routing key `result.<stage>.<source>`); `result-store` binds a durable
-queue (`anime.results.store`, key `result.#`) to that exchange and upserts each
-item into the `crawl_results` table, keyed on `(source, url, stage)`.
+queue (`anime.results.store`, key `result.#`) to that exchange. A `ResultMapper`
+normalizes each stage payload into typed tables (`anime`, `genre`,
+`anime_genre`, `episode`, `mirror`, `download_link`), upserted in one
+transaction on each table's unique key. Cross-stage links are stored as plain
+`*Url` columns and resolved in the read/API layer (no write-time FKs).
 
 DB path comes from `SQLITE_PATH` (default `data/results.sqlite`); schema is
 created on boot via TypeORM `synchronize` when `NODE_ENV=development` (use

@@ -15,8 +15,8 @@ importers:
         specifier: ^9.0.2
         version: 9.0.2(@nestjs/common@11.1.22(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.22)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@hanivanrizky/nestjs-browser-action':
-        specifier: ^0.10.0
-        version: 0.10.0(@nestjs/common@11.1.22(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.22)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        specifier: ^0.10.1
+        version: 0.10.1(@nestjs/common@11.1.22(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.22)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@hanivanrizky/nestjs-xpath-parser':
         specifier: ^0.3.1
         version: 0.3.1(@nestjs/common@11.1.22(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.22)(@noble/hashes@1.8.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -453,8 +453,8 @@ packages:
       reflect-metadata: ^0.2.2
       rxjs: ^7.8.1
 
-  '@hanivanrizky/nestjs-browser-action@0.10.0':
-    resolution: {integrity: sha512-z5agWDHd8IBo9AEbW5wC5wGQidBWUZO1rKOCOH9IcM/x+0B0pot021Qj0AuOt5UBQ8JTDUXpZigrelmS1eQibw==}
+  '@hanivanrizky/nestjs-browser-action@0.10.1':
+    resolution: {integrity: sha512-TupkXtoRAfXDWU9aHKu/NivzWS1D5jLXM/5zHbZSE6yvKAEOaHD6cZuxOAXkyWHY1Mp98vEZVGmt8LHpM2dZng==}
     engines: {node: '>=18.13.0'}
     peerDependencies:
       '@nestjs/common': ^11.0.0
@@ -1424,6 +1424,10 @@ packages:
 
   ansis@4.2.0:
     resolution: {integrity: sha512-HqZ5rWlFjGiV0tDm3UxxgNRqsOTniqoKZu0pIAfh7TZQMGuZK+hH0drySty0si0QXj1ieop4+SkSfPZBPPkHig==}
+    engines: {node: '>=14'}
+
+  ansis@4.3.0:
+    resolution: {integrity: sha512-44mvgtPvohuU/70DdY5Oz2AIrLJ9k6/5x4KmoSvPwO+5Moijo0+N9D0fKbbYZQWP1hNm5CpOf+E01jhxG/r8xg==}
     engines: {node: '>=14'}
 
   anymatch@3.1.3:
@@ -4344,7 +4348,7 @@ snapshots:
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
 
-  '@hanivanrizky/nestjs-browser-action@0.10.0(@nestjs/common@11.1.22(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.22)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@hanivanrizky/nestjs-browser-action@0.10.1(@nestjs/common@11.1.22(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.22)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 11.1.22(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.22(@nestjs/common@11.1.22(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.22)(@nestjs/platform-express@11.1.22)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -5487,6 +5491,8 @@ snapshots:
   ansi-styles@6.2.3: {}
 
   ansis@4.2.0: {}
+
+  ansis@4.3.0: {}
 
   anymatch@3.1.3:
     dependencies:
@@ -8001,7 +8007,7 @@ snapshots:
   typeorm@1.0.0(better-sqlite3@12.10.0)(ts-node@10.9.2(@types/node@24.12.4)(typescript@5.9.3)):
     dependencies:
       '@sqltools/formatter': 1.2.5
-      ansis: 4.2.0
+      ansis: 4.3.0
       dayjs: 1.11.20
       debug: 4.4.3
       dedent: 1.7.2

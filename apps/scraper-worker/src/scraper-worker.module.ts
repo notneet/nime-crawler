@@ -11,8 +11,12 @@ import { WorkerService } from './worker.service';
     RabbitMQModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (cfg: ConfigService) =>
-        buildRabbitConfig(cfg.get<string>('RMQ_URI', 'amqp://guest:guest@localhost:5672')),
+      useFactory: (cfg: ConfigService) => ({
+        ...buildRabbitConfig(cfg.get<string>('RMQ_URI', 'amqp://guest:guest@localhost:5672')),
+        // Heavy per-episode browser workflow serializes on the pool; without this,
+        // RabbitMQ floods the worker with ~11 jobs at once and they pile up.
+        prefetchCount: 1,
+      }),
     }),
   ],
   providers: [
