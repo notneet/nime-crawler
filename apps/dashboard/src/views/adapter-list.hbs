@@ -16,6 +16,7 @@
           <td>{{#if this.enabled}}<span class="pill">on</span>{{else}}<span class="text-mute">off</span>{{/if}}</td>
           <td class="text-mute">{{len this.stages}}</td>
           <td class="flex gap-1.5">
+            <a href="{{this.baseUrl}}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost !px-2.5 !py-1.5 !no-underline">Open</a>
             <button class="btn btn-ghost !px-2.5 !py-1.5" hx-post="/adapter/{{this.source}}/toggle" hx-target="body">Toggle</button>
             <button class="btn btn-danger !px-2.5 !py-1.5" hx-delete="/adapter/{{this.source}}" hx-confirm="Delete adapter {{this.source}}?" hx-target="body">Del</button>
           </td>

@@ -9,6 +9,7 @@
 
 {{#if sources.length}}
   <form class="card max-w-2xl p-6 space-y-4" hx-post="/inject" hx-target="#flash" hx-swap="innerHTML"
+    hx-confirm="Inject this URL into the crawl pipeline?" data-confirm-label="Inject"
     hx-on::after-request="if(event.detail.successful) this.reset(); window.injectSyncStages && window.injectSyncStages()">
     <div class="grid gap-4 sm:grid-cols-2">
       <div>
