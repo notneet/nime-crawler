@@ -30,6 +30,7 @@ GET    /episode/:id         detail: fields + mirrors + downloads
 POST   /episode/:id         edit
 DELETE /episode/:id         delete (cascades mirrors by episodeUrl)
 POST   /episode/:id/recrawl publish episode job for episode.url
+POST   /episode/:id/archive publish manual download-archive job for the episode
 DELETE /episode/mirror/:id  delete one mirror (htmx row swap)
 DELETE /episode/download/:id delete one download (htmx row swap)
 GET    /adapter             list adapters
@@ -51,7 +52,7 @@ with a `WWW-Authenticate: Basic` challenge.
 ## Database access
 
 The dashboard opens its **own** TypeORM `better-sqlite3` connection to the file
-at `SQLITE_PATH` (default `data/results.sqlite`), reusing the 6 entities now
+at `SQLITE_PATH` (default `data/results.sqlite`), reusing the 7 entities now
 shared from `@libs/commons/entities`. Two settings matter:
 
 - `synchronize: false` — `result-store` owns the schema (it runs `synchronize`
@@ -71,11 +72,22 @@ Re-crawl reuses the existing `CrawlJobDto` contract on `EXCHANGES.crawl`
 These are the same messages `scraper-worker` already consumes — re-crawl just
 re-injects a stage job for an existing URL.
 
+## Archive
+
+`POST /episode/:id/archive` publishes a `DownloadJobDto`
+(`{ episodeId, source, manual: true }`) to `EXCHANGES.download` (`anime.download`),
+routing key `download.episode.<source>` — the same job `result-store` emits
+automatically. The [downloader](./downloader.md) consumes it and archives the
+episode's highest/lowest-resolution direct downloads to S3/MinIO. The episode
+detail page lists existing `download_archive` rows (read-only).
+
 ## Inputs / outputs
 
-- **Reads/writes:** the SQLite tables owned by `result-store`.
+- **Reads/writes:** the SQLite tables owned by `result-store` (incl. read-only
+  `download_archive`).
 - **Publishes:** `crawl.detail.<source>` / `crawl.episode.<source>` to
-  `anime.crawl` on re-crawl.
+  `anime.crawl` on re-crawl; `download.episode.<source>` to `anime.download` on
+  archive.
 
 ## Notes
 

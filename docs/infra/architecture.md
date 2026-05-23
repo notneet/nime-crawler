@@ -1,9 +1,11 @@
 # Architecture
 
-Multi-site anime crawler on a NestJS monorepo. Five headless RabbitMQ
-microservices pass crawl work down a staged pipeline. A sixth app,
-[dashboard](./dashboard.md), is an HTTP tool for browsing/editing the stored
-data and triggering re-crawls — it is the only HTTP server in the monorepo.
+Multi-site anime crawler on a NestJS monorepo. Six headless RabbitMQ
+microservices pass crawl work down a staged pipeline (the last,
+[downloader](./downloader.md), archives episode videos to object storage). A
+seventh app, [dashboard](./dashboard.md), is an HTTP tool for browsing/editing
+the stored data and triggering re-crawls/archives — it is the only HTTP server
+in the monorepo.
 
 ## Stages
 
@@ -50,6 +52,7 @@ mutable page), so episodes process one at a time per worker process.
 | `EXCHANGES.parsed`| `anime.parsed`     | Internal parsed-page payloads            |
 | `EXCHANGES.results`| `anime.results`   | **Public** final structured data         |
 | `EXCHANGES.dlx`   | `anime.crawl.dlx`  | Dead-letter exchange for failed jobs     |
+| `EXCHANGES.download`| `anime.download` | Episode-video archive jobs               |
 
 Routing keys are `<prefix>.<stage>.<source>`, e.g. `crawl.episode.otakudesu`.
 
@@ -66,7 +69,15 @@ scheduler/control ──crawl.*──▶ anime.crawl ──▶ scraper-worker
                                                                                                   │
                                                                                                   ▼
                                                                                           SQLite (normalized tables)
+                                                                                                  │
+                                                                  download.episode.* ─────────────▶ anime.download ──▶ downloader ──▶ S3/MinIO
 ```
+
+After persisting an episode that carried `≥1` download row, `result-store`
+publishes a `download.episode.<source>` job to `anime.download`; the
+[downloader](./downloader.md) archives the highest/lowest-resolution direct
+downloads to S3-compatible object storage. The dashboard can also publish this
+job manually.
 
 ## Where results are stored
 
@@ -96,4 +107,5 @@ must be running (queue declared) before a crawl publishes results.
 - [result-sink](./result-sink.md) — results publisher
 - [result-store](./result-store.md) — SQLite persistence
 - [control](./control.md) — on-demand trigger
+- [downloader](./downloader.md) — archives episode videos to S3/MinIO
 - [dashboard](./dashboard.md) — HTTP UI to browse/edit/re-crawl stored data

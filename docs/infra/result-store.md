@@ -27,6 +27,9 @@ requeue).
 
 - **Consumes:** `result.#` from `anime.results`.
 - **Persists:** rows across the normalized tables below (SQLite).
+- **Publishes:** `download.episode.<source>` to `anime.download` after
+  persisting an episode that carried `≥1` download row (auto-archive trigger for
+  the [downloader](./downloader.md)).
 
 ## Where results are stored
 
@@ -56,6 +59,12 @@ Normalized tables (one mapper per stage fills them):
   `host` (label), `size`, `url`. Unique `uq_download` on `(url, ownerUrl, kind)`
   — `host` is nullable (episode downloads carry no label), so it is kept out of
   the unique key to preserve upsert idempotency (`NULL` never matches in SQLite).
+- **`download_archive`** (written by the [downloader](./downloader.md), not a
+  mapper) — `id` PK; `episodeId`, `source`, `quality`, `qualityRank`,
+  `sourceUrl`, `s3Bucket`, `s3Key`, `sizeBytes`, `status`
+  (`pending`/`done`/`failed`), `error`; timestamps. Unique `uq_download_archive`
+  on `(episodeId, qualityRank)`. `result-store` owns the schema (`synchronize`)
+  but only `result-store` and the dashboard read it; the downloader writes it.
 
 `source`/`url` (and `*Url`) columns keep stages decoupled: nothing resolves a
 cross-stage foreign key at write time; joins happen in the read/API layer.

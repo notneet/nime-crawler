@@ -43,8 +43,13 @@ pnpm run start:worker     # 1. scraper-worker — binds anime.crawl.worker (scal
 pnpm run start:sink       # 2. result-sink    — binds anime.parsed.sink
 pnpm run start:store      # 3. result-store   — binds anime.results.store, writes SQLite
 pnpm run start:control    # 4. control        — control plane (crawl.trigger)
-pnpm run start:scheduler  # 5. scheduler      — cron seeder, starts publishing jobs
+pnpm run start:downloader # 5. downloader     — binds anime.download.archive, archives videos to S3/MinIO
+pnpm run start:scheduler  # 6. scheduler      — cron seeder, starts publishing jobs
 ```
+
+The downloader needs an S3-compatible target (MinIO) — set the `S3_*` vars in
+`.env` and pre-create the bucket (`mc mb local/<bucket>`). See
+[downloader](./docs/infra/downloader.md).
 
 Bring the scheduler up last; once it runs (or you emit `crawl.trigger`), index
 jobs flow into the already-bound worker queue. Queues are durable, so a
@@ -67,6 +72,7 @@ See [`docs/infra/`](./docs/infra/) for the full breakdown:
 - [result-sink](./docs/infra/result-sink.md) — results publisher
 - [result-store](./docs/infra/result-store.md) — SQLite persistence
 - [control](./docs/infra/control.md) — on-demand trigger
+- [downloader](./docs/infra/downloader.md) — archives episode videos to S3/MinIO
 - [dashboard](./docs/infra/dashboard.md) — HTTP UI to browse/edit/re-crawl stored data
 
 ## Project setup
