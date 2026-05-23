@@ -4,6 +4,7 @@ import { CrawlJobDto } from '@libs/commons/messaging/crawl-job.dto';
 import { EXCHANGES, routingKey, Stage } from '@libs/commons/messaging/exchanges';
 import { AdapterService } from '@libs/commons/adapters/adapter.service';
 import { EngineService } from '@libs/commons/engine/engine.service';
+import { StageConfig } from '@libs/commons/adapters/site-adapter.types';
 
 export interface InjectSource {
   source: string;
@@ -53,5 +54,13 @@ export class InjectService {
     const { adapter, trimmed } = await this.resolve(source, stage, url);
     const config = adapter.stages[stage as Stage];
     return this.engine.parse(config!, trimmed);
+  }
+
+  async testConfig(config: StageConfig, url: string, baseUrl: string): Promise<Record<string, unknown>> {
+    const trimmed = url.trim();
+    if (!trimmed.startsWith(baseUrl)) {
+      throw new BadRequestException(`url must start with ${baseUrl}`);
+    }
+    return this.engine.parse(config, trimmed);
   }
 }

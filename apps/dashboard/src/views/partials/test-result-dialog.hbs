@@ -1,0 +1,15 @@
+<dialog id="test-result" class="card fixed left-1/2 top-1/2 m-0 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 p-0 text-fg backdrop:bg-ink/70 backdrop:backdrop-blur-sm">
+  <div class="border-b-2 border-ink px-6 py-4 flex items-center justify-between gap-3">
+    <h2 id="test-title" class="!text-fg">Test result</h2>
+    <div class="flex gap-2">
+      <button type="button" id="test-toggle" class="btn btn-ghost !px-2.5 !py-1.5">Raw JSON</button>
+      <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" onclick="document.getElementById('test-result').close()">Close</button>
+    </div>
+  </div>
+  <div id="test-urlbar" class="hidden gap-2 px-6 pt-4 sm:flex">
+    <input id="test-url" class="input" placeholder="https://…" />
+    <button type="button" id="test-run" class="btn btn-acid shrink-0">Run</button>
+  </div>
+  <p id="test-status" class="empty:hidden px-6 pt-4 text-sm text-mute"></p>
+  <div id="test-body" class="max-h-[70vh] overflow-auto px-6 py-5"></div>
+</dialog>

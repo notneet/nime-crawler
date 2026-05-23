@@ -62,7 +62,10 @@
           h('label', { class: 'label !mb-0', text: 'engine' }),
           eng,
         ]),
-        btn('✕ remove', 'del-stage', 'btn-danger'),
+        h('div', { class: 'flex items-center gap-2' }, [
+          btn('▶ test', 'test-stage', 'btn-ghost'),
+          btn('✕ remove', 'del-stage', 'btn-danger'),
+        ]),
       ]),
     );
     sec.append(renderDiscover(cfg.discover || []));
@@ -334,6 +337,7 @@
     const t = e.target.closest('[data-act]');
     if (!t) return;
     const act = t.dataset.act;
+    if (act === 'test-stage') { testStage(t.closest('[data-stage]')); return; }
     if (act === 'del-stage') { t.closest('[data-stage]').remove(); refreshAddSelect(); return; }
     if (act === 'del-row') { t.closest('[data-row]').remove(); return; }
     if (act === 'del-pattern') { t.closest('[data-row="pattern"]').remove(); return; }
@@ -383,6 +387,21 @@
     const pipes = collectPipes(card);
     if (Object.keys(pipes).length) p.pipes = pipes;
     return p;
+  }
+
+  // Test the stage's current (unsaved) config against a URL via the shared modal.
+  // collectStage runs inside buildBody so bad workflow JSON surfaces as a modal error.
+  function testStage(sec) {
+    if (!sec || !window.TestModal) return;
+    const stage = sec.dataset.stage;
+    const baseUrl = (form.querySelector('input[name="baseUrl"]') || {}).value || '';
+    window.TestModal.open({
+      stageLabel: stage,
+      endpoint: '/inject/test-config',
+      urlInput: true,
+      initialUrl: baseUrl,
+      buildBody: (url) => ({ config: collectStage(sec), url, baseUrl, stage }),
+    });
   }
 
   form.addEventListener('submit', (e) => {

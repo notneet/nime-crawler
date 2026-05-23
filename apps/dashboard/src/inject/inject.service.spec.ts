@@ -9,6 +9,7 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { InjectService } from './inject.service';
 import { AdapterService } from '@libs/commons/adapters/adapter.service';
 import { EngineService } from '@libs/commons/engine/engine.service';
+import { StageConfig } from '@libs/commons/adapters/site-adapter.types';
 import { EXCHANGES } from '@libs/commons/messaging/exchanges';
 
 describe('InjectService', () => {
@@ -93,6 +94,22 @@ describe('InjectService', () => {
 
   it('test rejects a stage the adapter does not define and does not parse', async () => {
     await expect(service.test('otakudesu', 'batch', 'https://otakudesu.example/x')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(engine.parse).not.toHaveBeenCalled();
+  });
+
+  it('testConfig parses the given config and returns the result', async () => {
+    engine.parse.mockResolvedValue({ a: 1 });
+    const cfg: StageConfig = { engine: 'xpath', patterns: [] };
+    const out = await service.testConfig(cfg, '  https://otakudesu.example/x  ', 'https://otakudesu.example');
+    expect(engine.parse).toHaveBeenCalledWith(cfg, 'https://otakudesu.example/x');
+    expect(out).toEqual({ a: 1 });
+  });
+
+  it('testConfig rejects a url outside baseUrl and does not parse', async () => {
+    const cfg: StageConfig = { engine: 'xpath', patterns: [] };
+    await expect(service.testConfig(cfg, 'https://evil.example/x', 'https://otakudesu.example')).rejects.toBeInstanceOf(
       BadRequestException,
     );
     expect(engine.parse).not.toHaveBeenCalled();

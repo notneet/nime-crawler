@@ -7,13 +7,14 @@ jest.mock('@hanivanrizky/nestjs-browser-action', () => ({
 import { BadRequestException } from '@nestjs/common';
 import { InjectController } from './inject.controller';
 import { InjectService, InjectSource } from './inject.service';
-import { InjectDto } from './inject.dto';
+import { InjectDto, TestConfigDto } from './inject.dto';
 
 describe('InjectController', () => {
   const injectService = {
     sources: jest.fn(),
     inject: jest.fn(),
     test: jest.fn(),
+    testConfig: jest.fn(),
   };
   const controller = new InjectController(injectService as unknown as InjectService);
 
@@ -50,6 +51,28 @@ describe('InjectController', () => {
   it('test returns an error payload when test throws', async () => {
     injectService.test.mockRejectedValue(new BadRequestException('url must start with https://o.example'));
     const vm = await controller.test({ source: 'otakudesu', stage: 'detail', url: 'https://evil/x' } as InjectDto);
+    expect(vm).toEqual({ ok: false, error: 'url must start with https://o.example' });
+  });
+
+  it('testConfig returns ok with the parsed result', async () => {
+    injectService.testConfig.mockResolvedValue({ a: 1 });
+    const vm = await controller.testConfig({
+      config: { engine: 'xpath' },
+      url: 'https://o.example/x',
+      baseUrl: 'https://o.example',
+      stage: 'detail',
+    } as unknown as TestConfigDto);
+    expect(injectService.testConfig).toHaveBeenCalledWith({ engine: 'xpath' }, 'https://o.example/x', 'https://o.example');
+    expect(vm).toEqual({ ok: true, stage: 'detail', result: { a: 1 } });
+  });
+
+  it('testConfig returns an error payload when it throws', async () => {
+    injectService.testConfig.mockRejectedValue(new BadRequestException('url must start with https://o.example'));
+    const vm = await controller.testConfig({
+      config: {},
+      url: 'https://evil/x',
+      baseUrl: 'https://o.example',
+    } as unknown as TestConfigDto);
     expect(vm).toEqual({ ok: false, error: 'url must start with https://o.example' });
   });
 });

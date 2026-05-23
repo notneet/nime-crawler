@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Render } from '@nestjs/common';
 import { InjectService } from './inject.service';
-import { InjectDto } from './inject.dto';
+import { InjectDto, TestConfigDto } from './inject.dto';
 
 @Controller('inject')
 export class InjectController {
@@ -30,6 +30,17 @@ export class InjectController {
     try {
       const result = await this.inject.test(body.source, body.stage, body.url);
       return { ok: true, stage: body.stage, result };
+    } catch (err) {
+      const error = err instanceof Error ? err.message : 'test failed';
+      return { ok: false, error };
+    }
+  }
+
+  @Post('test-config')
+  async testConfig(@Body() body: TestConfigDto) {
+    try {
+      const result = await this.inject.testConfig(body.config, body.url, body.baseUrl);
+      return { ok: true, stage: body.stage ?? '', result };
     } catch (err) {
       const error = err instanceof Error ? err.message : 'test failed';
       return { ok: false, error };
