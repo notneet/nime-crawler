@@ -58,6 +58,7 @@
     sec.append(
       h('div', { class: 'flex items-center justify-between' }, [
         h('div', { class: 'flex items-center gap-3' }, [
+          btn('▾', 'toggle-stage', 'btn-ghost'),
           h('span', { class: 'pill', text: stage }),
           h('label', { class: 'label !mb-0', text: 'engine' }),
           eng,
@@ -99,12 +100,66 @@
   function engineBody(engine, cfg) {
     return engine === 'browser' ? renderBrowserBody(cfg) : renderXpathBody(cfg);
   }
+  const ACTION_TYPES = ['navigate', 'wait', 'waitFor', 'click', 'type', 'select', 'scroll', 'extract',
+    'screenshot', 'evaluate', 'cleanse', 'saveCookies', 'loadCookies', 'clearCookies', 'listCookies',
+    'hover', 'keyPress', 'clear', 'waitForNetwork', 'reload'];
   function renderBrowserBody(cfg) {
-    const wrap = h('div', { class: 'space-y-2', 'data-browser': '' });
-    const ta = h('textarea', { class: 'input font-mono text-xs', rows: 18, spellcheck: 'false', 'data-f': 'workflow' });
-    ta.value = JSON.stringify((cfg && cfg.workflow) || { version: '1.0', actions: [] }, null, 2);
-    wrap.append(field2('workflow (JSON)', ta));
+    const wf = (cfg && cfg.workflow) || { version: '1.0', actions: [] };
+    const wrap = h('div', { class: 'space-y-3', 'data-browser': '' });
+    wrap.__wf = wf;
+    const version = textInput(wf.version, '1.0');
+    version.setAttribute('data-f', 'version');
+    version.classList.add('!w-32');
+    wrap.append(field2('version', version));
+    wrap.append(h('div', { class: 'flex items-center justify-between' }, [
+      h('label', { class: 'label !mb-0', text: 'actions' }),
+      btn('+ action', 'add-action'),
+    ]));
+    const rows = h('div', { class: 'space-y-3', 'data-rows': 'action' });
+    for (const a of wf.actions || []) rows.append(actionCard(a));
+    wrap.append(rows);
     return wrap;
+  }
+  function actionCard(a) {
+    a = a || { action: 'extract' };
+    const card = h('div', { class: 'card bg-cream p-3 space-y-2', 'data-row': 'action' });
+    card.__action = a;
+    const id = textInput(a.id, 'id (optional)'); id.setAttribute('data-f', 'actId');
+    const actOpts = ACTION_TYPES.includes(a.action) ? ACTION_TYPES : ACTION_TYPES.concat([a.action || '']);
+    const action = select(actOpts, a.action || 'extract'); action.setAttribute('data-f', 'action');
+    const onErr = select(['', 'continue', 'fail', 'skip'], a.onError || ''); onErr.setAttribute('data-f', 'onError');
+    card.append(h('div', { class: 'flex items-end gap-2' }, [
+      h('div', { class: 'flex-1' }, [field2('id', id)]),
+      field2('action', action),
+      field2('onError', onErr),
+      btn('✕', 'del-row', 'btn-danger'),
+    ]));
+    const tgt = a.target || {};
+    const tType = select(['css', 'xpath'], tgt.type || 'css'); tType.setAttribute('data-f', 'tType');
+    const tValue = textInput(tgt.value, 'selector'); tValue.setAttribute('data-f', 'tValue'); tValue.classList.add('font-mono', 'text-xs');
+    card.append(h('div', { class: 'flex items-end gap-2' }, [
+      field2('target type', tType),
+      h('div', { class: 'flex-1' }, [field2('target value', tValue)]),
+    ]));
+    const val = h('textarea', { class: 'input font-mono text-xs', rows: 2, spellcheck: 'false', 'data-f': 'aValue' });
+    val.value = a.value == null ? '' : String(a.value);
+    card.append(field2('value', val));
+    card.append(actionAdvanced(a.options || {}));
+    return card;
+  }
+  function actionAdvanced(opts) {
+    const d = h('details', { class: 'rounded-none border-2 border-ink/30 p-2' });
+    d.append(h('summary', { class: 'cursor-pointer font-mono text-[0.62rem] uppercase tracking-[0.18em] text-mute', text: 'options' }));
+    const body = h('div', { class: 'mt-2 space-y-2' });
+    const as = select(['', 'text', 'html', 'outerHtml', 'attribute'], opts.as || ''); as.setAttribute('data-f', 'optAs');
+    const attr = textInput(opts.attribute, 'attribute'); attr.setAttribute('data-f', 'optAttribute');
+    body.append(h('div', { class: 'flex items-end gap-2' }, [field2('as', as), h('div', { class: 'flex-1' }, [field2('attribute', attr)])]));
+    const timeout = textInput(opts.timeout, 'timeout ms'); timeout.setAttribute('data-f', 'optTimeout'); timeout.type = 'number';
+    const delay = textInput(opts.delay, 'delay ms'); delay.setAttribute('data-f', 'optDelay'); delay.type = 'number';
+    body.append(h('div', { class: 'flex items-end gap-2' }, [field2('timeout', timeout), field2('delay', delay)]));
+    body.append(h('div', { class: 'flex flex-wrap gap-4' }, [tagCheck('optMultiple', opts.multiple)]));
+    d.append(body);
+    return d;
   }
   function renderXpathBody(cfg) {
     const wrap = h('div', { class: 'space-y-3', 'data-xpath': '' });
@@ -311,6 +366,13 @@
     return c;
   }
 
+  function setCollapsed(sec, collapsed) {
+    sec.classList.toggle('is-collapsed', collapsed);
+    sec.querySelectorAll(':scope > [data-discover], :scope > .stage-body').forEach((el) => el.classList.toggle('hidden', collapsed));
+    const t = sec.querySelector(':scope [data-act="toggle-stage"]');
+    if (t) t.textContent = collapsed ? '▸' : '▾';
+  }
+
   function swapBody(sec, engine) {
     const body = sec.querySelector(':scope > .stage-body');
     body.replaceChildren();
@@ -337,10 +399,16 @@
     const t = e.target.closest('[data-act]');
     if (!t) return;
     const act = t.dataset.act;
+    if (act === 'toggle-stage') {
+      const sec = t.closest('[data-stage]');
+      setCollapsed(sec, !sec.classList.contains('is-collapsed'));
+      return;
+    }
     if (act === 'test-stage') { testStage(t.closest('[data-stage]')); return; }
     if (act === 'del-stage') { t.closest('[data-stage]').remove(); refreshAddSelect(); return; }
     if (act === 'del-row') { t.closest('[data-row]').remove(); return; }
     if (act === 'del-pattern') { t.closest('[data-row="pattern"]').remove(); return; }
+    if (act === 'add-action') { rowsOf(t, 'action').append(actionCard()); return; }
     if (act === 'add-discover') { rowsOf(t, 'discover').append(discoverRow()); return; }
     if (act === 'add-pattern') { rowsOf(t, 'pattern').append(patternCard()); return; }
     if (act === 'add-xpath') { rowsOf(t, 'xpath').append(xpathRow()); return; }
@@ -367,8 +435,7 @@
       .filter((d) => d.fromKey);
     if (disc.length) cfg.discover = disc;
     if (engine === 'browser') {
-      const wf = sec.querySelector('[data-f="workflow"]').value;
-      cfg.workflow = JSON.parse(wf); // throws on bad JSON → caught in submit handler
+      cfg.workflow = collectWorkflow(sec);
     } else {
       const xbody = sec.querySelector(':scope > .stage-body > [data-xpath]');
       const collectKey = fieldEl(xbody, 'collect').value.trim();
@@ -377,6 +444,43 @@
       if (collectKey) cfg.collect = collectKey;
     }
     return cfg;
+  }
+  function setOrDel(o, k, v) { if (v) o[k] = v; else delete o[k]; }
+  function setNumOrDel(o, k, v) {
+    const t = String(v).trim();
+    if (t !== '' && !isNaN(Number(t))) o[k] = Number(t); else delete o[k];
+  }
+  function collectWorkflow(sec) {
+    const wrap = sec.querySelector(':scope > .stage-body > [data-browser]');
+    const wf = Object.assign({}, wrap.__wf || {});
+    const ver = fieldEl(wrap, 'version').value.trim();
+    wf.version = ver || wf.version || '1.0';
+    wf.actions = [...wrap.querySelectorAll(':scope > [data-rows="action"] > [data-row="action"]')].map(collectAction);
+    return wf;
+  }
+  function collectAction(card) {
+    const a = JSON.parse(JSON.stringify(card.__action || {}));
+    const id = fieldEl(card, 'actId').value.trim();
+    if (id) a.id = id; else delete a.id;
+    a.action = fieldEl(card, 'action').value;
+    const tType = fieldEl(card, 'tType').value;
+    const tValue = fieldEl(card, 'tValue').value.trim();
+    if (tValue) a.target = Object.assign({}, a.target, { type: tType, value: tValue });
+    else if (a.target && a.target.shadowHost) { a.target = Object.assign({}, a.target, { type: tType }); delete a.target.value; }
+    else delete a.target;
+    const v = fieldEl(card, 'aValue').value;
+    if (v === '') delete a.value;
+    else a.value = /^\d+$/.test(v) ? Number(v) : v;
+    const oe = fieldEl(card, 'onError').value;
+    if (oe) a.onError = oe; else delete a.onError;
+    const opts = Object.assign({}, a.options);
+    setOrDel(opts, 'as', fieldEl(card, 'optAs').value);
+    setOrDel(opts, 'attribute', fieldEl(card, 'optAttribute').value.trim());
+    if (checkedOf(card, 'optMultiple')) opts.multiple = true; else delete opts.multiple;
+    setNumOrDel(opts, 'timeout', fieldEl(card, 'optTimeout').value);
+    setNumOrDel(opts, 'delay', fieldEl(card, 'optDelay').value);
+    if (Object.keys(opts).length) a.options = opts; else delete a.options;
+    return a;
   }
   function collectPattern(card) {
     const p = { key: fieldEl(card, 'key').value, patternType: 'xpath', returnType: fieldEl(card, 'returnType').value };
@@ -420,6 +524,7 @@
     let stages = {};
     try { stages = JSON.parse(document.getElementById('stages-data').value || '{}'); } catch (_) {}
     for (const k of STAGE_KEYS) if (stages[k]) editor.append(renderStage(k, stages[k]));
+    [...editor.querySelectorAll(':scope > [data-stage]')].forEach((sec, i) => setCollapsed(sec, i !== 0));
     refreshAddSelect();
   }
   boot();
