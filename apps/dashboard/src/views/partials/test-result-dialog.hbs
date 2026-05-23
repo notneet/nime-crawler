@@ -3,6 +3,7 @@
     <h2 class="!text-fg" x-text="title">Test result</h2>
     <div class="flex gap-2">
       <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="toggle()" x-text="showingRaw ? 'Table' : 'Raw JSON'">Raw JSON</button>
+      <button type="button" class="btn btn-acid !px-2.5 !py-1.5" x-show="publish" :disabled="committing || running || !result" @click="commit()">Inject</button>
       <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="$root.close()">Close</button>
     </div>
   </div>

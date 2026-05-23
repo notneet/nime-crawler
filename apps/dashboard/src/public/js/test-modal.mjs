@@ -12,7 +12,9 @@ document.addEventListener('alpine:init', () => {
     url: '',
     result: null,
     current: null,
+    publish: null,
     running: false,
+    committing: false,
 
     _dlg: null,
     init() { instance = this; this._dlg = this.$el; },
@@ -22,6 +24,7 @@ document.addEventListener('alpine:init', () => {
 
     open(opts) {
       this.current = { endpoint: opts.endpoint, buildBody: opts.buildBody };
+      this.publish = opts.publish || null;
       this.result = null;
       this.showingRaw = false;
       this.status = '';
@@ -61,6 +64,38 @@ document.addEventListener('alpine:init', () => {
         .finally(() => { clearTimeout(timer); this.running = false; });
     },
     setStatus(msg, isError) { this.status = msg || ''; this.isError = !!isError; },
+
+    commit() {
+      if (!this.publish || this.committing) return;
+      const go = () => {
+        let body;
+        try { body = this.publish.buildBody(this.url); }
+        catch (err) { this.setStatus(err && err.message ? err.message : 'invalid request', true); return; }
+        this.committing = true;
+        this.setStatus('Injecting…', false);
+        fetch(this.publish.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+          .then((r) => r.text().then((t) => ({ status: r.status, text: t })))
+          .then(({ status, text }) => {
+            const ok = status >= 200 && status < 300 && !/border-warn/.test(text);
+            const m = text.match(/>([^<]+)<\/div>/);
+            const msg = (m && m[1].trim()) || (ok ? 'Injected.' : 'Inject failed.');
+            this.setStatus(msg, !ok);
+            if (ok) setTimeout(() => this.close(), 1200);
+          })
+          .catch(() => this.setStatus('Inject request failed.', true))
+          .finally(() => { this.committing = false; });
+      };
+      const msg = this.publish.confirmMsg || 'Inject this URL?';
+      if (window.confirmModal) {
+        window.confirmModal(msg, 'Inject').then((y) => { if (y) go(); });
+      } else if (window.confirm(msg)) {
+        go();
+      }
+    },
 
     isUrl, isImageUrl,
     cellKind(v) {

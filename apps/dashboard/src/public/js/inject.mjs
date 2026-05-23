@@ -24,12 +24,24 @@ document.addEventListener('alpine:init', () => {
     },
     test() {
       if (!window.TestModal) return;
+      const noDiscoverEl = this.$root.querySelector('input[name="noDiscover"]');
       window.TestModal.open({
         stageLabel: this.stage,
         endpoint: '/inject/test',
         buildBody: (u) => ({ source: this.source, stage: this.stage, url: u }),
         initialUrl: this.$refs.url.value,
+        urlInput: true,
         autoRun: true,
+        publish: {
+          endpoint: '/inject',
+          confirmMsg: 'Inject this URL into the crawl pipeline?',
+          buildBody: (u) => ({
+            source: this.source,
+            stage: this.stage,
+            url: u,
+            noDiscover: noDiscoverEl && noDiscoverEl.checked ? 'on' : '',
+          }),
+        },
       });
     },
   }));
