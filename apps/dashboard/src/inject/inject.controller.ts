@@ -24,4 +24,15 @@ export class InjectController {
       return { ok: false, message, layout: false };
     }
   }
+
+  @Post('test')
+  async test(@Body() body: InjectDto) {
+    try {
+      const result = await this.inject.test(body.source, body.stage, body.url);
+      return { ok: true, stage: body.stage, result };
+    } catch (err) {
+      const error = err instanceof Error ? err.message : 'test failed';
+      return { ok: false, error };
+    }
+  }
 }

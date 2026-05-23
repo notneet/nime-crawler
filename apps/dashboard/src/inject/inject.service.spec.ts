@@ -1,7 +1,14 @@
+jest.mock('@hanivanrizky/nestjs-xpath-parser', () => ({ ScraperHtmlService: class {} }));
+jest.mock('@hanivanrizky/nestjs-browser-action', () => ({
+  BrowserActionService: class {},
+  PageService: class {},
+}));
+
 import { BadRequestException } from '@nestjs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { InjectService } from './inject.service';
 import { AdapterService } from '@libs/commons/adapters/adapter.service';
+import { EngineService } from '@libs/commons/engine/engine.service';
 import { EXCHANGES } from '@libs/commons/messaging/exchanges';
 
 describe('InjectService', () => {
@@ -20,9 +27,11 @@ describe('InjectService', () => {
     getOrThrow: jest.fn(),
   };
   const amqp = { publish: jest.fn() };
+  const engine = { parse: jest.fn() };
   const service = new InjectService(
     adapters as unknown as AdapterService,
     amqp as unknown as AmqpConnection,
+    engine as unknown as EngineService,
   );
 
   beforeEach(() => {
@@ -66,5 +75,26 @@ describe('InjectService', () => {
   it('rejects a url that does not start with the adapter baseUrl', async () => {
     await expect(service.inject('otakudesu', 'detail', 'https://evil.example/x')).rejects.toBeInstanceOf(BadRequestException);
     expect(amqp.publish).not.toHaveBeenCalled();
+  });
+
+  it('test parses with the stage config and returns the result', async () => {
+    engine.parse.mockResolvedValue({ title: 'X' });
+    const out = await service.test('otakudesu', 'detail', '  https://otakudesu.example/anime/x  ');
+    expect(engine.parse).toHaveBeenCalledWith(adapter.stages.detail, 'https://otakudesu.example/anime/x');
+    expect(out).toEqual({ title: 'X' });
+  });
+
+  it('test rejects a url outside the adapter baseUrl and does not parse', async () => {
+    await expect(service.test('otakudesu', 'detail', 'https://evil.example/x')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(engine.parse).not.toHaveBeenCalled();
+  });
+
+  it('test rejects a stage the adapter does not define and does not parse', async () => {
+    await expect(service.test('otakudesu', 'batch', 'https://otakudesu.example/x')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(engine.parse).not.toHaveBeenCalled();
   });
 });

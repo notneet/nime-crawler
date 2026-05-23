@@ -1,11 +1,19 @@
+jest.mock('@hanivanrizky/nestjs-xpath-parser', () => ({ ScraperHtmlService: class {} }));
+jest.mock('@hanivanrizky/nestjs-browser-action', () => ({
+  BrowserActionService: class {},
+  PageService: class {},
+}));
+
 import { BadRequestException } from '@nestjs/common';
 import { InjectController } from './inject.controller';
 import { InjectService, InjectSource } from './inject.service';
+import { InjectDto } from './inject.dto';
 
 describe('InjectController', () => {
   const injectService = {
     sources: jest.fn(),
     inject: jest.fn(),
+    test: jest.fn(),
   };
   const controller = new InjectController(injectService as unknown as InjectService);
 
@@ -30,5 +38,18 @@ describe('InjectController', () => {
     injectService.inject.mockRejectedValue(new BadRequestException('url must start with https://o.example'));
     const vm = await controller.submit({ source: 'otakudesu', stage: 'detail', url: 'https://evil/x' });
     expect(vm).toEqual({ ok: false, message: 'url must start with https://o.example', layout: false });
+  });
+
+  it('test returns ok with the parsed result', async () => {
+    injectService.test.mockResolvedValue({ title: 'X' });
+    const vm = await controller.test({ source: 'otakudesu', stage: 'detail', url: 'https://o.example/x' } as InjectDto);
+    expect(injectService.test).toHaveBeenCalledWith('otakudesu', 'detail', 'https://o.example/x');
+    expect(vm).toEqual({ ok: true, stage: 'detail', result: { title: 'X' } });
+  });
+
+  it('test returns an error payload when test throws', async () => {
+    injectService.test.mockRejectedValue(new BadRequestException('url must start with https://o.example'));
+    const vm = await controller.test({ source: 'otakudesu', stage: 'detail', url: 'https://evil/x' } as InjectDto);
+    expect(vm).toEqual({ ok: false, error: 'url must start with https://o.example' });
   });
 });

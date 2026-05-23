@@ -27,7 +27,10 @@
       <input name="url" id="inject-url" class="input" placeholder="https://…" required />
       <p id="inject-hint" class="mt-1 text-[0.68rem] text-mute"></p>
     </div>
-    <button type="submit" class="btn btn-acid">Inject</button>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-acid">Inject</button>
+      <button type="button" id="inject-test-btn" class="btn btn-ghost">Test</button>
+    </div>
   </form>
 {{else}}
   <div class="card p-6 text-sm text-mute">No enabled adapters. Inject is unavailable until a site adapter is registered.</div>
@@ -49,25 +52,17 @@
   </div>
 </dialog>
 
-<script>
-  (function () {
-    var sources = {{{sourcesJson}}};
-    var bySource = {};
-    sources.forEach(function (s) { bySource[s.source] = s; });
-    window.injectSyncStages = function () {
-      var src = document.getElementById('inject-source');
-      var stage = document.getElementById('inject-stage');
-      var hint = document.getElementById('inject-hint');
-      if (!src || !stage) return;
-      var s = bySource[src.value];
-      while (stage.firstChild) stage.removeChild(stage.firstChild);
-      (s ? s.stages : []).forEach(function (st) {
-        var o = document.createElement('option');
-        o.value = st; o.textContent = st;
-        stage.appendChild(o);
-      });
-      if (hint && s) hint.textContent = 'must start with ' + s.baseUrl;
-    };
-    window.injectSyncStages();
-  })();
-</script>
+<dialog id="test-result" class="card fixed left-1/2 top-1/2 m-0 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 p-0 text-fg backdrop:bg-ink/70 backdrop:backdrop-blur-sm">
+  <div class="border-b-2 border-ink px-6 py-4 flex items-center justify-between gap-3">
+    <h2 id="test-title" class="!text-fg">Test result</h2>
+    <div class="flex gap-2">
+      <button type="button" id="test-toggle" class="btn btn-ghost !px-2.5 !py-1.5">Raw JSON</button>
+      <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" onclick="document.getElementById('test-result').close()">Close</button>
+    </div>
+  </div>
+  <p id="test-status" class="empty:hidden px-6 pt-4 text-sm text-mute"></p>
+  <div id="test-body" class="max-h-[70vh] overflow-auto px-6 py-5"></div>
+</dialog>
+
+<script type="application/json" id="inject-sources">{{{sourcesJson}}}</script>
+<script src="/static/js/inject.js"></script>

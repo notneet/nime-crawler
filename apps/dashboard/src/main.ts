@@ -11,6 +11,8 @@ async function bootstrap() {
   const viewsDir = join(process.cwd(), 'apps/dashboard/src/views');
   app.setBaseViewsDir(viewsDir);
   app.setViewEngine('hbs');
+  // Static assets (js/css) served from source, mounted at /static.
+  app.useStaticAssets(join(process.cwd(), 'apps/dashboard/src/public'), { prefix: '/static' });
   // Register partials synchronously: hbs.registerPartials() scans the dir async
   // and races the first render, which 500s with "partial could not be found".
   const partialsDir = join(viewsDir, 'partials');

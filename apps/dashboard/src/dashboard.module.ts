@@ -13,6 +13,7 @@ import {
   Adapter,
 } from '@libs/commons/entities';
 import { buildRabbitConfig } from '@libs/commons/rabbit/rabbit.config';
+import { EngineModule } from '@libs/commons';
 import { AdapterService } from '@libs/commons/adapters/adapter.service';
 import { BasicAuthMiddleware } from './auth/basic-auth.middleware';
 import { AnimeService } from './anime/anime.service';
@@ -52,6 +53,7 @@ import { AdapterModule } from './adapter/adapter.module';
         buildRabbitConfig(cfg.get<string>('RMQ_URI', 'amqp://guest:guest@localhost:5672')),
     }),
     AdapterModule,
+    EngineModule,
   ],
   controllers: [StatsController, AnimeController, EpisodeController, InjectController],
   providers: [

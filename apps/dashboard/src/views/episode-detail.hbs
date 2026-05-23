@@ -17,7 +17,7 @@
       <span id="player-label" class="pill">{{player.quality}} · {{player.host}}</span>
     </div>
     <div class="aspect-video bg-ink">
-      <iframe id="player-frame" src="{{player.streamUrl}}" class="h-full w-full border-0" allowfullscreen referrerpolicy="no-referrer"></iframe>
+      <iframe id="player-frame" src="{{player.streamUrl}}" data-initial="{{player.id}}" class="h-full w-full border-0" allowfullscreen referrerpolicy="no-referrer"></iframe>
     </div>
   </div>
 {{/if}}
@@ -68,29 +68,4 @@
 </div>
 {{> pager downloadsPager}}
 
-<style>
-  tr.is-playing > td { background: var(--color-blush); }
-  tr.is-playing > td:first-child { box-shadow: inset 3px 0 0 0 var(--color-acid); }
-</style>
-<script>
-  (function () {
-    var frame = document.getElementById('player-frame');
-    if (!frame) return;
-    var label = document.getElementById('player-label');
-    function activate(row) {
-      document.querySelectorAll('tr[data-mirror-id].is-playing').forEach(function (r) {
-        r.classList.remove('is-playing');
-      });
-      if (row) row.classList.add('is-playing');
-    }
-    document.addEventListener('click', function (e) {
-      var btn = e.target.closest('.js-play');
-      if (!btn) return;
-      frame.src = btn.dataset.stream;
-      if (label) label.textContent = btn.dataset.quality + ' · ' + btn.dataset.host;
-      activate(btn.closest('tr[data-mirror-id]'));
-    });
-    var initial = {{#if player}}{{player.id}}{{else}}null{{/if}};
-    if (initial != null) activate(document.querySelector('tr[data-mirror-id="' + initial + '"]'));
-  })();
-</script>
+<script src="/static/js/episode-player.js"></script>

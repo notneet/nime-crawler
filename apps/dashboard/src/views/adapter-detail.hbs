@@ -18,8 +18,19 @@
     <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.22em] text-mute">Enabled</span>
   </label>
   <div>
-    <label class="label">Stages (JSON)</label>
-    <textarea name="stages" rows="24" class="input font-mono text-xs" spellcheck="false">{{stagesJson}}</textarea>
+    <div class="mb-1.5 flex items-center justify-between">
+      <label class="label !mb-0">Stages</label>
+      <div class="flex items-center gap-2">
+        <select id="add-stage-select" class="input !w-auto py-1 text-xs"></select>
+        <button type="button" class="btn btn-ghost" data-act="add-stage">+ stage</button>
+      </div>
+    </div>
+    <div id="stage-editor" class="space-y-4"></div>
+    <input type="hidden" name="stages" id="stages-field" />
+    <textarea id="stages-data" hidden>{{stagesJson}}</textarea>
+    <p id="editor-error" class="mt-2 hidden text-xs font-bold text-deep"></p>
   </div>
   <button type="submit" class="btn btn-acid">Save</button>
 </form>
+
+<script src="/static/js/adapter-editor.js"></script>
