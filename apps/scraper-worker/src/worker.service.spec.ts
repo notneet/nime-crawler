@@ -65,6 +65,29 @@ describe('WorkerService', () => {
     );
   });
 
+  it('noDiscover publishes parsed data but skips the discover cascade', async () => {
+    engine.parse.mockResolvedValue({
+      title: 'X',
+      episodeLinks: ['/episode/a/'],
+      batchLinks: ['/batch/c/'],
+    });
+
+    await service.handle({
+      source: 'otakudesu',
+      stage: 'detail',
+      url: 'https://otakudesu.blog/anime/x/',
+      adapter: otakudesuAdapter,
+      noDiscover: true,
+    });
+
+    expect(amqp.publish).toHaveBeenCalledTimes(1);
+    expect(amqp.publish).toHaveBeenCalledWith(
+      EXCHANGES.parsed,
+      'parsed.detail.otakudesu',
+      expect.objectContaining({ stage: 'detail', data: expect.objectContaining({ title: 'X' }) }),
+    );
+  });
+
   it('dead-letters (Nack false) when the snapshot has no config for the stage', async () => {
     const result = await service.handle({
       source: 'nope',

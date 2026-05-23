@@ -12,6 +12,11 @@ export class InjectDto {
 
   @IsUrl({ require_protocol: true })
   url!: string;
+
+  // Checkbox: when "on", publish this stage only (no discover cascade).
+  @IsOptional()
+  @IsString()
+  noDiscover?: string;
 }
 
 export class TestConfigDto {

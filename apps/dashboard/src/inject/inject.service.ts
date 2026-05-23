@@ -44,9 +44,10 @@ export class InjectService {
     return { adapter, trimmed };
   }
 
-  async inject(source: string, stage: string, url: string): Promise<void> {
+  async inject(source: string, stage: string, url: string, noDiscover = false): Promise<void> {
     const { adapter, trimmed } = await this.resolve(source, stage, url);
     const job: CrawlJobDto = { source, stage: stage as Stage, url: trimmed, adapter };
+    if (noDiscover) job.noDiscover = true;
     await this.amqp.publish(EXCHANGES.crawl, routingKey('crawl', stage as Stage, source), job);
   }
 

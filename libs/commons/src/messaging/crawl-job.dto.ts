@@ -50,6 +50,12 @@ export class CrawlJobDto {
   @IsBoolean()
   force?: boolean;
 
+  // Publish this stage only: the worker parses and stores it but skips the
+  // discover cascade (no next-stage jobs are published).
+  @IsOptional()
+  @IsBoolean()
+  noDiscover?: boolean;
+
   @IsOptional()
   @IsObject()
   meta?: Record<string, unknown>;

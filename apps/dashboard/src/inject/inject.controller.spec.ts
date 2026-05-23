@@ -31,8 +31,15 @@ describe('InjectController', () => {
   it('submit injects and returns an ok flash', async () => {
     injectService.inject.mockResolvedValue(undefined);
     const vm = await controller.submit({ source: 'otakudesu', stage: 'detail', url: 'https://o.example/x' });
-    expect(injectService.inject).toHaveBeenCalledWith('otakudesu', 'detail', 'https://o.example/x');
+    expect(injectService.inject).toHaveBeenCalledWith('otakudesu', 'detail', 'https://o.example/x', false);
     expect(vm).toEqual({ ok: true, message: 'Injected detail · https://o.example/x', layout: false });
+  });
+
+  it('submit passes noDiscover when checkbox is on', async () => {
+    injectService.inject.mockResolvedValue(undefined);
+    const vm = await controller.submit({ source: 'otakudesu', stage: 'detail', url: 'https://o.example/x', noDiscover: 'on' });
+    expect(injectService.inject).toHaveBeenCalledWith('otakudesu', 'detail', 'https://o.example/x', true);
+    expect(vm).toEqual({ ok: true, message: 'Injected detail · https://o.example/x (this stage only)', layout: false });
   });
 
   it('submit returns an error flash when inject throws', async () => {

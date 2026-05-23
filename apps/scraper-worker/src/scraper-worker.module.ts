@@ -30,7 +30,7 @@ import { WorkerService } from './worker.service';
         ...buildRabbitConfig(cfg.get<string>('RMQ_URI', 'amqp://guest:guest@localhost:5672')),
         // Heavy per-episode browser workflow serializes on the pool; without this,
         // RabbitMQ floods the worker with ~11 jobs at once and they pile up.
-        prefetchCount: 1,
+        prefetchCount: Number(cfg.get<string>('PREFETCH_COUNT', '1')),
       }),
     }),
   ],

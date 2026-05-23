@@ -111,6 +111,7 @@
     version.setAttribute('data-f', 'version');
     version.classList.add('!w-32');
     wrap.append(field2('version', version));
+    wrap.append(h('div', { class: 'flex flex-wrap gap-4' }, [tagCheck('interceptResource', wf.interceptResource)]));
     wrap.append(h('div', { class: 'flex items-center justify-between' }, [
       h('label', { class: 'label !mb-0', text: 'actions' }),
       btn('+ action', 'add-action'),
@@ -455,6 +456,7 @@
     const wf = Object.assign({}, wrap.__wf || {});
     const ver = fieldEl(wrap, 'version').value.trim();
     wf.version = ver || wf.version || '1.0';
+    if (checkedOf(wrap, 'interceptResource')) wf.interceptResource = true; else delete wf.interceptResource;
     wf.actions = [...wrap.querySelectorAll(':scope > [data-rows="action"] > [data-row="action"]')].map(collectAction);
     return wf;
   }

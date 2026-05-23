@@ -10,6 +10,7 @@ import {
   EngineService,
   EXCHANGES,
   routingKey,
+  ThrottleInterceptor,
   TimingInterceptor,
 } from '@libs/commons';
 import { Anime, Episode } from '@libs/commons/entities';
@@ -49,7 +50,7 @@ export class WorkerService {
     }
   }
 
-  @UseInterceptors(TimingInterceptor)
+  @UseInterceptors(ThrottleInterceptor, TimingInterceptor)
   @RabbitSubscribe({
     exchange: EXCHANGES.crawl,
     routingKey: 'crawl.#',
@@ -80,7 +81,7 @@ export class WorkerService {
     try {
       const parsed = await this.engine.parse(stageConfig, job.url);
 
-      const nextJobs = buildNextJobs(adapter, job.stage, parsed);
+      const nextJobs = job.noDiscover ? [] : buildNextJobs(adapter, job.stage, parsed);
       for (const next of nextJobs) {
         await this.amqp.publish(EXCHANGES.crawl, routingKey('crawl', next.stage, next.source), next);
       }

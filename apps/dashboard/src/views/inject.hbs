@@ -27,6 +27,10 @@
       <input name="url" id="inject-url" class="input" placeholder="https://…" required />
       <p id="inject-hint" class="mt-1 text-[0.68rem] text-mute"></p>
     </div>
+    <label class="flex w-fit cursor-pointer select-none items-center gap-2.5">
+      <input type="checkbox" name="noDiscover" class="check" />
+      <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.22em] text-mute">This stage only (no discover)</span>
+    </label>
     <div class="flex gap-2">
       <button type="submit" class="btn btn-acid">Inject</button>
       <button type="button" id="inject-test-btn" class="btn btn-ghost">Test</button>

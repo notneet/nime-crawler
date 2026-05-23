@@ -17,8 +17,9 @@ export class InjectController {
   @Render('partials/flash')
   async submit(@Body() body: InjectDto) {
     try {
-      await this.inject.inject(body.source, body.stage, body.url);
-      return { ok: true, message: `Injected ${body.stage} · ${body.url}`, layout: false };
+      await this.inject.inject(body.source, body.stage, body.url, body.noDiscover === 'on');
+      const scope = body.noDiscover === 'on' ? ' (this stage only)' : '';
+      return { ok: true, message: `Injected ${body.stage} · ${body.url}${scope}`, layout: false };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'inject failed';
       return { ok: false, message, layout: false };
