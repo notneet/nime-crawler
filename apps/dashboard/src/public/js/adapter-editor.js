@@ -47,6 +47,7 @@
   const checkedOf = (scope, f) => { const el = fieldEl(scope, f); return !!(el && el.checked); };
   const rowsOf = (btnEl, name) =>
     btnEl.parentElement.parentElement.querySelector(':scope > [data-rows="' + name + '"]');
+  const confirmDel = (msg) => (window.confirmModal ? window.confirmModal(msg) : Promise.resolve(window.confirm(msg)));
 
   // ---- render: stage shell ----
   function renderStage(stage, cfg) {
@@ -117,7 +118,11 @@
       btn('+ action', 'add-action'),
     ]));
     const rows = h('div', { class: 'space-y-3', 'data-rows': 'action' });
-    for (const a of wf.actions || []) rows.append(actionCard(a));
+    (wf.actions || []).forEach((a, i) => {
+      const card = actionCard(a);
+      if (i !== 0) setActionCollapsed(card, true);
+      rows.append(card);
+    });
     wrap.append(rows);
     return wrap;
   }
@@ -129,10 +134,16 @@
     const actOpts = ACTION_TYPES.includes(a.action) ? ACTION_TYPES : ACTION_TYPES.concat([a.action || '']);
     const action = select(actOpts, a.action || 'extract'); action.setAttribute('data-f', 'action');
     const onErr = select(['', 'continue', 'fail', 'skip'], a.onError || ''); onErr.setAttribute('data-f', 'onError');
-    card.append(h('div', { class: 'flex items-end gap-2' }, [
+    const summary = h('span', { class: 'hidden flex-1 truncate font-mono text-xs font-bold text-fg', 'data-summary': '' });
+    const fields = h('div', { class: 'flex flex-1 items-end gap-2', 'data-actfields': '' }, [
       h('div', { class: 'flex-1' }, [field2('id', id)]),
       field2('action', action),
       field2('onError', onErr),
+    ]);
+    card.append(h('div', { class: 'flex items-end gap-2' }, [
+      btn('▾', 'toggle-action', 'btn-ghost !px-2.5 !py-1.5'),
+      summary,
+      fields,
       btn('✕', 'del-row', 'btn-danger'),
     ]));
     const tgt = a.target || {};
@@ -374,6 +385,23 @@
     if (t) t.textContent = collapsed ? '▸' : '▾';
   }
 
+  function setActionCollapsed(card, force) {
+    const collapsed = typeof force === 'boolean' ? force : !card.classList.contains('is-collapsed');
+    card.classList.toggle('is-collapsed', collapsed);
+    [...card.children].forEach((el, i) => { if (i > 0) el.classList.toggle('hidden', collapsed); });
+    const fields = card.querySelector(':scope > div [data-actfields]');
+    const summary = card.querySelector(':scope > div [data-summary]');
+    fields.classList.toggle('hidden', collapsed);
+    summary.classList.toggle('hidden', !collapsed);
+    if (collapsed) {
+      const id = fieldEl(card, 'actId').value.trim();
+      const action = fieldEl(card, 'action').value;
+      summary.textContent = id || action;
+    }
+    const t = card.querySelector(':scope [data-act="toggle-action"]');
+    if (t) t.textContent = collapsed ? '▸' : '▾';
+  }
+
   function swapBody(sec, engine) {
     const body = sec.querySelector(':scope > .stage-body');
     body.replaceChildren();
@@ -406,9 +434,22 @@
       return;
     }
     if (act === 'test-stage') { testStage(t.closest('[data-stage]')); return; }
-    if (act === 'del-stage') { t.closest('[data-stage]').remove(); refreshAddSelect(); return; }
-    if (act === 'del-row') { t.closest('[data-row]').remove(); return; }
-    if (act === 'del-pattern') { t.closest('[data-row="pattern"]').remove(); return; }
+    if (act === 'del-stage') {
+      const sec = t.closest('[data-stage]');
+      confirmDel('Delete the "' + sec.dataset.stage + '" stage?').then((y) => { if (y) { sec.remove(); refreshAddSelect(); } });
+      return;
+    }
+    if (act === 'del-row') {
+      const row = t.closest('[data-row]');
+      confirmDel('Delete this ' + (row.dataset.row || 'item') + '?').then((y) => { if (y) row.remove(); });
+      return;
+    }
+    if (act === 'del-pattern') {
+      const row = t.closest('[data-row="pattern"]');
+      confirmDel('Delete this pattern?').then((y) => { if (y) row.remove(); });
+      return;
+    }
+    if (act === 'toggle-action') { setActionCollapsed(t.closest('[data-row="action"]')); return; }
     if (act === 'add-action') { rowsOf(t, 'action').append(actionCard()); return; }
     if (act === 'add-discover') { rowsOf(t, 'discover').append(discoverRow()); return; }
     if (act === 'add-pattern') { rowsOf(t, 'pattern').append(patternCard()); return; }
