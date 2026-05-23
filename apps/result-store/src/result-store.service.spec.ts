@@ -1,14 +1,28 @@
 import { DataSource } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { ParsedResultDto } from '@libs/commons/messaging/parsed-result.dto';
 import { Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
 import { ResultMapper } from './result.mapper';
 import { ResultStoreService } from './result-store.service';
 
+const cfgStub = (autoArchive: boolean): ConfigService =>
+  ({
+    get: (_key: string, def?: string) => (autoArchive ? 'true' : def),
+  }) as unknown as ConfigService;
+
 describe('ResultStoreService', () => {
   let dataSource: DataSource;
   let service: ResultStoreService;
   let amqp: { publish: jest.Mock };
+
+  const buildService = (autoArchive: boolean): ResultStoreService =>
+    new ResultStoreService(
+      dataSource,
+      new ResultMapper(),
+      amqp as unknown as AmqpConnection,
+      cfgStub(autoArchive),
+    );
 
   beforeEach(async () => {
     dataSource = new DataSource({
@@ -19,11 +33,7 @@ describe('ResultStoreService', () => {
     });
     await dataSource.initialize();
     amqp = { publish: jest.fn() };
-    service = new ResultStoreService(
-      dataSource,
-      new ResultMapper(),
-      amqp as unknown as AmqpConnection,
-    );
+    service = buildService(true);
   });
 
   afterEach(async () => {
@@ -167,6 +177,13 @@ describe('ResultStoreService', () => {
 
   it('non-episode result: does not publish a download job', async () => {
     await service.handle(detailResult());
+
+    expect(amqp.publish).not.toHaveBeenCalled();
+  });
+
+  it('auto-trigger disabled: episode with downloads does not publish', async () => {
+    service = buildService(false);
+    await service.handle(episodeResult());
 
     expect(amqp.publish).not.toHaveBeenCalled();
   });

@@ -10,6 +10,7 @@ describe('EpisodeController', () => {
     detail: jest.fn(),
     update: jest.fn(),
     archive: jest.fn(),
+    resolvableMirrors: jest.fn(),
     remove: jest.fn(),
     deleteMirror: jest.fn(),
     deleteDownload: jest.fn(),
@@ -51,16 +52,40 @@ describe('EpisodeController', () => {
     expect(vm).toEqual({ ok: true, message: 'Re-crawl queued', layout: false });
   });
 
-  it('archive queues a job and returns ok flash', async () => {
+  it('archive queues a job for the chosen mirror and returns ok flash', async () => {
     episodeService.archive.mockResolvedValue({ ok: true, message: 'archive job queued | https://e/1' });
-    const vm = await controller.archive('1');
-    expect(episodeService.archive).toHaveBeenCalledWith(1);
+    const vm = await controller.archive('1', '9');
+    expect(episodeService.archive).toHaveBeenCalledWith(1, { mirrorId: 9, episodeStream: false });
     expect(vm).toEqual({ ok: true, message: 'archive job queued | https://e/1', layout: false });
+  });
+
+  it('archive without mirrorId passes undefined (auto path)', async () => {
+    episodeService.archive.mockResolvedValue({ ok: true, message: 'queued' });
+    await controller.archive('1');
+    expect(episodeService.archive).toHaveBeenCalledWith(1, { mirrorId: undefined, episodeStream: false });
+  });
+
+  it('archive with episodeStream flag resolves the episode stream server-side', async () => {
+    episodeService.archive.mockResolvedValue({ ok: true, message: 'queued' });
+    await controller.archive('1', undefined, 'true');
+    expect(episodeService.archive).toHaveBeenCalledWith(1, { mirrorId: undefined, episodeStream: true });
   });
 
   it('archive throws 404 when episode missing', async () => {
     episodeService.archive.mockResolvedValue({ ok: false, message: 'episode not found' });
     await expect(controller.archive('9')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('archiveChooser returns mirror list view-model', async () => {
+    episodeService.resolvableMirrors.mockResolvedValue({ episodeId: 1, mirrors: [{ id: 9, quality: '720p', host: 'h' }] });
+    const vm = await controller.archiveChooser('1');
+    expect(episodeService.resolvableMirrors).toHaveBeenCalledWith(1);
+    expect(vm).toEqual({ episodeId: 1, mirrors: [{ id: 9, quality: '720p', host: 'h' }], layout: false });
+  });
+
+  it('archiveChooser throws 404 when episode missing', async () => {
+    episodeService.resolvableMirrors.mockResolvedValue(null);
+    await expect(controller.archiveChooser('9')).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('deleteMirror deletes and returns empty body', async () => {

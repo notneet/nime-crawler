@@ -73,11 +73,13 @@ scheduler/control ──crawl.*──▶ anime.crawl ──▶ scraper-worker
                                                                   download.episode.* ─────────────▶ anime.download ──▶ downloader ──▶ S3/MinIO
 ```
 
-After persisting an episode that carried `≥1` download row, `result-store`
-publishes a `download.episode.<source>` job to `anime.download`; the
-[downloader](./downloader.md) archives the highest/lowest-resolution direct
-downloads to S3-compatible object storage. The dashboard can also publish this
-job manually.
+The [downloader](./downloader.md) archives the highest/lowest-resolution
+resolvable mirror of an episode to S3-compatible object storage (extracting the
+real video via `yt-dlp`). It is **decoupled from
+the crawl pipeline by default** — triggered manually from the dashboard
+(`POST /episode/:id/archive`). Set `DOWNLOADER_AUTO_TRIGGER=true` to also have
+`result-store` auto-publish a `download.episode.<source>` job to `anime.download`
+after persisting an episode that carried `≥1` download row.
 
 ## Where results are stored
 

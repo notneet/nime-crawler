@@ -27,9 +27,11 @@ requeue).
 
 - **Consumes:** `result.#` from `anime.results`.
 - **Persists:** rows across the normalized tables below (SQLite).
-- **Publishes:** `download.episode.<source>` to `anime.download` after
-  persisting an episode that carried `≥1` download row (auto-archive trigger for
-  the [downloader](./downloader.md)).
+- **Publishes (optional):** `download.episode.<source>` to `anime.download` after
+  persisting an episode that carried `≥1` download row — only when
+  `DOWNLOADER_AUTO_TRIGGER=true` (default `false`). Gates the auto-archive
+  trigger for the [downloader](./downloader.md); off by default so the downloader
+  is manual-only from the dashboard.
 
 ## Where results are stored
 

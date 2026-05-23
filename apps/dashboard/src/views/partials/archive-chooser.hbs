@@ -1,0 +1,58 @@
+<dialog x-data x-init="$el.showModal()" class="card fixed left-1/2 top-1/2 m-0 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 p-0 text-fg backdrop:bg-ink/70 backdrop:backdrop-blur-sm">
+  <div class="border-b-2 border-ink px-6 py-4 flex items-center justify-between gap-3">
+    <h2 class="!text-fg">Archive — pick a mirror</h2>
+    <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="$root.close()">Close</button>
+  </div>
+  <div class="max-h-[70vh] overflow-auto px-6 py-5">
+    {{#if mirrors.length}}
+    <div class="mb-4 flex flex-wrap gap-2">
+      <button type="button" class="btn btn-acid"
+        hx-post="/episode/{{episodeId}}/archive"
+        hx-vals='{"mirrorId": {{highest.id}} }'
+        hx-target="#flash" hx-swap="innerHTML"
+        hx-on::after-request="this.closest('dialog').close()">Archive highest ({{highest.quality}})</button>
+      <button type="button" class="btn btn-ghost"
+        hx-post="/episode/{{episodeId}}/archive"
+        hx-vals='{"mirrorId": {{lowest.id}} }'
+        hx-target="#flash" hx-swap="innerHTML"
+        hx-on::after-request="this.closest('dialog').close()">Archive lowest ({{lowest.quality}})</button>
+      {{#if episodeStreamUrl}}
+      <button type="button" class="btn btn-ghost"
+        hx-post="/episode/{{episodeId}}/archive"
+        hx-vals='{"episodeStream": true}'
+        hx-target="#flash" hx-swap="innerHTML"
+        hx-on::after-request="this.closest('dialog').close()">Archive episode stream (lowest)</button>
+      {{/if}}
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Quality</th><th>Host</th><th class="w-24"></th></tr></thead>
+      <tbody>
+        {{#each mirrors}}
+        <tr>
+          <td><span class="pill">{{this.quality}}</span></td>
+          <td>{{this.host}}</td>
+          <td><button type="button" class="btn btn-acid !px-2.5 !py-1.5"
+            hx-post="/episode/{{../episodeId}}/archive"
+            hx-vals='{"mirrorId": {{this.id}} }'
+            hx-target="#flash" hx-swap="innerHTML"
+            hx-on::after-request="this.closest('dialog').close()">Archive</button></td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    {{#if episodeStreamUrl}}
+    <div class="mb-4 flex flex-wrap gap-2">
+      <button type="button" class="btn btn-acid"
+        hx-post="/episode/{{episodeId}}/archive"
+        hx-vals='{"episodeStream": true}'
+        hx-target="#flash" hx-swap="innerHTML"
+        hx-on::after-request="this.closest('dialog').close()">Archive episode stream (lowest)</button>
+    </div>
+    <p class="text-mute">no resolvable mirrors — only the episode's own player stream is available</p>
+    {{else}}
+    <p class="py-8 text-center text-mute">no resolvable mirrors for this episode</p>
+    {{/if}}
+    {{/if}}
+  </div>
+</dialog>

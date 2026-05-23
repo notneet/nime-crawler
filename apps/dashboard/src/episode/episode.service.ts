@@ -93,13 +93,43 @@ export class EpisodeService {
     return { episode, mirrors, downloads, mirrorsTotal, downloadsTotal, player, archives };
   }
 
-  async archive(id: number): Promise<{ ok: boolean; message: string }> {
+  async resolvableMirrors(id: number): Promise<{
+    episodeId: number;
+    mirrors: { id: number; quality: string; host: string }[];
+    highest: { id: number; quality: string } | null;
+    lowest: { id: number; quality: string } | null;
+    episodeStreamUrl: string | null;
+  } | null> {
+    const ep = await this.episode.findOneBy({ id });
+    if (!ep) return null;
+    const all = await this.mirror.findBy({ episodeUrl: ep.url });
+    const mirrors = all
+      .filter((m) => m.streamUrl)
+      .sort((a, b) => (parseInt(b.quality, 10) || 0) - (parseInt(a.quality, 10) || 0) || b.id - a.id)
+      .map((m) => ({ id: m.id, quality: m.quality, host: m.host }));
+    // Sorted high→low: first is the highest quality, last is the lowest.
+    const highest = mirrors[0] ? { id: mirrors[0].id, quality: mirrors[0].quality } : null;
+    const last = mirrors.at(-1);
+    const lowest = last ? { id: last.id, quality: last.quality } : null;
+    return { episodeId: ep.id, mirrors, highest, lowest, episodeStreamUrl: ep.streamUrl ?? null };
+  }
+
+  async archive(
+    id: number,
+    opts: { mirrorId?: number; episodeStream?: boolean } = {},
+  ): Promise<{ ok: boolean; message: string }> {
     const ep = await this.episode.findOneBy({ id });
     if (!ep) return { ok: false, message: 'episode not found' };
+    // Resolve the stream URL server-side from the episode (never trust a client URL).
+    let streamUrl: string | undefined;
+    if (opts.episodeStream) {
+      if (!ep.streamUrl) return { ok: false, message: 'episode has no stream url' };
+      streamUrl = ep.streamUrl;
+    }
     await this.amqp.publish(
       EXCHANGES.download,
       routingKey('download', 'episode', ep.source),
-      { episodeId: ep.id, source: ep.source, manual: true } satisfies DownloadJobDto,
+      { episodeId: ep.id, source: ep.source, manual: true, mirrorId: opts.mirrorId, streamUrl } satisfies DownloadJobDto,
     );
     return { ok: true, message: `archive job queued | ${ep.url}` };
   }

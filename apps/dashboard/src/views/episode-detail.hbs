@@ -4,12 +4,13 @@
   <h1 class="max-w-3xl">{{episode.title}}</h1>
   <div class="flex flex-wrap gap-2">
     <button class="btn btn-ghost" hx-post="/episode/{{episode.id}}/recrawl" hx-confirm="Re-crawl this episode from source?" data-confirm-label="Re-crawl" hx-target="#flash" hx-swap="innerHTML">Re-crawl</button>
-    <button class="btn btn-ghost" hx-post="/episode/{{episode.id}}/archive" hx-confirm="Queue archive job for this episode (max + min quality)?" data-confirm-label="Archive" hx-target="#flash" hx-swap="innerHTML">Archive</button>
+    <button class="btn btn-ghost" hx-get="/episode/{{episode.id}}/archive" hx-target="#archive-modal" hx-swap="innerHTML">Archive</button>
     <button class="btn btn-danger" hx-delete="/episode/{{episode.id}}" hx-confirm="Delete this episode?" hx-target="body">Delete</button>
   </div>
 </div>
 
 <div id="flash" class="empty:hidden mb-4"></div>
+<div id="archive-modal"></div>
 
 <div x-data="player('{{#if player}}{{player.id}}{{/if}}')" x-init="init()">
 {{#if player}}

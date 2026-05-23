@@ -113,4 +113,50 @@ describe('EpisodeService', () => {
     expect(res).toEqual({ ok: false, message: 'episode not found' });
     expect(amqp.publish).not.toHaveBeenCalled();
   });
+
+  it('archive with episodeStream resolves the episode stream url server-side', async () => {
+    const e = await seedEpisode();
+    await ds.getRepository(Episode).update(e.id, { streamUrl: 'https://desustream.info/p/9' } as Partial<Episode>);
+    const res = await service.archive(e.id, { episodeStream: true });
+    expect(res.ok).toBe(true);
+    expect(amqp.publish).toHaveBeenCalledWith(EXCHANGES.download, 'download.episode.otakudesu', {
+      episodeId: e.id,
+      source: 'otakudesu',
+      manual: true,
+      mirrorId: undefined,
+      streamUrl: 'https://desustream.info/p/9',
+    });
+  });
+
+  it('archive with episodeStream errors when episode has no stream url', async () => {
+    const e = await seedEpisode();
+    const res = await service.archive(e.id, { episodeStream: true });
+    expect(res).toEqual({ ok: false, message: 'episode has no stream url' });
+    expect(amqp.publish).not.toHaveBeenCalled();
+  });
+
+  it('resolvableMirrors lists only mirrors with a streamUrl, high→low, with highest/lowest', async () => {
+    const e = await seedEpisode();
+    const repo = ds.getRepository(Mirror);
+    await repo.save({ episodeUrl: e.url, quality: '480p', host: 'a', streamUrl: 'https://s/480' } as Mirror);
+    await repo.save({ episodeUrl: e.url, quality: '1080p', host: 'b', streamUrl: 'https://s/1080' } as Mirror);
+    await repo.save({ episodeUrl: e.url, quality: '720p', host: 'c', streamUrl: 'https://s/720' } as Mirror);
+    await repo.save({ episodeUrl: e.url, quality: '720p', host: 'd', streamUrl: null } as unknown as Mirror);
+    const res = await service.resolvableMirrors(e.id);
+    expect(res?.mirrors.map((m) => m.quality)).toEqual(['1080p', '720p', '480p']);
+    expect(res?.highest?.quality).toBe('1080p');
+    expect(res?.lowest?.quality).toBe('480p');
+  });
+
+  it('resolvableMirrors highest/lowest are null when no resolvable mirrors', async () => {
+    const e = await seedEpisode();
+    const res = await service.resolvableMirrors(e.id);
+    expect(res?.mirrors).toHaveLength(0);
+    expect(res?.highest).toBeNull();
+    expect(res?.lowest).toBeNull();
+  });
+
+  it('resolvableMirrors returns null for missing episode', async () => {
+    expect(await service.resolvableMirrors(999)).toBeNull();
+  });
 });

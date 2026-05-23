@@ -1,4 +1,5 @@
 import { Injectable, Logger, UseInterceptors } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DataSource, QueryDeepPartialEntity } from 'typeorm';
 import { AmqpConnection, Nack, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { EXCHANGES, routingKey } from '@libs/commons/messaging/exchanges';
@@ -12,12 +13,16 @@ import { ResultMapper } from './result.mapper';
 export class ResultStoreService {
   private readonly logger = new Logger(ResultStoreService.name);
   private writeChain: Promise<unknown> = Promise.resolve();
+  private readonly autoArchive: boolean;
 
   constructor(
     private readonly dataSource: DataSource,
     private readonly mapper: ResultMapper,
     private readonly amqp: AmqpConnection,
-  ) {}
+    cfg: ConfigService,
+  ) {
+    this.autoArchive = cfg.get<string>('DOWNLOADER_AUTO_TRIGGER', 'false') === 'true';
+  }
 
   @UseInterceptors(TimingInterceptor)
   @RabbitSubscribe({
@@ -76,7 +81,7 @@ export class ResultStoreService {
 
       this.logger.log(`[${result.source}/${result.stage}] stored: ${result.url}`);
 
-      if (m.episode && m.downloads?.length) {
+      if (this.autoArchive && m.episode && m.downloads?.length) {
         const epData = m.episode;
         const ep = await this.dataSource.getRepository(Episode).findOneBy({
           source: epData.source,

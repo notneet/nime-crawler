@@ -5,18 +5,22 @@
   <span class="pill">{{pager.total}} total</span>
 </div>
 
+<div id="flash" class="empty:hidden mb-4"></div>
+<div id="archive-modal"></div>
+
 <div class="card overflow-hidden">
   <table class="tbl">
-    <thead><tr><th class="w-20">ID</th><th class="w-28">Number</th><th>Title</th></tr></thead>
+    <thead><tr><th class="w-20">ID</th><th class="w-28">Number</th><th>Title</th><th class="w-28 text-right">Actions</th></tr></thead>
     <tbody>
       {{#each episodes}}
         <tr>
           <td class="text-mute">{{this.id}}</td>
           <td><span class="pill">{{this.number}}</span></td>
           <td><a href="/episode/{{this.id}}" class="font-bold">{{this.title}}</a></td>
+          <td class="text-right"><button class="btn btn-ghost" hx-get="/episode/{{this.id}}/archive" hx-target="#archive-modal" hx-swap="innerHTML">Archive</button></td>
         </tr>
       {{else}}
-        <tr><td colspan="3" class="py-10 text-center text-mute">no episodes</td></tr>
+        <tr><td colspan="4" class="py-10 text-center text-mute">no episodes</td></tr>
       {{/each}}
     </tbody>
   </table>

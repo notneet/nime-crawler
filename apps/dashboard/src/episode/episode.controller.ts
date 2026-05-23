@@ -81,10 +81,25 @@ export class EpisodeController {
     return { ok: true, message: 'Re-crawl queued', layout: false };
   }
 
+  @Get(':id/archive')
+  @Render('partials/archive-chooser')
+  async archiveChooser(@Param('id') id: string) {
+    const data = await this.episode.resolvableMirrors(Number(id));
+    if (!data) throw new NotFoundException('episode not found');
+    return { ...data, layout: false };
+  }
+
   @Post(':id/archive')
   @Render('partials/flash')
-  async archive(@Param('id') id: string) {
-    const res = await this.episode.archive(Number(id));
+  async archive(
+    @Param('id') id: string,
+    @Body('mirrorId') mirrorId?: string,
+    @Body('episodeStream') episodeStream?: string,
+  ) {
+    const res = await this.episode.archive(Number(id), {
+      mirrorId: mirrorId ? Number(mirrorId) : undefined,
+      episodeStream: episodeStream === 'true' || episodeStream === '1',
+    });
     if (!res.ok) throw new NotFoundException(res.message);
     return { ok: true, message: res.message, layout: false };
   }
