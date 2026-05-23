@@ -8,25 +8,28 @@
 <div id="flash" class="empty:hidden mb-4"></div>
 
 {{#if sources.length}}
-  <form class="card max-w-2xl p-6 space-y-4" hx-post="/inject" hx-target="#flash" hx-swap="innerHTML"
+  <form class="card max-w-2xl p-6 space-y-4" x-data="injectForm" x-init="init()"
+    hx-post="/inject" hx-target="#flash" hx-swap="innerHTML"
     hx-confirm="Inject this URL into the crawl pipeline?" data-confirm-label="Inject"
-    hx-on::after-request="if(event.detail.successful) this.reset(); window.injectSyncStages && window.injectSyncStages()">
+    hx-on::after-request="if(event.detail.successful) this.reset()">
     <div class="grid gap-4 sm:grid-cols-2">
       <div>
         <label class="label">Source</label>
-        <select name="source" id="inject-source" class="input" onchange="window.injectSyncStages()">
-          {{#each sources}}<option value="{{this.source}}">{{this.source}}</option>{{/each}}
+        <select name="source" class="input" x-model="source" @change="syncStage()">
+          <template x-for="s in sources" :key="s.source"><option :value="s.source" x-text="s.source"></option></template>
         </select>
       </div>
       <div>
         <label class="label">Stage</label>
-        <select name="stage" id="inject-stage" class="input"></select>
+        <select name="stage" class="input" x-model="stage">
+          <template x-for="st in stages" :key="st"><option :value="st" x-text="st"></option></template>
+        </select>
       </div>
     </div>
     <div>
       <label class="label">URL</label>
-      <input name="url" id="inject-url" class="input" placeholder="https://…" required />
-      <p id="inject-hint" class="mt-1 text-[0.68rem] text-mute"></p>
+      <input name="url" x-ref="url" class="input" placeholder="https://…" required />
+      <p class="mt-1 text-[0.68rem] text-mute" x-text="hint"></p>
     </div>
     <label class="flex w-fit cursor-pointer select-none items-center gap-2.5">
       <input type="checkbox" name="noDiscover" class="check" />
@@ -34,7 +37,7 @@
     </label>
     <div class="flex gap-2">
       <button type="submit" class="btn btn-acid">Inject</button>
-      <button type="button" id="inject-test-btn" class="btn btn-ghost">Test</button>
+      <button type="button" class="btn btn-ghost" @click="test()">Test</button>
     </div>
   </form>
 {{else}}
@@ -60,5 +63,5 @@
 {{> test-result-dialog}}
 
 <script type="application/json" id="inject-sources">{{{sourcesJson}}}</script>
-<script src="/static/js/test-modal.js"></script>
-<script src="/static/js/inject.js"></script>
+<script type="module" src="/static/js/test-modal.mjs"></script>
+<script type="module" src="/static/js/inject.mjs"></script>

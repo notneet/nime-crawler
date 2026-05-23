@@ -10,14 +10,15 @@
 
 <div id="flash" class="empty:hidden mb-4"></div>
 
+<div x-data="player('{{#if player}}{{player.id}}{{/if}}')" x-init="init()">
 {{#if player}}
   <div class="card mb-6 overflow-hidden">
     <div class="flex items-center justify-between border-b border-edge px-4 py-2.5">
       <h2 class="!text-fg">Player</h2>
-      <span id="player-label" class="pill">{{player.quality}} · {{player.host}}</span>
+      <span x-ref="label" class="pill" x-text="label">{{player.quality}} · {{player.host}}</span>
     </div>
     <div class="aspect-video bg-ink">
-      <iframe id="player-frame" src="{{player.streamUrl}}" data-initial="{{player.id}}" class="h-full w-full border-0" allowfullscreen referrerpolicy="no-referrer"></iframe>
+      <iframe x-ref="frame" :src="src" src="{{player.streamUrl}}" class="h-full w-full border-0" allowfullscreen referrerpolicy="no-referrer"></iframe>
     </div>
   </div>
 {{/if}}
@@ -39,11 +40,11 @@
     <thead><tr><th>Quality</th><th>Host</th><th>Stream URL</th><th class="w-20"></th></tr></thead>
     <tbody>
       {{#each mirrors}}
-        <tr data-mirror-id="{{this.id}}">
+        <tr :class="{ 'is-playing': playingId === '{{this.id}}' }">
           <td><span class="pill">{{this.quality}}</span></td>
           <td>{{this.host}}</td>
           <td class="break-all">{{#if this.streamUrl}}<a href="{{this.streamUrl}}" target="_blank" rel="noopener noreferrer">{{this.streamUrl}}</a>{{/if}}</td>
-          <td>{{#if this.streamUrl}}<button type="button" class="btn btn-ghost !px-2.5 !py-1.5 js-play" data-stream="{{this.streamUrl}}" data-quality="{{this.quality}}" data-host="{{this.host}}">Play</button>{{else}}<span class="text-mute">—</span>{{/if}}</td>
+          <td>{{#if this.streamUrl}}<button type="button" class="btn btn-ghost !px-2.5 !py-1.5" :class="{ 'btn-acid': playingId === '{{this.id}}' }" @click="play('{{this.id}}', '{{this.streamUrl}}', '{{this.quality}}', '{{this.host}}')">Play</button>{{else}}<span class="text-mute">—</span>{{/if}}</td>
         </tr>
       {{else}}
         <tr><td colspan="4" class="py-8 text-center text-mute">no mirrors</td></tr>
@@ -52,6 +53,7 @@
   </table>
 </div>
 {{> pager mirrorsPager}}
+</div>
 
 <h2 class="mt-8 mb-3">Downloads <span class="text-mute">/ {{downloadsPager.total}}</span></h2>
 <div class="card overflow-hidden">
@@ -68,4 +70,4 @@
 </div>
 {{> pager downloadsPager}}
 
-<script src="/static/js/episode-player.js"></script>
+<script type="module" src="/static/js/episode-player.mjs"></script>

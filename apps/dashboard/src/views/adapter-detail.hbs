@@ -5,7 +5,8 @@
 {{#if error}}<div class="card mb-4 border-deep p-4 text-deep">{{error}}</div>{{/if}}
 {{#if message}}<div class="card mb-4 p-4">{{message}}</div>{{/if}}
 
-<form class="card p-6 space-y-4" method="post" action="{{#if isNew}}/adapter{{else}}/adapter/{{adapter.source}}{{/if}}">
+<form class="card p-6 space-y-4" method="post" action="{{#if isNew}}/adapter{{else}}/adapter/{{adapter.source}}{{/if}}"
+  x-data="stageEditor" x-init="init()" @submit="onSubmit($event)">
   <div class="grid gap-4 sm:grid-cols-2">
     <div>
       <label class="label">Source</label>
@@ -17,23 +18,299 @@
     <input type="checkbox" name="enabled" class="check" {{#if adapter.enabled}}checked{{/if}} />
     <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.22em] text-mute">Enabled</span>
   </label>
+
   <div>
     <div class="mb-1.5 flex items-center justify-between">
       <label class="label !mb-0">Stages</label>
       <div class="flex items-center gap-2">
-        <select id="add-stage-select" class="input !w-auto py-1 text-xs"></select>
-        <button type="button" class="btn btn-ghost" data-act="add-stage">+ stage</button>
+        <select class="input !w-auto py-1 text-xs" x-model="addPick" :disabled="!missing.length">
+          <template x-for="k in missing" :key="k"><option :value="k" x-text="k"></option></template>
+        </select>
+        <button type="button" class="btn btn-ghost" :disabled="!missing.length" @click="addStage()">+ stage</button>
       </div>
     </div>
-    <div id="stage-editor" class="space-y-4"></div>
-    <input type="hidden" name="stages" id="stages-field" />
-    <textarea id="stages-data" hidden>{{stagesJson}}</textarea>
-    <p id="editor-error" class="mt-2 hidden text-xs font-bold text-deep"></p>
+
+    <div class="space-y-4">
+      <template x-for="key in order" :key="key">
+        <section class="card p-4 space-y-3">
+          <!-- stage header -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <button type="button" class="btn btn-ghost" @click="stages[key].__open = !stages[key].__open" x-text="stages[key].__open ? '▾' : '▸'"></button>
+              <span class="pill" x-text="key"></span>
+              <label class="label !mb-0">engine</label>
+              <select class="input" x-model="stages[key].engine" @change="setEngine(stages[key])">
+                <option value="xpath">xpath</option>
+                <option value="browser">browser</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" class="btn btn-ghost" @click="test(stages[key], key)">▶ test</button>
+              <button type="button" class="btn btn-danger" @click="removeStage(key)">✕ remove</button>
+            </div>
+          </div>
+
+          <!-- discover -->
+          <div class="space-y-2" x-show="stages[key].__open">
+            <div class="flex items-center justify-between">
+              <label class="label !mb-0">discover</label>
+              <button type="button" class="btn btn-ghost" @click="addDiscover(stages[key])">+ rule</button>
+            </div>
+            <div class="space-y-2">
+              <template x-for="(d, di) in stages[key].discover" :key="di">
+                <div class="flex items-center gap-2">
+                  <select class="input" x-model="d.stage">
+                    <template x-for="sk in STAGE_KEYS" :key="sk"><option :value="sk" x-text="sk"></option></template>
+                  </select>
+                  <input class="input" placeholder="fromKey" x-model="d.fromKey" />
+                  <button type="button" class="btn btn-ghost" @click="removeDiscover(stages[key], di)">✕</button>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- body -->
+          <div class="stage-body space-y-3" x-show="stages[key].__open">
+            <!-- BROWSER -->
+            <template x-if="stages[key].engine === 'browser'">
+              <div class="space-y-3">
+                <div>
+                  <label class="label">version</label>
+                  <input class="input !w-32" x-model="stages[key].workflow.version" placeholder="1.0" />
+                </div>
+                <div class="flex flex-wrap gap-4">
+                  <label class="flex w-fit cursor-pointer select-none items-center gap-2">
+                    <input type="checkbox" class="check" x-model="stages[key].workflow.interceptResource" />
+                    <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.14em] text-mute">interceptResource</span>
+                  </label>
+                </div>
+                <div class="flex items-center justify-between">
+                  <label class="label !mb-0">actions</label>
+                  <button type="button" class="btn btn-ghost" @click="addAction(stages[key])">+ action</button>
+                </div>
+                <div class="space-y-3">
+                  <template x-for="(a, ai) in stages[key].workflow.actions" :key="a.__k">
+                    <div class="card bg-cream p-3 space-y-2">
+                      <div class="flex items-end gap-2">
+                        <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="a.__open = !a.__open" x-text="a.__open ? '▾' : '▸'"></button>
+                        <span class="flex-1 truncate font-mono text-xs font-bold text-fg" x-show="!a.__open" x-text="summaryOf(a)"></span>
+                        <div class="flex flex-1 items-end gap-2" x-show="a.__open">
+                          <div class="flex-1"><label class="label">id</label><input class="input" x-model="a.id" placeholder="id (optional)" /></div>
+                          <div><label class="label">action</label>
+                            <select class="input" x-model="a.action">
+                              <template x-for="t in actionOptions(a)" :key="t"><option :value="t" x-text="t"></option></template>
+                            </select>
+                          </div>
+                          <div><label class="label">onError</label>
+                            <select class="input" x-model="a.onError">
+                              <template x-for="t in ['', 'continue', 'fail', 'skip']" :key="t"><option :value="t" x-text="t || '(none)'"></option></template>
+                            </select>
+                          </div>
+                        </div>
+                        <button type="button" class="btn btn-danger" @click="removeAction(stages[key], ai)">✕</button>
+                      </div>
+                      <template x-if="a.__open">
+                        <div class="space-y-2">
+                          <div class="flex items-end gap-2">
+                            <div><label class="label">target type</label>
+                              <select class="input" x-model="tgt(a).type"><option>css</option><option>xpath</option></select>
+                            </div>
+                            <div class="flex-1"><label class="label">target value</label>
+                              <input class="input font-mono text-xs" x-model="tgt(a).value" placeholder="selector" />
+                            </div>
+                          </div>
+                          <div><label class="label">value</label>
+                            <textarea class="input font-mono text-xs" rows="2" spellcheck="false" x-model="a.value"></textarea>
+                          </div>
+                          <details class="rounded-none border-2 border-ink/30 p-2">
+                            <summary class="cursor-pointer font-mono text-[0.62rem] uppercase tracking-[0.18em] text-mute">options</summary>
+                            <div class="mt-2 space-y-2">
+                              <div class="flex items-end gap-2">
+                                <div><label class="label">as</label>
+                                  <select class="input" x-model="opts(a).as">
+                                    <template x-for="t in ['', 'text', 'html', 'outerHtml', 'attribute']" :key="t"><option :value="t" x-text="t || '(none)'"></option></template>
+                                  </select>
+                                </div>
+                                <div class="flex-1"><label class="label">attribute</label><input class="input" x-model="opts(a).attribute" placeholder="attribute" /></div>
+                              </div>
+                              <div class="flex items-end gap-2">
+                                <div><label class="label">timeout</label><input type="number" class="input" x-model.number="opts(a).timeout" placeholder="timeout ms" /></div>
+                                <div><label class="label">delay</label><input type="number" class="input" x-model.number="opts(a).delay" placeholder="delay ms" /></div>
+                              </div>
+                              <div class="flex flex-wrap gap-4">
+                                <label class="flex w-fit cursor-pointer select-none items-center gap-2">
+                                  <input type="checkbox" class="check" x-model="opts(a).multiple" />
+                                  <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.14em] text-mute">multiple</span>
+                                </label>
+                              </div>
+                            </div>
+                          </details>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
+            <!-- XPATH -->
+            <template x-if="stages[key].engine !== 'browser'">
+              <div class="space-y-3">
+                <div><label class="label">collect</label><input class="input" x-model="stages[key].collect" placeholder="collect key (optional)" /></div>
+                <div class="flex items-center justify-between">
+                  <label class="label !mb-0">patterns</label>
+                  <button type="button" class="btn btn-ghost" @click="addPattern(stages[key])">+ pattern</button>
+                </div>
+                <div class="space-y-3">
+                  <template x-for="(p, pi) in stages[key].patterns" :key="p.__k">
+                    <div class="card bg-cream p-3 space-y-2">
+                      <div class="flex items-end justify-between gap-2">
+                        <div class="flex-1"><label class="label">key</label><input class="input" x-model="p.key" placeholder="key" /></div>
+                        <div><label class="label">returnType</label>
+                          <select class="input" x-model="p.returnType"><option>text</option><option>rawHTML</option></select>
+                        </div>
+                        <button type="button" class="btn btn-danger" @click="removePattern(stages[key], pi)">✕</button>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <label class="label !mb-0">xpath</label>
+                        <button type="button" class="btn btn-ghost" @click="addXpath(p)">+ xpath</button>
+                      </div>
+                      <div class="space-y-2">
+                        <template x-for="(xp, xi) in p.patterns" :key="xi">
+                          <div class="flex items-center gap-2">
+                            <input class="input font-mono text-xs" x-model="p.patterns[xi]" placeholder="//xpath/expr" />
+                            <button type="button" class="btn btn-ghost" @click="removeXpath(p, xi)">✕</button>
+                          </div>
+                        </template>
+                      </div>
+                      <div class="flex flex-wrap gap-4">
+                        <label class="flex w-fit cursor-pointer select-none items-center gap-2">
+                          <input type="checkbox" class="check" x-model="p.meta.multiple" />
+                          <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.14em] text-mute">multiple</span>
+                        </label>
+                        <label class="flex w-fit cursor-pointer select-none items-center gap-2">
+                          <input type="checkbox" class="check" x-model="p.meta.isContainer" />
+                          <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.14em] text-mute">isContainer</span>
+                        </label>
+                      </div>
+                      <details class="rounded-none border-2 border-ink/30 p-2">
+                        <summary class="cursor-pointer font-mono text-[0.62rem] uppercase tracking-[0.18em] text-mute">advanced meta</summary>
+                        <div class="mt-2 space-y-2">
+                          <div class="flex flex-wrap gap-4">
+                            <label class="flex w-fit cursor-pointer select-none items-center gap-2">
+                              <input type="checkbox" class="check" x-model="p.meta.multiline" />
+                              <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.14em] text-mute">multiline</span>
+                            </label>
+                            <label class="flex w-fit cursor-pointer select-none items-center gap-2">
+                              <input type="checkbox" class="check" x-model="p.meta.isPage" />
+                              <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.14em] text-mute">isPage</span>
+                            </label>
+                          </div>
+                          <div class="flex items-center justify-between">
+                            <label class="label !mb-0">alterPattern</label>
+                            <button type="button" class="btn btn-ghost" @click="addAlter(p)">+ alt</button>
+                          </div>
+                          <div class="space-y-2">
+                            <template x-for="(ap, api) in p.meta.alterPattern" :key="api">
+                              <div class="flex items-center gap-2">
+                                <input class="input font-mono text-xs" x-model="p.meta.alterPattern[api]" placeholder="alt xpath" />
+                                <button type="button" class="btn btn-ghost" @click="removeAlter(p, api)">✕</button>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </details>
+                      <details class="rounded-none border-2 border-ink/30 p-2">
+                        <summary class="cursor-pointer font-mono text-[0.62rem] uppercase tracking-[0.18em] text-mute">pipes</summary>
+                        <div class="mt-2 space-y-2">
+                          <div class="flex flex-wrap gap-4">
+                            <template x-for="f in ['trim', 'decode', 'toLowerCase', 'toUpperCase']" :key="f">
+                              <label class="flex w-fit cursor-pointer select-none items-center gap-2">
+                                <input type="checkbox" class="check" x-model="p.pipes[f]" />
+                                <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.14em] text-mute" x-text="f"></span>
+                              </label>
+                            </template>
+                          </div>
+                          <div><label class="label">merge</label>
+                            <select class="input" x-model="p.pipes.merge">
+                              <template x-for="t in ['', 'true', 'with space', 'with comma']" :key="t"><option :value="t" x-text="t || '(none)'"></option></template>
+                            </select>
+                          </div>
+                          <div class="flex items-center justify-between">
+                            <label class="label !mb-0">replace</label>
+                            <button type="button" class="btn btn-ghost" @click="addReplace(p)">+ replace</button>
+                          </div>
+                          <div class="space-y-2">
+                            <template x-for="(r, ri) in p.pipes.replace" :key="ri">
+                              <div class="flex items-center gap-2">
+                                <input class="input" x-model="r.from" placeholder="from" />
+                                <input class="input" x-model="r.to" placeholder="to" />
+                                <button type="button" class="btn btn-ghost" @click="removeReplace(p, ri)">✕</button>
+                              </div>
+                            </template>
+                          </div>
+                          <div class="flex items-center justify-between">
+                            <label class="label !mb-0">custom pipes</label>
+                            <button type="button" class="btn btn-ghost" @click="addCustom(p)">+ pipe</button>
+                          </div>
+                          <div class="space-y-2">
+                            <template x-for="(c, ci) in p.pipes.custom" :key="c.__k">
+                              <div class="card bg-panel p-2 space-y-2">
+                                <div class="flex items-center gap-2">
+                                  <label class="label !mb-0">type</label>
+                                  <select class="input" x-model="c.type" @change="customChange(c)">
+                                    <template x-for="t in customOptions(c)" :key="t"><option :value="t" x-text="t"></option></template>
+                                  </select>
+                                  <button type="button" class="btn btn-danger" @click="removeCustom(p, ci)">✕</button>
+                                </div>
+                                <template x-if="!CUSTOM_TYPES.includes(c.type)">
+                                  <div><label class="label">raw json</label><textarea class="input font-mono text-xs" rows="3" x-model="c.__cjson"></textarea></div>
+                                </template>
+                                <template x-if="c.type === 'regex'">
+                                  <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                      <label class="label !mb-0">rules</label>
+                                      <button type="button" class="btn btn-ghost" @click="addRule(c)">+ rule</button>
+                                    </div>
+                                    <template x-for="(r, rri) in c.rules" :key="rri">
+                                      <div class="flex items-center gap-2">
+                                        <input class="input font-mono text-xs" x-model="r.pattern" placeholder="pattern" />
+                                        <input class="input" x-model="r.replacement" placeholder="replacement" />
+                                        <input class="input !w-20" x-model="r.flags" placeholder="flags" />
+                                        <button type="button" class="btn btn-ghost" @click="removeRule(c, rri)">✕</button>
+                                      </div>
+                                    </template>
+                                  </div>
+                                </template>
+                                <template x-if="c.type === 'date-format'">
+                                  <div><label class="label">format</label><input class="input" x-model="c.format" placeholder="YYYY-MM-DD" /></div>
+                                </template>
+                                <template x-if="c.type === 'url-resolve'">
+                                  <div><label class="label">baseUrl</label><input class="input" x-model="c.baseUrl" placeholder="https://..." /></div>
+                                </template>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </details>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+        </section>
+      </template>
+    </div>
+
+    <input type="hidden" name="stages" x-ref="field" />
+    <textarea x-ref="data" hidden>{{stagesJson}}</textarea>
+    <p class="mt-2 text-xs font-bold text-deep" x-show="error" x-text="error"></p>
   </div>
   <button type="submit" class="btn btn-acid">Save</button>
 </form>
 
 {{> test-result-dialog}}
 
-<script src="/static/js/test-modal.js"></script>
-<script src="/static/js/adapter-editor.js"></script>
+<script type="module" src="/static/js/test-modal.mjs"></script>
+<script type="module" src="/static/js/adapter-editor.mjs"></script>

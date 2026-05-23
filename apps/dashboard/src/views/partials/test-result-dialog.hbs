@@ -1,15 +1,143 @@
-<dialog id="test-result" class="card fixed left-1/2 top-1/2 m-0 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 p-0 text-fg backdrop:bg-ink/70 backdrop:backdrop-blur-sm">
+<dialog x-data="testModal" x-init="init()" class="card fixed left-1/2 top-1/2 m-0 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 p-0 text-fg backdrop:bg-ink/70 backdrop:backdrop-blur-sm">
   <div class="border-b-2 border-ink px-6 py-4 flex items-center justify-between gap-3">
-    <h2 id="test-title" class="!text-fg">Test result</h2>
+    <h2 class="!text-fg" x-text="title">Test result</h2>
     <div class="flex gap-2">
-      <button type="button" id="test-toggle" class="btn btn-ghost !px-2.5 !py-1.5">Raw JSON</button>
-      <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" onclick="document.getElementById('test-result').close()">Close</button>
+      <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="toggle()" x-text="showingRaw ? 'Table' : 'Raw JSON'">Raw JSON</button>
+      <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="$root.close()">Close</button>
     </div>
   </div>
-  <div id="test-urlbar" class="hidden gap-2 px-6 pt-4 sm:flex">
-    <input id="test-url" class="input" placeholder="https://…" />
-    <button type="button" id="test-run" class="btn btn-acid shrink-0">Run</button>
+  <div class="gap-2 px-6 pt-4 sm:flex" :class="showUrl ? '' : 'hidden'">
+    <input x-ref="url" x-model="url" @keydown.enter.prevent="run(url)" class="input" placeholder="https://…" />
+    <button type="button" class="btn btn-acid shrink-0" :disabled="running" @click="run(url)">Run</button>
   </div>
-  <p id="test-status" class="empty:hidden px-6 pt-4 text-sm text-mute"></p>
-  <div id="test-body" class="max-h-[70vh] overflow-auto px-6 py-5"></div>
+  <p class="px-6 pt-4 text-sm" :class="isError ? 'text-deep' : 'text-mute'" x-show="status" x-text="status"></p>
+
+  <div class="max-h-[70vh] overflow-auto px-6 py-5">
+    <!-- RAW -->
+    <template x-if="showingRaw && result !== null">
+      <pre class="font-mono text-xs whitespace-pre-wrap break-all" x-text="rawText"></pre>
+    </template>
+
+    <!-- TABLE/FIELDS -->
+    <template x-if="!showingRaw && vm">
+      <div>
+        <!-- downloads -->
+        <template x-if="vm.kind === 'downloads'">
+          <div>
+            <p class="mb-3 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-mute" x-text="vm.wrapKey + ' · showing ' + vm.rows.length + ' of ' + vm.total"></p>
+            <table class="tbl">
+              <thead><tr><th>Quality</th><th>Host</th><th>Size</th><th>URL</th></tr></thead>
+              <tbody>
+                <template x-for="(r, i) in vm.rows" :key="i">
+                  <tr>
+                    <td><template x-if="r.quality != null && r.quality !== ''"><span class="pill" x-text="r.quality"></span></template></td>
+                    <td x-text="r.host"></td>
+                    <td class="text-mute" x-text="r.size"></td>
+                    <td class="break-all"><template x-if="isUrl(r.url)"><a :href="r.url" target="_blank" rel="noopener noreferrer" x-text="r.url"></a></template><template x-if="!isUrl(r.url)"><span x-text="r.url"></span></template></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </template>
+
+        <!-- rows -->
+        <template x-if="vm.kind === 'rows'">
+          <div>
+            <p class="mb-3 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-mute" x-text="vm.wrapKey + ' · showing ' + vm.rows.length + ' of ' + vm.total"></p>
+            <table class="tbl">
+              <thead><tr><template x-for="c in vm.cols" :key="c"><th x-text="c"></th></template></tr></thead>
+              <tbody>
+                <template x-for="(row, i) in vm.rows" :key="i">
+                  <tr>
+                    <template x-for="c in vm.cols" :key="c">
+                      <td class="break-all" x-data="{ v: row[c] }">
+                        <template x-if="cellKind(v) === 'url'"><a :href="v" target="_blank" rel="noopener noreferrer" class="block break-all" x-text="v"></a></template>
+                        <template x-if="cellKind(v) === 'scalar'"><span x-text="String(v)"></span></template>
+                        <template x-if="cellKind(v) === 'joined'"><span x-text="joined(v)"></span></template>
+                        <template x-if="cellKind(v) === 'mixed'"><span><template x-for="(x, xi) in v" :key="xi"><span class="block"><template x-if="isUrl(x)"><a :href="x" target="_blank" rel="noopener noreferrer" x-text="x"></a></template><template x-if="!isUrl(x)"><span x-text="x == null ? '' : String(x)"></span></template></span></template></span></template>
+                        <template x-if="cellKind(v) === 'json'"><span x-text="jsonCell(v)"></span></template>
+                      </td>
+                    </template>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </template>
+
+        <!-- links -->
+        <template x-if="vm.kind === 'links'">
+          <div>
+            <div class="mb-3 flex items-center justify-between gap-2">
+              <p class="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-mute" x-text="vm.wrapKey + ' · showing ' + vm.items.length + ' of ' + vm.total"></p>
+              <button type="button" class="btn btn-ghost !px-2 !py-1 !text-[0.6rem]" @click="copy(vm.all.join('\n'), $event)">Copy all</button>
+            </div>
+            <table class="tbl">
+              <thead><tr><th x-text="vm.wrapKey"></th><th class="w-16"></th></tr></thead>
+              <tbody>
+                <template x-for="(v, i) in vm.items" :key="i">
+                  <tr>
+                    <td class="break-all"><template x-if="isUrl(v)"><a :href="v" target="_blank" rel="noopener noreferrer" class="block break-all" x-text="v"></a></template><template x-if="!isUrl(v)"><span x-text="String(v)"></span></template></td>
+                    <td><button type="button" class="btn btn-ghost !px-2 !py-1 !text-[0.6rem]" @click="copy(String(v), $event)">Copy</button></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </template>
+
+        <!-- fields -->
+        <template x-if="vm.kind === 'fields'">
+          <table class="tbl">
+            <tbody>
+              <template x-for="f in vm.fields" :key="f.key">
+                <tr>
+                  <td class="border-b border-ink/15 px-3 py-2.5 align-top break-all font-mono text-mute whitespace-nowrap" x-text="f.key"></td>
+                  <td class="border-b border-ink/15 px-3 py-2.5 align-top break-all" x-data="{ k: f.key, v: f.value }">
+                    <template x-if="fieldKind(k, v) === 'image'"><img :src="v" loading="lazy" referrerpolicy="no-referrer" class="max-h-48 border-2 border-ink bg-blush object-cover" /></template>
+                    <template x-if="fieldKind(k, v) === 'downloads'">
+                      <table class="tbl">
+                        <thead><tr><th>Quality</th><th>Host</th><th>Size</th><th>URL</th></tr></thead>
+                        <tbody>
+                          <template x-for="(r, i) in fieldDownloads(v)" :key="i">
+                            <tr><td><template x-if="r.quality"><span class="pill" x-text="r.quality"></span></template></td><td x-text="r.host"></td><td class="text-mute" x-text="r.size"></td><td class="break-all"><a :href="r.url" target="_blank" rel="noopener noreferrer" x-text="r.url"></a></td></tr>
+                          </template>
+                        </tbody>
+                      </table>
+                    </template>
+                    <template x-if="fieldKind(k, v) === 'rows'">
+                      <table class="tbl">
+                        <thead><tr><template x-for="c in rowCols(v)" :key="c"><th x-text="c"></th></template></tr></thead>
+                        <tbody>
+                          <template x-for="(row, i) in v" :key="i">
+                            <tr><template x-for="c in rowCols(v)" :key="c"><td class="break-all" x-text="row[c] == null ? '' : (typeof row[c] === 'object' ? JSON.stringify(row[c]) : String(row[c]))"></td></template></tr>
+                          </template>
+                        </tbody>
+                      </table>
+                    </template>
+                    <template x-if="fieldKind(k, v) === 'urls'">
+                      <span><template x-for="(x, xi) in v" :key="xi"><span class="block"><template x-if="isUrl(x)"><a :href="x" target="_blank" rel="noopener noreferrer" x-text="x"></a></template><template x-if="!isUrl(x)"><span x-text="x == null ? '' : String(x)"></span></template></span></template></span>
+                    </template>
+                    <template x-if="fieldKind(k, v) === 'pills'">
+                      <span><template x-for="(x, xi) in v" :key="xi"><span class="pill mb-1 mr-1 inline-block" x-text="String(x)"></span></template></span>
+                    </template>
+                    <template x-if="fieldKind(k, v) === 'cell'">
+                      <span>
+                        <template x-if="cellKind(v) === 'url'"><a :href="v" target="_blank" rel="noopener noreferrer" class="block break-all" x-text="v"></a></template>
+                        <template x-if="cellKind(v) === 'scalar'"><span x-text="String(v)"></span></template>
+                        <template x-if="cellKind(v) === 'joined'"><span x-text="joined(v)"></span></template>
+                        <template x-if="cellKind(v) === 'json'"><span x-text="jsonCell(v)"></span></template>
+                        <template x-if="cellKind(v) === 'empty'"><span></span></template>
+                      </span>
+                    </template>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </template>
+      </div>
+    </template>
+  </div>
 </dialog>
