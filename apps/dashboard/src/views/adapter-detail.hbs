@@ -13,7 +13,10 @@
     </div>
     <div><label class="label">Base URL</label><input name="baseUrl" value="{{adapter.baseUrl}}" class="input" required /></div>
   </div>
-  <label class="flex items-center gap-2"><input type="checkbox" name="enabled" {{#if adapter.enabled}}checked{{/if}} /> Enabled</label>
+  <label class="flex w-fit cursor-pointer select-none items-center gap-2.5">
+    <input type="checkbox" name="enabled" class="check" {{#if adapter.enabled}}checked{{/if}} />
+    <span class="font-mono text-[0.62rem] font-bold uppercase tracking-[0.22em] text-mute">Enabled</span>
+  </label>
   <div>
     <label class="label">Stages (JSON)</label>
     <textarea name="stages" rows="24" class="input font-mono text-xs" spellcheck="false">{{stagesJson}}</textarea>
