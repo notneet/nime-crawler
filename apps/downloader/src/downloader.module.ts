@@ -2,20 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { buildRabbitConfig } from '@libs/commons';
-import {
-  Anime,
-  Genre,
-  AnimeGenre,
-  Episode,
-  Mirror,
-  DownloadLink,
-  DownloadArchive,
-  Adapter,
-} from '@libs/commons/entities';
-import { ResultMapper } from './result.mapper';
-import { ResultStoreService } from './result-store.service';
-import { AdapterSeedService } from './adapter-seed.service';
+import { buildRabbitConfig, S3Module } from '@libs/commons';
+import { Anime, Episode, DownloadLink, DownloadArchive } from '@libs/commons/entities';
+import { ArchiveModule } from './archive/archive.module';
 
 @Module({
   imports: [
@@ -26,18 +15,19 @@ import { AdapterSeedService } from './adapter-seed.service';
       useFactory: (cfg: ConfigService) => ({
         type: 'better-sqlite3',
         database: cfg.get<string>('SQLITE_PATH', 'data/results.sqlite'),
-        entities: [Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink, DownloadArchive, Adapter],
+        entities: [Anime, Episode, DownloadLink, DownloadArchive],
         synchronize: cfg.get<string>('NODE_ENV') === 'development',
       }),
     }),
-    TypeOrmModule.forFeature([Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink, DownloadArchive, Adapter]),
+    TypeOrmModule.forFeature([Anime, Episode, DownloadLink, DownloadArchive]),
     RabbitMQModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (cfg: ConfigService) =>
         buildRabbitConfig(cfg.get<string>('RMQ_URI', 'amqp://guest:guest@localhost:5672')),
     }),
+    S3Module,
+    ArchiveModule,
   ],
-  providers: [ResultStoreService, ResultMapper, AdapterSeedService],
 })
-export class ResultStoreModule {}
+export class DownloaderModule {}

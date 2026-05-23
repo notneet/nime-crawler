@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { ParsedResultDto } from '@libs/commons/messaging/parsed-result.dto';
 import { Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
 import { ResultMapper } from './result.mapper';
@@ -7,6 +8,7 @@ import { ResultStoreService } from './result-store.service';
 describe('ResultStoreService', () => {
   let dataSource: DataSource;
   let service: ResultStoreService;
+  let amqp: { publish: jest.Mock };
 
   beforeEach(async () => {
     dataSource = new DataSource({
@@ -16,7 +18,12 @@ describe('ResultStoreService', () => {
       synchronize: true,
     });
     await dataSource.initialize();
-    service = new ResultStoreService(dataSource, new ResultMapper());
+    amqp = { publish: jest.fn() };
+    service = new ResultStoreService(
+      dataSource,
+      new ResultMapper(),
+      amqp as unknown as AmqpConnection,
+    );
   });
 
   afterEach(async () => {
@@ -128,5 +135,39 @@ describe('ResultStoreService', () => {
 
     const downloads = await dataSource.getRepository(DownloadLink).find();
     expect(downloads).toHaveLength(2);
+  });
+
+  it('episode with downloads: publishes a download job once with episodeId/source', async () => {
+    await service.handle(episodeResult());
+
+    const ep = await dataSource.getRepository(Episode).findOneBy({
+      source: 'otakudesu',
+      url: 'https://otakudesu.blog/episode/foo-episode-11/',
+    });
+    expect(ep).not.toBeNull();
+
+    expect(amqp.publish).toHaveBeenCalledTimes(1);
+    expect(amqp.publish).toHaveBeenCalledWith('anime.download', 'download.episode.otakudesu', {
+      episodeId: ep!.id,
+      source: 'otakudesu',
+    });
+  });
+
+  it('episode without downloads: does not publish a download job', async () => {
+    const result: ParsedResultDto = {
+      source: 'otakudesu',
+      stage: 'episode',
+      url: 'https://otakudesu.blog/episode/foo-episode-12/',
+      data: { title: 'Episode 12' },
+    };
+    await service.handle(result);
+
+    expect(amqp.publish).not.toHaveBeenCalled();
+  });
+
+  it('non-episode result: does not publish a download job', async () => {
+    await service.handle(detailResult());
+
+    expect(amqp.publish).not.toHaveBeenCalled();
   });
 });

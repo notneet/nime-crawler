@@ -9,6 +9,7 @@ describe('EpisodeController', () => {
   const episodeService = {
     detail: jest.fn(),
     update: jest.fn(),
+    archive: jest.fn(),
     remove: jest.fn(),
     deleteMirror: jest.fn(),
     deleteDownload: jest.fn(),
@@ -22,7 +23,7 @@ describe('EpisodeController', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('detail returns the view-model with mirror and download pagers', async () => {
-    const detail = { episode: { id: 1 } as Episode, mirrors: [], downloads: [], mirrorsTotal: 25, downloadsTotal: 4, player: null };
+    const detail = { episode: { id: 1 } as Episode, mirrors: [], downloads: [], mirrorsTotal: 25, downloadsTotal: 4, player: null, archives: [] };
     episodeService.detail.mockResolvedValue(detail);
     const vm = await controller.detail('1', '2', '10', '1', '20');
     expect(episodeService.detail).toHaveBeenCalledWith(1, 2, 10, 1, 20);
@@ -48,6 +49,18 @@ describe('EpisodeController', () => {
     const vm = await controller.recrawl('1');
     expect(recrawl.episode).toHaveBeenCalledWith('otakudesu', 'https://e/1');
     expect(vm).toEqual({ ok: true, message: 'Re-crawl queued', layout: false });
+  });
+
+  it('archive queues a job and returns ok flash', async () => {
+    episodeService.archive.mockResolvedValue({ ok: true, message: 'archive job queued | https://e/1' });
+    const vm = await controller.archive('1');
+    expect(episodeService.archive).toHaveBeenCalledWith(1);
+    expect(vm).toEqual({ ok: true, message: 'archive job queued | https://e/1', layout: false });
+  });
+
+  it('archive throws 404 when episode missing', async () => {
+    episodeService.archive.mockResolvedValue({ ok: false, message: 'episode not found' });
+    await expect(controller.archive('9')).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('deleteMirror deletes and returns empty body', async () => {

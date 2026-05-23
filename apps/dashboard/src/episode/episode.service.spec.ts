@@ -1,10 +1,13 @@
 import { DataSource, Repository } from 'typeorm';
-import { Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
+import type { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink, DownloadArchive } from '@libs/commons/entities';
+import { EXCHANGES } from '@libs/commons/messaging/exchanges';
 import { EpisodeService } from './episode.service';
 
 describe('EpisodeService', () => {
   let ds: DataSource;
   let service: EpisodeService;
+  let amqp: { publish: jest.Mock };
 
   beforeEach(async () => {
     ds = new DataSource({
@@ -14,10 +17,13 @@ describe('EpisodeService', () => {
       synchronize: true,
     });
     await ds.initialize();
+    amqp = { publish: jest.fn() };
     service = new EpisodeService(
       ds.getRepository(Episode),
       ds.getRepository(Mirror),
       ds.getRepository(DownloadLink),
+      { findBy: jest.fn().mockResolvedValue([]) } as unknown as Repository<DownloadArchive>,
+      amqp as unknown as AmqpConnection,
     );
   });
 
@@ -88,5 +94,23 @@ describe('EpisodeService', () => {
 
   it('deleteDownload returns false for missing id', async () => {
     expect(await service.deleteDownload(999)).toBe(false);
+  });
+
+  it('archive publishes a download job and returns ok', async () => {
+    const e = await seedEpisode();
+    const res = await service.archive(e.id);
+    expect(amqp.publish).toHaveBeenCalledTimes(1);
+    expect(amqp.publish).toHaveBeenCalledWith(EXCHANGES.download, 'download.episode.otakudesu', {
+      episodeId: e.id,
+      source: 'otakudesu',
+      manual: true,
+    });
+    expect(res.ok).toBe(true);
+  });
+
+  it('archive returns not-found and does not publish for missing id', async () => {
+    const res = await service.archive(999);
+    expect(res).toEqual({ ok: false, message: 'episode not found' });
+    expect(amqp.publish).not.toHaveBeenCalled();
   });
 });

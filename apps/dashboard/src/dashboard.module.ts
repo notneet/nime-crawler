@@ -10,6 +10,7 @@ import {
   Episode,
   Mirror,
   DownloadLink,
+  DownloadArchive,
   Adapter,
 } from '@libs/commons/entities';
 import { buildRabbitConfig } from '@libs/commons/rabbit/rabbit.config';
@@ -36,7 +37,7 @@ import { AdapterModule } from './adapter/adapter.module';
       useFactory: (cfg: ConfigService) => ({
         type: 'better-sqlite3' as const,
         database: cfg.get<string>('SQLITE_PATH', 'data/results.sqlite'),
-        entities: [Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink, Adapter],
+        entities: [Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink, DownloadArchive, Adapter],
         // result-store owns schema creation; the dashboard never alters it.
         synchronize: false,
         // WAL lets the dashboard read/write while the worker writes concurrently.
@@ -45,7 +46,7 @@ import { AdapterModule } from './adapter/adapter.module';
         },
       }),
     }),
-    TypeOrmModule.forFeature([Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink, Adapter]),
+    TypeOrmModule.forFeature([Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink, DownloadArchive, Adapter]),
     RabbitMQModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

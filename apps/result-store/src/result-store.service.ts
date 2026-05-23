@@ -1,8 +1,9 @@
 import { Injectable, Logger, UseInterceptors } from '@nestjs/common';
 import { DataSource, QueryDeepPartialEntity } from 'typeorm';
-import { Nack, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { EXCHANGES } from '@libs/commons/messaging/exchanges';
+import { AmqpConnection, Nack, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
+import { EXCHANGES, routingKey } from '@libs/commons/messaging/exchanges';
 import { ParsedResultDto } from '@libs/commons/messaging/parsed-result.dto';
+import { DownloadJobDto } from '@libs/commons/messaging/download-job.dto';
 import { TimingInterceptor } from '@libs/commons/interceptors/timing/timing.interceptor';
 import { Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
 import { ResultMapper } from './result.mapper';
@@ -15,6 +16,7 @@ export class ResultStoreService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly mapper: ResultMapper,
+    private readonly amqp: AmqpConnection,
   ) {}
 
   @UseInterceptors(TimingInterceptor)
@@ -73,6 +75,21 @@ export class ResultStoreService {
       });
 
       this.logger.log(`[${result.source}/${result.stage}] stored: ${result.url}`);
+
+      if (m.episode && m.downloads?.length) {
+        const epData = m.episode;
+        const ep = await this.dataSource.getRepository(Episode).findOneBy({
+          source: epData.source,
+          url: epData.url,
+        });
+        if (ep) {
+          await this.amqp.publish(
+            EXCHANGES.download,
+            routingKey('download', 'episode', epData.source),
+            { episodeId: ep.id, source: epData.source } satisfies DownloadJobDto,
+          );
+        }
+      }
     } catch (err) {
       this.logger.error(
         `store failed for ${result.source}/${result.stage}: ${(err as Error).message}`,

@@ -37,6 +37,15 @@
         "tsConfigPath": "apps/dashboard/tsconfig.app.json"
       }
     },
+    "downloader": {
+      "type": "application",
+      "root": "apps/downloader",
+      "entryFile": "main",
+      "sourceRoot": "apps/downloader/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/downloader/tsconfig.app.json"
+      }
+    },
     "result-sink": {
       "type": "application",
       "root": "apps/result-sink",

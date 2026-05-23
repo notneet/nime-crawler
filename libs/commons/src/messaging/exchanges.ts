@@ -2,13 +2,14 @@ export const EXCHANGES = {
   crawl: 'anime.crawl',
   parsed: 'anime.parsed',
   results: 'anime.results',
+  download: 'anime.download',
   dlx: 'anime.crawl.dlx',
 } as const;
 
 export const STAGES = ['index', 'detail', 'episode', 'batch'] as const;
 export type Stage = (typeof STAGES)[number];
 
-export type RoutingPrefix = 'crawl' | 'parsed' | 'result';
+export type RoutingPrefix = 'crawl' | 'parsed' | 'result' | 'download';
 
 export function routingKey(prefix: RoutingPrefix, stage: Stage, site: string): string {
   return `${prefix}.${stage}.${site}`;

@@ -10,6 +10,7 @@ export function buildRabbitConfig(uri: string): RabbitMQConfig {
       { name: EXCHANGES.crawl, type: 'topic' },
       { name: EXCHANGES.parsed, type: 'topic' },
       { name: EXCHANGES.results, type: 'topic' },
+      { name: EXCHANGES.download, type: 'topic' },
       { name: EXCHANGES.dlx, type: 'topic' },
     ],
   };

@@ -15,12 +15,14 @@
     "start:store": "nest start result-store",
     "start:control": "nest start control",
     "start:dashboard": "nest start dashboard",
+    "start:downloader": "nest start downloader",
     "start:scheduler:dev": "nest start scheduler --watch",
     "start:worker:dev": "nest start scraper-worker --watch",
     "start:sink:dev": "nest start result-sink --watch",
     "start:store:dev": "nest start result-store --watch",
     "start:control:dev": "nest start control --watch",
     "start:dashboard:dev": "nest start dashboard --watch",
+    "start:downloader:dev": "nest start downloader --watch",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/control/main",
@@ -32,6 +34,8 @@
     "test:e2e": "jest --config ./apps/control/test/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1052.0",
+    "@aws-sdk/lib-storage": "^3.1052.0",
     "@golevelup/nestjs-rabbitmq": "^9.0.2",
     "@hanivanrizky/nestjs-browser-action": "^0.11.0",
     "@hanivanrizky/nestjs-xpath-parser": "^0.3.1",

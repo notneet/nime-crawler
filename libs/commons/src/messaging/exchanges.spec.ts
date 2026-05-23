@@ -5,6 +5,7 @@ describe('messaging/exchanges', () => {
     expect(EXCHANGES.crawl).toBe('anime.crawl');
     expect(EXCHANGES.parsed).toBe('anime.parsed');
     expect(EXCHANGES.results).toBe('anime.results');
+    expect(EXCHANGES.download).toBe('anime.download');
     expect(EXCHANGES.dlx).toBe('anime.crawl.dlx');
   });
 

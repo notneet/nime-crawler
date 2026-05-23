@@ -4,6 +4,7 @@
   <h1 class="max-w-3xl">{{episode.title}}</h1>
   <div class="flex flex-wrap gap-2">
     <button class="btn btn-ghost" hx-post="/episode/{{episode.id}}/recrawl" hx-confirm="Re-crawl this episode from source?" data-confirm-label="Re-crawl" hx-target="#flash" hx-swap="innerHTML">Re-crawl</button>
+    <button class="btn btn-ghost" hx-post="/episode/{{episode.id}}/archive" hx-confirm="Queue archive job for this episode (max + min quality)?" data-confirm-label="Archive" hx-target="#flash" hx-swap="innerHTML">Archive</button>
     <button class="btn btn-danger" hx-delete="/episode/{{episode.id}}" hx-confirm="Delete this episode?" hx-target="body">Delete</button>
   </div>
 </div>
@@ -69,5 +70,25 @@
   </table>
 </div>
 {{> pager downloadsPager}}
+
+<h2 class="mt-8 mb-3">Archives <span class="text-mute">/ {{archives.length}}</span></h2>
+<div class="card overflow-hidden">
+  <table class="tbl">
+    <thead><tr><th>Quality</th><th>Status</th><th>Size</th><th>S3 Key</th><th>Error</th></tr></thead>
+    <tbody>
+      {{#each archives}}
+        <tr>
+          <td><span class="pill">{{this.quality}}</span></td>
+          <td>{{this.status}}</td>
+          <td class="text-mute">{{this.sizeHuman}}</td>
+          <td class="break-all">{{this.s3Key}}</td>
+          <td class="text-deep">{{this.error}}</td>
+        </tr>
+      {{else}}
+        <tr><td colspan="5" class="py-8 text-center text-mute">no archives</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
 
 <script type="module" src="/static/js/episode-player.mjs"></script>

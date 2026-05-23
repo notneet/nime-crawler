@@ -1,8 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryDeepPartialEntity, Repository } from 'typeorm';
-import { Episode, Mirror, DownloadLink } from '@libs/commons/entities';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { Episode, Mirror, DownloadLink, DownloadArchive } from '@libs/commons/entities';
+import { EXCHANGES, routingKey } from '@libs/commons/messaging/exchanges';
+import { DownloadJobDto } from '@libs/commons/messaging/download-job.dto';
 import { DEFAULT_LIMIT } from '../common/pagination';
+
+export interface ArchiveView {
+  quality: string;
+  status: string;
+  sizeHuman: string;
+  s3Key: string;
+  error: string;
+}
 
 export interface EpisodeDetail {
   episode: Episode;
@@ -11,6 +22,19 @@ export interface EpisodeDetail {
   mirrorsTotal: number;
   downloadsTotal: number;
   player: Mirror | null;
+  archives: ArchiveView[];
+}
+
+function humanBytes(n: number | null): string {
+  if (n === null || !Number.isFinite(n) || n <= 0) return '';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let v = n;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${v.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
 function pickBestMirror(mirrors: Mirror[]): Mirror | null {
@@ -31,6 +55,8 @@ export class EpisodeService {
     @InjectRepository(Episode) private readonly episode: Repository<Episode>,
     @InjectRepository(Mirror) private readonly mirror: Repository<Mirror>,
     @InjectRepository(DownloadLink) private readonly download: Repository<DownloadLink>,
+    @InjectRepository(DownloadArchive) private readonly archiveRepo: Repository<DownloadArchive>,
+    private readonly amqp: AmqpConnection,
   ) {}
 
   async detail(
@@ -56,7 +82,26 @@ export class EpisodeService {
     });
     const allMirrors = await this.mirror.findBy({ episodeUrl: episode.url });
     const player = pickBestMirror(allMirrors);
-    return { episode, mirrors, downloads, mirrorsTotal, downloadsTotal, player };
+    const archiveRows = await this.archiveRepo.findBy({ episodeId: episode.id });
+    const archives = archiveRows.map((a) => ({
+      quality: a.quality,
+      status: a.status,
+      sizeHuman: humanBytes(a.sizeBytes ? Number(a.sizeBytes) : null),
+      s3Key: a.s3Key,
+      error: a.error ?? '',
+    }));
+    return { episode, mirrors, downloads, mirrorsTotal, downloadsTotal, player, archives };
+  }
+
+  async archive(id: number): Promise<{ ok: boolean; message: string }> {
+    const ep = await this.episode.findOneBy({ id });
+    if (!ep) return { ok: false, message: 'episode not found' };
+    await this.amqp.publish(
+      EXCHANGES.download,
+      routingKey('download', 'episode', ep.source),
+      { episodeId: ep.id, source: ep.source, manual: true } satisfies DownloadJobDto,
+    );
+    return { ok: true, message: `archive job queued | ${ep.url}` };
   }
 
   async update(id: number, patch: Partial<Episode>): Promise<Episode | null> {

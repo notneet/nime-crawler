@@ -81,6 +81,14 @@ export class EpisodeController {
     return { ok: true, message: 'Re-crawl queued', layout: false };
   }
 
+  @Post(':id/archive')
+  @Render('partials/flash')
+  async archive(@Param('id') id: string) {
+    const res = await this.episode.archive(Number(id));
+    if (!res.ok) throw new NotFoundException(res.message);
+    return { ok: true, message: res.message, layout: false };
+  }
+
   @Delete('mirror/:id')
   @Header('Content-Type', 'text/html')
   async deleteMirror(@Param('id') id: string): Promise<string> {
