@@ -45,6 +45,21 @@ window.TestModal = (function () {
     return a;
   }
 
+  function copyBtn(getText, label) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn btn-ghost !px-2 !py-1 !text-[0.6rem]';
+    b.textContent = label || 'Copy';
+    b.addEventListener('click', function () {
+      var text = typeof getText === 'function' ? getText() : getText;
+      var done = function () { var o = b.textContent; b.textContent = '✓'; setTimeout(function () { b.textContent = o; }, 1200); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () {});
+      }
+    });
+    return b;
+  }
+
   function fillCell(el, v) {
     if (v == null) return;
     if (isUrl(v)) { el.appendChild(anchor(v)); return; }
@@ -139,15 +154,26 @@ window.TestModal = (function () {
     htr.appendChild(th);
     thead.appendChild(htr);
     table.appendChild(thead);
+    var copyTh = document.createElement('th');
+    copyTh.className = 'w-16';
+    htr.appendChild(copyTh);
     var tbody = document.createElement('tbody');
     shown.forEach(function (v) {
       var tr = document.createElement('tr');
       tr.appendChild(cell('td', v));
+      var act = document.createElement('td');
+      act.className = 'border-b border-ink/15 px-3 py-2.5 align-top';
+      act.appendChild(copyBtn(String(v)));
+      tr.appendChild(act);
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
     var frag = document.createDocumentFragment();
-    frag.appendChild(noteEl(wrapKey, shown.length, arr.length));
+    var head = document.createElement('div');
+    head.className = 'mb-3 flex items-center justify-between gap-2';
+    head.appendChild(noteEl(wrapKey, shown.length, arr.length));
+    head.appendChild(copyBtn(function () { return arr.join('\n'); }, 'Copy all'));
+    frag.appendChild(head);
     frag.appendChild(table);
     return frag;
   }
