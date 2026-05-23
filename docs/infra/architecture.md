@@ -16,6 +16,16 @@ A `SiteAdapter` config object declares, per stage, which engine to use and how
 to discover the next stage's URLs. `otakudesu` is the reference adapter
 (`libs/commons/src/adapters/otakudesu.adapter.ts`).
 
+Adapters live in the DB (the `adapter` table), not in code. `result-store` owns
+the schema and seeds otakudesu once from the `otakudesuAdapter` constant on first
+boot; after that the DB is authoritative. Triggers (scheduler, control, dashboard
+re-crawl) read the current adapter via `AdapterService` and embed the **full
+snapshot** into the job. The worker is stateless about adapters — it reads
+`job.adapter` and threads that same snapshot through every discovered next-stage
+job (snapshot-per-cycle: an edit applies on the next trigger, not mid-cascade).
+Adapters are CRUD-editable from the [dashboard](./dashboard.md). See
+[adapters](./adapters.md).
+
 **Freshness skip:** before fetching a `detail`/`episode` page, the worker skips
 it if a stored row for `(source, url)` was updated within `SKIP_FRESH_HOURS`
 (default 72; `0` disables). This avoids re-fetching unchanged leaf pages on every

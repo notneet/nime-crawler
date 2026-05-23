@@ -1,0 +1,22 @@
+<div class="crumb"><a href="/adapter">Adapters</a><span>/</span><span class="text-fg">{{#if isNew}}new{{else}}{{adapter.source}}{{/if}}</span></div>
+
+<h1 class="mb-6">{{#if isNew}}New adapter{{else}}{{adapter.source}}{{/if}}</h1>
+
+{{#if error}}<div class="card mb-4 border-deep p-4 text-deep">{{error}}</div>{{/if}}
+{{#if message}}<div class="card mb-4 p-4">{{message}}</div>{{/if}}
+
+<form class="card p-6 space-y-4" method="post" action="{{#if isNew}}/adapter{{else}}/adapter/{{adapter.source}}{{/if}}">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label class="label">Source</label>
+      <input name="source" value="{{adapter.source}}" class="input" {{#unless isNew}}readonly{{/unless}} required />
+    </div>
+    <div><label class="label">Base URL</label><input name="baseUrl" value="{{adapter.baseUrl}}" class="input" required /></div>
+  </div>
+  <label class="flex items-center gap-2"><input type="checkbox" name="enabled" {{#if adapter.enabled}}checked{{/if}} /> Enabled</label>
+  <div>
+    <label class="label">Stages (JSON)</label>
+    <textarea name="stages" rows="24" class="input font-mono text-xs" spellcheck="false">{{stagesJson}}</textarea>
+  </div>
+  <button type="submit" class="btn btn-acid">Save</button>
+</form>

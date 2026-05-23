@@ -25,10 +25,21 @@ describe('buildNextJobs', () => {
       batchLinks: ['/batch/c/'],
     });
     expect(jobs).toEqual([
-      { source: 'demo', stage: 'episode', url: 'https://demo.test/episode/a/' },
-      { source: 'demo', stage: 'episode', url: 'https://demo.test/episode/b/' },
-      { source: 'demo', stage: 'batch', url: 'https://demo.test/batch/c/' },
+      { source: 'demo', stage: 'episode', url: 'https://demo.test/episode/a/', adapter },
+      { source: 'demo', stage: 'episode', url: 'https://demo.test/episode/b/', adapter },
+      { source: 'demo', stage: 'batch', url: 'https://demo.test/batch/c/', adapter },
     ]);
+  });
+
+  it('stamps the adapter snapshot onto every discovered job', () => {
+    const jobs = buildNextJobs(adapter, 'detail', { episodeLinks: ['/episode/a/'] });
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0].adapter).toBe(adapter);
+    expect(jobs[0]).toMatchObject({
+      source: 'demo',
+      stage: 'episode',
+      url: 'https://demo.test/episode/a/',
+    });
   });
 
   it('returns empty array for a terminal stage (no discover)', () => {

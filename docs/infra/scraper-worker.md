@@ -18,8 +18,9 @@ queue:       anime.crawl.worker   (durable, deadLetterExchange: anime.crawl.dlx)
 
 Per job:
 
-1. Look up the site adapter + stage config. Missing config → `Nack(false)`
-   (dead-letter, no requeue).
+1. Read the adapter snapshot carried in the job (`job.adapter`) and its stage
+   config. The worker holds no registry. Missing/invalid snapshot or missing
+   stage config → `Nack(false)` (dead-letter, no requeue).
 2. **Freshness skip-check** (`detail`/`episode` only). If a row already exists for
    `(source, url)` and was updated within `SKIP_FRESH_HOURS`, skip the fetch and
    ack — no parse, no next-stage jobs, no parsed payload. Jobs with `force: true`

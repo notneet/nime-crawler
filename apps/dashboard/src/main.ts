@@ -19,6 +19,9 @@ async function bootstrap() {
       hbs.handlebars.registerPartial(file.slice(0, -4), readFileSync(join(partialsDir, file), 'utf8'));
     }
   }
+  hbs.handlebars.registerHelper('len', (v: unknown) =>
+    v && typeof v === 'object' ? Object.keys(v as object).length : 0,
+  );
   app.enableShutdownHooks();
   const port = Number(process.env.DASH_PORT ?? 3001);
   await app.listen(port);

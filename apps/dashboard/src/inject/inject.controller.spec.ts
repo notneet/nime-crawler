@@ -11,10 +11,10 @@ describe('InjectController', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  it('page returns sources and a serialized copy for the client', () => {
+  it('page returns sources and a serialized copy for the client', async () => {
     const sources: InjectSource[] = [{ source: 'otakudesu', baseUrl: 'https://o.example', stages: ['detail'] }];
-    injectService.sources.mockReturnValue(sources);
-    const vm = controller.page();
+    injectService.sources.mockResolvedValue(sources);
+    const vm = await controller.page();
     expect(vm.sources).toBe(sources);
     expect(vm.sourcesJson).toBe(JSON.stringify(sources));
   });

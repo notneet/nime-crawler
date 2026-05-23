@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { buildRabbitConfig, EngineModule, SiteRegistry, otakudesuAdapter } from '@libs/commons';
+import { buildRabbitConfig, EngineModule } from '@libs/commons';
 import { Anime, Episode } from '@libs/commons/entities';
 import { WorkerService } from './worker.service';
 
@@ -34,9 +34,6 @@ import { WorkerService } from './worker.service';
       }),
     }),
   ],
-  providers: [
-    WorkerService,
-    { provide: SiteRegistry, useFactory: () => new SiteRegistry([otakudesuAdapter]) },
-  ],
+  providers: [WorkerService],
 })
 export class ScraperWorkerModule {}

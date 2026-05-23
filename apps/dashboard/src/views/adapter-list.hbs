@@ -1,0 +1,28 @@
+<div class="crumb"><span class="text-fg">Adapters</span></div>
+
+<div class="mb-6 flex items-center justify-between">
+  <h1>Adapters</h1>
+  <a href="/adapter/new" class="btn btn-acid !no-underline">New adapter</a>
+</div>
+
+<div class="card overflow-hidden">
+  <table class="tbl">
+    <thead><tr><th>Source</th><th>Base URL</th><th class="w-24">Enabled</th><th class="w-20">Stages</th><th class="w-40"></th></tr></thead>
+    <tbody>
+      {{#each rows}}
+        <tr>
+          <td><a href="/adapter/{{this.source}}">{{this.source}}</a></td>
+          <td class="break-all text-mute">{{this.baseUrl}}</td>
+          <td>{{#if this.enabled}}<span class="pill">on</span>{{else}}<span class="text-mute">off</span>{{/if}}</td>
+          <td class="text-mute">{{len this.stages}}</td>
+          <td class="flex gap-1.5">
+            <button class="btn btn-ghost !px-2.5 !py-1.5" hx-post="/adapter/{{this.source}}/toggle" hx-target="body">Toggle</button>
+            <button class="btn btn-danger !px-2.5 !py-1.5" hx-delete="/adapter/{{this.source}}" hx-confirm="Delete adapter {{this.source}}?" hx-target="body">Del</button>
+          </td>
+        </tr>
+      {{else}}
+        <tr><td colspan="5" class="py-10 text-center text-mute">no adapters</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>

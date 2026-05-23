@@ -1,7 +1,9 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { EXCHANGES, routingKey, SiteRegistry, CrawlJobDto } from '@libs/commons';
+import { AdapterService } from '@libs/commons/adapters/adapter.service';
+import { EXCHANGES, routingKey } from '@libs/commons/messaging/exchanges';
+import type { CrawlJobDto } from '@libs/commons/messaging/crawl-job.dto';
 
 @Injectable()
 export class SchedulerService implements OnApplicationBootstrap {
@@ -9,7 +11,7 @@ export class SchedulerService implements OnApplicationBootstrap {
 
   constructor(
     private readonly amqp: AmqpConnection,
-    private readonly registry: SiteRegistry,
+    private readonly adapters: AdapterService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -18,22 +20,23 @@ export class SchedulerService implements OnApplicationBootstrap {
 
   @Cron(CronExpression.EVERY_30_MINUTES)
   async seedAll(): Promise<void> {
-    const sources = this.registry.enabledSources();
-    this.logger.log(`seeding ${sources.length} enabled site(s): ${sources.join(', ')}`);
-    for (const source of sources) {
-      await this.seedSite(source);
+    const adapters = await this.adapters.enabledAdapters();
+    this.logger.log(
+      `seeding ${adapters.length} enabled site(s): ${adapters.map((a) => a.source).join(', ')}`,
+    );
+    for (const adapter of adapters) {
+      const job: CrawlJobDto = {
+        source: adapter.source,
+        stage: 'index',
+        url: `${adapter.baseUrl}/`,
+        adapter,
+      };
+      await this.amqp.publish(
+        EXCHANGES.crawl,
+        routingKey('crawl', 'index', adapter.source),
+        job,
+      );
+      this.logger.log(`seeded ${adapter.source} index: ${job.url}`);
     }
-  }
-
-  async seedSite(source: string): Promise<void> {
-    const start = Date.now();
-    const adapter = this.registry.getOrThrow(source);
-    const job: CrawlJobDto = {
-      source: adapter.source,
-      stage: 'index',
-      url: `${adapter.baseUrl}/`,
-    };
-    await this.amqp.publish(EXCHANGES.crawl, routingKey('crawl', 'index', source), job);
-    this.logger.log(`seeded ${source} index: ${job.url} (${Date.now() - start}ms)`);
   }
 }

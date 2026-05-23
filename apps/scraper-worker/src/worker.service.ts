@@ -10,7 +10,6 @@ import {
   EngineService,
   EXCHANGES,
   routingKey,
-  SiteRegistry,
   TimingInterceptor,
 } from '@libs/commons';
 import { Anime, Episode } from '@libs/commons/entities';
@@ -23,7 +22,6 @@ export class WorkerService {
   constructor(
     private readonly amqp: AmqpConnection,
     private readonly engine: EngineService,
-    private readonly registry: SiteRegistry,
     private readonly config: ConfigService,
     @InjectRepository(Anime) private readonly animeRepo: Repository<Anime>,
     @InjectRepository(Episode) private readonly episodeRepo: Repository<Episode>,
@@ -66,7 +64,7 @@ export class WorkerService {
   }
 
   async handle(job: CrawlJobDto): Promise<void | Nack> {
-    const adapter = this.registry.get(job.source);
+    const adapter = job.adapter;
     const stageConfig = adapter?.stages[job.stage];
     if (!adapter || !stageConfig) {
       this.logger.error(`no config for ${job.source}/${job.stage}; dead-lettering`);

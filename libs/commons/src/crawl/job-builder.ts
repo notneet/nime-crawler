@@ -21,7 +21,7 @@ export function buildNextJobs(
       const dedupeKey = `${rule.stage}|${url}`;
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
-      jobs.push({ source: adapter.source, stage: rule.stage, url });
+      jobs.push({ source: adapter.source, stage: rule.stage, url, adapter });
     }
   }
   return jobs;

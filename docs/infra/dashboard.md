@@ -32,6 +32,13 @@ DELETE /episode/:id         delete (cascades mirrors by episodeUrl)
 POST   /episode/:id/recrawl publish episode job for episode.url
 DELETE /episode/mirror/:id  delete one mirror (htmx row swap)
 DELETE /episode/download/:id delete one download (htmx row swap)
+GET    /adapter             list adapters
+GET    /adapter/new         create form
+POST   /adapter             create (validates stages JSON)
+GET    /adapter/:source     edit form
+POST   /adapter/:source     update
+DELETE /adapter/:source     delete
+POST   /adapter/:source/toggle  flip enabled
 ```
 
 ## Auth
@@ -83,3 +90,8 @@ re-injects a stage job for an existing URL.
 - Downloads are split by `kind`: `/anime/:id/downloads` shows episode-kind links
   (`ownerUrl` = an episode URL); `/anime/:id/batch` shows batch-kind links
   (`ownerUrl` = the anime URL). Both delete via `DELETE /episode/download/:id`.
+- Adapter `stages` is edited as a raw JSON textarea, validated on save for stage
+  keys (`index|detail|episode|batch`), `engine` (`xpath|browser`), and the shape
+  each engine needs (`xpath` → `patterns` array; `browser` → `workflow` object).
+  Invalid JSON/structure or a duplicate `source` re-renders with a flash error and
+  no DB write. There is no structured workflow builder — see [adapters](./adapters.md).

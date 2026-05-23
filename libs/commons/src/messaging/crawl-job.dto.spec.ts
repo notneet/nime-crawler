@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { CrawlJobDto } from './crawl-job.dto';
@@ -7,14 +8,61 @@ function validate(payload: unknown) {
   return validateSync(dto);
 }
 
+const validAdapter = {
+  source: 'otakudesu',
+  baseUrl: 'https://otakudesu.blog',
+  enabled: true,
+  stages: { detail: { engine: 'xpath', patterns: [] } },
+};
+
 describe('CrawlJobDto', () => {
   it('accepts a valid job', () => {
     const errors = validate({
       source: 'otakudesu',
       stage: 'detail',
       url: 'https://otakudesu.blog/anime/x-sub-indo/',
+      adapter: validAdapter,
     });
     expect(errors).toHaveLength(0);
+  });
+
+  it('accepts a disabled adapter snapshot', () => {
+    const dto = plainToInstance(CrawlJobDto, {
+      source: 'otakudesu',
+      stage: 'detail',
+      url: 'https://otakudesu.blog/anime/x/',
+      adapter: { ...validAdapter, enabled: false },
+    });
+    expect(validateSync(dto)).toHaveLength(0);
+  });
+
+  it('rejects a job whose adapter.baseUrl is not a URL', () => {
+    const dto = plainToInstance(CrawlJobDto, {
+      source: 'otakudesu',
+      stage: 'detail',
+      url: 'https://otakudesu.blog/anime/x/',
+      adapter: { ...validAdapter, baseUrl: 'not-a-url' },
+    });
+    expect(validateSync(dto).length).toBeGreaterThan(0);
+  });
+
+  it('rejects a job whose adapter.enabled is not a boolean', () => {
+    const dto = plainToInstance(CrawlJobDto, {
+      source: 'otakudesu',
+      stage: 'detail',
+      url: 'https://otakudesu.blog/anime/x/',
+      adapter: { ...validAdapter, enabled: 'yes' },
+    });
+    expect(validateSync(dto).length).toBeGreaterThan(0);
+  });
+
+  it('rejects a job with no adapter', () => {
+    const dto = plainToInstance(CrawlJobDto, {
+      source: 'otakudesu',
+      stage: 'detail',
+      url: 'https://otakudesu.blog/anime/x/',
+    });
+    expect(validateSync(dto).length).toBeGreaterThan(0);
   });
 
   it('rejects an unknown stage', () => {

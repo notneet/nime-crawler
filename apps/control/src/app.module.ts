@@ -1,12 +1,25 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { buildRabbitConfig, SiteRegistry, otakudesuAdapter } from '@libs/commons';
+import { buildRabbitConfig, AdapterService } from '@libs/commons';
+import { Adapter } from '@libs/commons/entities';
 import { ControlController } from './control.controller';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (cfg: ConfigService) => ({
+        type: 'better-sqlite3' as const,
+        database: cfg.get<string>('SQLITE_PATH', 'data/results.sqlite'),
+        entities: [Adapter],
+        synchronize: false,
+      }),
+    }),
+    TypeOrmModule.forFeature([Adapter]),
     RabbitMQModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -15,6 +28,6 @@ import { ControlController } from './control.controller';
     }),
   ],
   controllers: [ControlController],
-  providers: [{ provide: SiteRegistry, useFactory: () => new SiteRegistry([otakudesuAdapter]) }],
+  providers: [AdapterService],
 })
 export class AppModule {}

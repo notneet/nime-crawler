@@ -10,25 +10,39 @@ jest.mock('@hanivanrizky/nestjs-browser-action', () => ({
 
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { ControlController } from './control.controller';
-import { SiteRegistry, otakudesuAdapter, EXCHANGES } from '@libs/commons';
+import { EXCHANGES } from '@libs/commons/messaging/exchanges';
+import { otakudesuAdapter } from '@libs/commons/adapters/otakudesu.adapter';
+import type { AdapterService } from '@libs/commons/adapters/adapter.service';
 
 describe('ControlController', () => {
   const amqp = { publish: jest.fn() };
-  const registry = new SiteRegistry([otakudesuAdapter]);
-  const controller = new ControlController(amqp as unknown as AmqpConnection, registry);
+  const adapters = {
+    getOrThrow: jest.fn().mockResolvedValue(otakudesuAdapter),
+  };
+  const controller = new ControlController(
+    amqp as unknown as AmqpConnection,
+    adapters as unknown as AdapterService,
+  );
 
   beforeEach(() => jest.clearAllMocks());
 
-  it('on a crawl.trigger event, publishes an index job for the requested site', async () => {
+  it('publishes an index job carrying the adapter snapshot on trigger', async () => {
     await controller.onTrigger({ source: 'otakudesu' });
     expect(amqp.publish).toHaveBeenCalledWith(
       EXCHANGES.crawl,
       'crawl.index.otakudesu',
-      expect.objectContaining({ source: 'otakudesu', stage: 'index', url: 'https://otakudesu.blog/' }),
+      expect.objectContaining({
+        source: 'otakudesu',
+        stage: 'index',
+        url: 'https://otakudesu.blog/',
+        adapter: otakudesuAdapter,
+      }),
     );
   });
 
-  it('throws for an unknown site', async () => {
+  it('propagates getOrThrow rejection for an unknown site', async () => {
+    adapters.getOrThrow.mockRejectedValueOnce(new Error('unknown site: nope'));
     await expect(controller.onTrigger({ source: 'nope' })).rejects.toThrow(/unknown site/i);
+    expect(amqp.publish).not.toHaveBeenCalled();
   });
 });

@@ -4,7 +4,7 @@ export * from './messaging/parsed-result.dto';
 export * from './messaging/crawl-trigger.dto';
 export * from './adapters/site-adapter.types';
 export * from './adapters/otakudesu.adapter';
-export * from './adapters/site-registry';
+export * from './adapters/adapter.service';
 export * from './pipes/normalize-url.pipe';
 export * from './crawl/job-builder';
 export * from './engine/engine.service';

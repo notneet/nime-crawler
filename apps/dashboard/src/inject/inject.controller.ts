@@ -8,8 +8,8 @@ export class InjectController {
 
   @Get()
   @Render('inject')
-  page() {
-    const sources = this.inject.sources();
+  async page() {
+    const sources = await this.inject.sources();
     return { sources, sourcesJson: JSON.stringify(sources) };
   }
 

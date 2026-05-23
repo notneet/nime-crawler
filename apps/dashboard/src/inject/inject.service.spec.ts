@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { InjectService } from './inject.service';
-import { SiteRegistry } from '@libs/commons/adapters/site-registry';
+import { AdapterService } from '@libs/commons/adapters/adapter.service';
 import { EXCHANGES } from '@libs/commons/messaging/exchanges';
 
 describe('InjectService', () => {
@@ -9,28 +9,31 @@ describe('InjectService', () => {
     source: 'otakudesu',
     baseUrl: 'https://otakudesu.example',
     enabled: true,
-    stages: { detail: {}, episode: {} },
+    stages: {
+      detail: { engine: 'xpath', patterns: [] },
+      episode: { engine: 'xpath', patterns: [] },
+    },
   };
-  const registry = {
-    enabledSources: jest.fn(),
+  const adapters = {
+    enabledAdapters: jest.fn(),
     get: jest.fn(),
     getOrThrow: jest.fn(),
   };
   const amqp = { publish: jest.fn() };
   const service = new InjectService(
-    registry as unknown as SiteRegistry,
+    adapters as unknown as AdapterService,
     amqp as unknown as AmqpConnection,
   );
 
   beforeEach(() => {
     jest.clearAllMocks();
-    registry.enabledSources.mockReturnValue(['otakudesu']);
-    registry.get.mockReturnValue(adapter);
-    registry.getOrThrow.mockReturnValue(adapter);
+    adapters.enabledAdapters.mockResolvedValue([adapter]);
+    adapters.get.mockResolvedValue(adapter);
+    adapters.getOrThrow.mockResolvedValue(adapter);
   });
 
-  it('sources maps enabled adapters to source/baseUrl/stages', () => {
-    expect(service.sources()).toEqual([
+  it('sources maps enabled adapters to source/baseUrl/stages', async () => {
+    expect(await service.sources()).toEqual([
       { source: 'otakudesu', baseUrl: 'https://otakudesu.example', stages: ['detail', 'episode'] },
     ]);
   });
@@ -40,12 +43,17 @@ describe('InjectService', () => {
     expect(amqp.publish).toHaveBeenCalledWith(
       EXCHANGES.crawl,
       'crawl.detail.otakudesu',
-      { source: 'otakudesu', stage: 'detail', url: 'https://otakudesu.example/anime/x' },
+      expect.objectContaining({
+        source: 'otakudesu',
+        stage: 'detail',
+        url: 'https://otakudesu.example/anime/x',
+        adapter,
+      }),
     );
   });
 
   it('rejects an unknown source', async () => {
-    registry.get.mockReturnValue(undefined);
+    adapters.get.mockResolvedValue(undefined);
     await expect(service.inject('nope', 'detail', 'https://nope/x')).rejects.toBeInstanceOf(BadRequestException);
     expect(amqp.publish).not.toHaveBeenCalled();
   });

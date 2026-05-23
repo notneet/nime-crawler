@@ -3,10 +3,17 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import type { Database } from 'better-sqlite3';
-import { Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
+import {
+  Anime,
+  Genre,
+  AnimeGenre,
+  Episode,
+  Mirror,
+  DownloadLink,
+  Adapter,
+} from '@libs/commons/entities';
 import { buildRabbitConfig } from '@libs/commons/rabbit/rabbit.config';
-import { SiteRegistry } from '@libs/commons/adapters/site-registry';
-import { otakudesuAdapter } from '@libs/commons/adapters/otakudesu.adapter';
+import { AdapterService } from '@libs/commons/adapters/adapter.service';
 import { BasicAuthMiddleware } from './auth/basic-auth.middleware';
 import { AnimeService } from './anime/anime.service';
 import { AnimeController } from './anime/anime.controller';
@@ -17,6 +24,7 @@ import { StatsController } from './stats/stats.controller';
 import { RecrawlService } from './recrawl/recrawl.service';
 import { InjectService } from './inject/inject.service';
 import { InjectController } from './inject/inject.controller';
+import { AdapterModule } from './adapter/adapter.module';
 
 @Module({
   imports: [
@@ -27,7 +35,7 @@ import { InjectController } from './inject/inject.controller';
       useFactory: (cfg: ConfigService) => ({
         type: 'better-sqlite3' as const,
         database: cfg.get<string>('SQLITE_PATH', 'data/results.sqlite'),
-        entities: [Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink],
+        entities: [Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink, Adapter],
         // result-store owns schema creation; the dashboard never alters it.
         synchronize: false,
         // WAL lets the dashboard read/write while the worker writes concurrently.
@@ -36,13 +44,14 @@ import { InjectController } from './inject/inject.controller';
         },
       }),
     }),
-    TypeOrmModule.forFeature([Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink]),
+    TypeOrmModule.forFeature([Anime, Genre, AnimeGenre, Episode, Mirror, DownloadLink, Adapter]),
     RabbitMQModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (cfg: ConfigService) =>
         buildRabbitConfig(cfg.get<string>('RMQ_URI', 'amqp://guest:guest@localhost:5672')),
     }),
+    AdapterModule,
   ],
   controllers: [StatsController, AnimeController, EpisodeController, InjectController],
   providers: [
@@ -50,8 +59,8 @@ import { InjectController } from './inject/inject.controller';
     EpisodeService,
     StatsService,
     RecrawlService,
+    AdapterService,
     InjectService,
-    { provide: SiteRegistry, useFactory: () => new SiteRegistry([otakudesuAdapter]) },
   ],
 })
 export class DashboardModule implements NestModule {
