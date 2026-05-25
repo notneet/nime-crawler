@@ -1,4 +1,3 @@
-import { NotFoundException } from '@nestjs/common';
 import type { Response } from 'express';
 import { AnimeController } from './anime.controller';
 import { AnimeService } from './anime.service';
@@ -64,50 +63,63 @@ describe('AnimeController', () => {
     expect(res.render).not.toHaveBeenCalled();
   });
 
-  it('detail throws 404 when missing', async () => {
+  it('detail renders 404 when missing', async () => {
     animeService.detail.mockResolvedValue(null);
-    const res = { render: jest.fn(), redirect: jest.fn() } as unknown as Response;
-    await expect(controller.detail('999', res)).rejects.toBeInstanceOf(NotFoundException);
+    const res = { render: jest.fn(), redirect: jest.fn(), status: jest.fn().mockReturnThis() } as unknown as Response;
+    await controller.detail('999', res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.render).toHaveBeenCalledWith('not-found', expect.any(Object));
   });
 
   it('episodes returns the list view-model with a pager', async () => {
     const data = { anime: { id: 1 } as Anime, episodes: [], total: 12 };
     animeService.episodesOf.mockResolvedValue(data);
-    const vm = await controller.episodes('1', '2', '10');
+    const res = { render: jest.fn(), status: jest.fn().mockReturnThis() } as unknown as Response;
+    await controller.episodes('1', '2', '10', res);
     expect(animeService.episodesOf).toHaveBeenCalledWith(1, 2, 10);
-    expect(vm.anime).toBe(data.anime);
-    expect(vm.pager).toMatchObject({ baseUrl: '/anime/1/episodes', page: 2, limit: 10, total: 12, lastPage: 2 });
+    expect(res.render).toHaveBeenCalledWith('anime-episodes', expect.objectContaining({ anime: data.anime, pager: expect.objectContaining({ baseUrl: '/anime/1/episodes', page: 2, limit: 10, total: 12 }) }));
   });
 
-  it('episodes throws 404 when missing', async () => {
+  it('episodes renders 404 when missing', async () => {
     animeService.episodesOf.mockResolvedValue(null);
-    await expect(controller.episodes('9', '1', '')).rejects.toBeInstanceOf(NotFoundException);
+    const res = { render: jest.fn(), status: jest.fn().mockReturnThis() } as unknown as Response;
+    await controller.episodes('9', '1', '', res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.render).toHaveBeenCalledWith('not-found', expect.any(Object));
   });
 
   it('mirrors returns the list view-model with a pager', async () => {
     const data = { anime: { id: 1 } as Anime, rows: [], total: 3 };
     animeService.mirrorsOf.mockResolvedValue(data);
-    const vm = await controller.mirrors('1', '1', '');
+    const res = { render: jest.fn(), status: jest.fn().mockReturnThis() } as unknown as Response;
+    await controller.mirrors('1', '1', '', res);
     expect(animeService.mirrorsOf).toHaveBeenCalledWith(1, 1, 10);
-    expect(vm.pager).toMatchObject({ baseUrl: '/anime/1/mirrors', total: 3 });
+    expect(res.render).toHaveBeenCalledWith('anime-mirrors', expect.objectContaining({ pager: expect.objectContaining({ baseUrl: '/anime/1/mirrors', total: 3 }) }));
   });
 
-  it('mirrors throws 404 when missing', async () => {
+  it('mirrors renders 404 when missing', async () => {
     animeService.mirrorsOf.mockResolvedValue(null);
-    await expect(controller.mirrors('9', '1', '')).rejects.toBeInstanceOf(NotFoundException);
+    const res = { render: jest.fn(), status: jest.fn().mockReturnThis() } as unknown as Response;
+    await controller.mirrors('9', '1', '', res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.render).toHaveBeenCalledWith('not-found', expect.any(Object));
   });
 
   it('downloads returns the list view-model with a pager', async () => {
     const data = { anime: { id: 1 } as Anime, rows: [], total: 7 };
     animeService.downloadsOf.mockResolvedValue(data);
-    const vm = await controller.downloads('1', '1', '');
+    const res = { render: jest.fn(), status: jest.fn().mockReturnThis() } as unknown as Response;
+    await controller.downloads('1', '1', '', res);
     expect(animeService.downloadsOf).toHaveBeenCalledWith(1, 1, 10);
-    expect(vm.pager).toMatchObject({ baseUrl: '/anime/1/downloads', total: 7 });
+    expect(res.render).toHaveBeenCalledWith('anime-downloads', expect.objectContaining({ pager: expect.objectContaining({ baseUrl: '/anime/1/downloads', total: 7 }) }));
   });
 
-  it('downloads throws 404 when missing', async () => {
+  it('downloads renders 404 when missing', async () => {
     animeService.downloadsOf.mockResolvedValue(null);
-    await expect(controller.downloads('9', '1', '')).rejects.toBeInstanceOf(NotFoundException);
+    const res = { render: jest.fn(), status: jest.fn().mockReturnThis() } as unknown as Response;
+    await controller.downloads('9', '1', '', res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.render).toHaveBeenCalledWith('not-found', expect.any(Object));
   });
 
   it('update returns ok flash', async () => {

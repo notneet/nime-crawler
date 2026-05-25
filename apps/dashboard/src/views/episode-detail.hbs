@@ -23,6 +23,16 @@
       <iframe x-ref="frame" :src="src" src="{{player.streamUrl}}" class="h-full w-full border-0" allowfullscreen referrerpolicy="no-referrer"></iframe>
     </div>
   </div>
+{{else if episode.streamUrl}}
+  <div class="card mb-6 overflow-hidden">
+    <div class="flex items-center justify-between border-b border-edge px-4 py-2.5">
+      <h2 class="!text-fg">Player</h2>
+      <span class="pill">stream</span>
+    </div>
+    <div class="aspect-video bg-ink">
+      <iframe src="{{episode.streamUrl}}" class="h-full w-full border-0" allowfullscreen referrerpolicy="no-referrer"></iframe>
+    </div>
+  </div>
 {{/if}}
 
 <form class="card p-6 space-y-4" hx-post="/episode/{{episode.id}}" hx-target="#flash" hx-swap="innerHTML">

@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   NotFoundException,
   Param,
   Post,
@@ -43,72 +44,69 @@ export class AnimeController {
   @Get(':id')
   async detail(@Param('id') id: string, @Res() res: Response): Promise<void> {
     const detail = await this.anime.detail(Number(id));
-    if (!detail) throw new NotFoundException('anime not found');
-    if (detail.isAlias) {
-      res.redirect(302, `/anime/${detail.anime.id}`);
-      return;
-    }
+    if (!detail) { res.status(HttpStatus.NOT_FOUND).render('not-found', { message: `Anime #${id} not found` }); return; }
+    if (detail.isAlias) { res.redirect(302, `/anime/${detail.anime.id}`); return; }
     res.render('anime-detail', detail);
   }
 
   @Get(':id/episodes')
-  @Render('anime-episodes')
   async episodes(
     @Param('id') id: string,
     @Query('page') pageParam = '1',
     @Query('limit') limitParam = '',
-  ) {
+    @Res() res: Response,
+  ): Promise<void> {
     const page = parsePage(pageParam);
     const limit = parseLimit(limitParam);
     const data = await this.anime.episodesOf(Number(id), page, limit);
-    if (!data) throw new NotFoundException('anime not found');
+    if (!data) { res.status(HttpStatus.NOT_FOUND).render('not-found', { message: `Anime #${id} not found` }); return; }
     const pager = buildPager({ baseUrl: `/anime/${id}/episodes`, page, limit, total: data.total });
-    return { ...data, pager };
+    res.render('anime-episodes', { ...data, pager });
   }
 
   @Get(':id/mirrors')
-  @Render('anime-mirrors')
   async mirrors(
     @Param('id') id: string,
     @Query('page') pageParam = '1',
     @Query('limit') limitParam = '',
-  ) {
+    @Res() res: Response,
+  ): Promise<void> {
     const page = parsePage(pageParam);
     const limit = parseLimit(limitParam);
     const data = await this.anime.mirrorsOf(Number(id), page, limit);
-    if (!data) throw new NotFoundException('anime not found');
+    if (!data) { res.status(HttpStatus.NOT_FOUND).render('not-found', { message: `Anime #${id} not found` }); return; }
     const pager = buildPager({ baseUrl: `/anime/${id}/mirrors`, page, limit, total: data.total });
-    return { ...data, pager };
+    res.render('anime-mirrors', { ...data, pager });
   }
 
   @Get(':id/downloads')
-  @Render('anime-downloads')
   async downloads(
     @Param('id') id: string,
     @Query('page') pageParam = '1',
     @Query('limit') limitParam = '',
-  ) {
+    @Res() res: Response,
+  ): Promise<void> {
     const page = parsePage(pageParam);
     const limit = parseLimit(limitParam);
     const data = await this.anime.downloadsOf(Number(id), page, limit);
-    if (!data) throw new NotFoundException('anime not found');
+    if (!data) { res.status(HttpStatus.NOT_FOUND).render('not-found', { message: `Anime #${id} not found` }); return; }
     const pager = buildPager({ baseUrl: `/anime/${id}/downloads`, page, limit, total: data.total });
-    return { ...data, pager };
+    res.render('anime-downloads', { ...data, pager });
   }
 
   @Get(':id/batch')
-  @Render('anime-batch')
   async batch(
     @Param('id') id: string,
     @Query('page') pageParam = '1',
     @Query('limit') limitParam = '',
-  ) {
+    @Res() res: Response,
+  ): Promise<void> {
     const page = parsePage(pageParam);
     const limit = parseLimit(limitParam);
     const data = await this.anime.batchOf(Number(id), page, limit);
-    if (!data) throw new NotFoundException('anime not found');
+    if (!data) { res.status(HttpStatus.NOT_FOUND).render('not-found', { message: `Anime #${id} not found` }); return; }
     const pager = buildPager({ baseUrl: `/anime/${id}/batch`, page, limit, total: data.total });
-    return { ...data, pager };
+    res.render('anime-batch', { ...data, pager });
   }
 
   @Post(':id')

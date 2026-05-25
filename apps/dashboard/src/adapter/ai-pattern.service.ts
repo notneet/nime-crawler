@@ -28,6 +28,27 @@ export interface AiResult {
 
 const MAX_HTML_LENGTH = 40_000;
 
+const KEEP_ATTRS = ['href', 'src', 'data-src', 'data-href', 'id', 'class', 'type', 'name', 'value'] as const;
+
+const UTILITY_CLASS_RE =
+  /^(?:m[trblxy]?|p[trblxy]?|[wh]|min-[wh]|max-[wh]|flex|grid|col|row|inline|block|hidden|visible|float|clear|text|font|bg|border|rounded|items|justify|content|gap|z|top|left|right|bottom|absolute|relative|fixed|sticky|overflow|cursor|pointer|select|transition|duration|ease|delay|opacity|shadow|ring|outline|space|divide|object|aspect|order|grow|shrink|basis|place|self|leading|tracking|decoration|uppercase|lowercase|capitalize|truncate|whitespace|break|list|table|caption|fill|stroke|sr|sm|md|lg|xl|2xl)-/;
+
+const STAGE_KEY_HINTS: Readonly<Record<string, readonly string[]>> = {
+  index:   ['links'],
+  detail:  ['title', 'titleJP', 'score', 'type', 'status', 'genres', 'episodeLinks', 'batchLinks', 'thumbnailUrl'],
+  episode: ['title', 'animeUrl', 'kategoz', 'streamUrl', 'downloadLabel', 'downloadHosts', 'downloadLinks', 'nextEpisode'],
+  batch:   ['title', 'animeUrl', 'downloadLabel', 'downloadHosts', 'downloadLinks'],
+} as const;
+
+const STAGE_DISCOVER_HINTS: Readonly<Record<string, string>> = {
+  index:   'discover: [{ stage: "detail", fromKey: "links" }]',
+  detail:  'discover: [{ stage: "episode", fromKey: "episodeLinks" }, { stage: "batch", fromKey: "batchLinks" }] — omit rules whose fromKey was not extracted',
+  episode: 'discover: [{ stage: "episode", fromKey: "nextEpisode" }] — only if nextEpisode was extracted',
+  batch:   'discover: []',
+} as const;
+
+const VALID_STAGES = Object.keys(STAGE_KEY_HINTS).join(', ');
+
 const SYSTEM_PROMPT = `You are an expert web scraper. Given an HTML page and a reference stage config from a different anime site (otakudesu), produce a new stage config for the target site.
 
 Rules:
@@ -36,7 +57,9 @@ Rules:
 - Adapt all selectors (XPath, CSS, evaluate JS) to match the target site's actual HTML
 - Preserve pipes, meta, discover, collect, engine, workflow structure from the reference
 - For browser engine stages: keep the same action ids and sequence — only update CSS selectors and evaluate expressions to match the target page
-- XPath patterns must be valid XPath 1.0 expressions targeting the actual HTML provided`;
+- XPath patterns must be valid XPath 1.0 expressions targeting the actual HTML provided
+- Valid discover stage names are: ${VALID_STAGES} — never invent stage names outside this list
+- XPath must NOT target <head> elements — the engine only parses the page body`;
 
 @Injectable()
 export class AiPatternService {
@@ -108,7 +131,7 @@ export class AiPatternService {
     if (typeof html !== 'string' || !html) {
       throw new InternalServerErrorException(`xpath fetch returned no HTML for ${url}`);
     }
-    return this.truncate(html);
+    return this.normalizeHtml(html);
   }
 
   private async fetchHtmlBrowser(url: string): Promise<string> {
@@ -129,22 +152,58 @@ export class AiPatternService {
     if (typeof html !== 'string' || !html) {
       throw new InternalServerErrorException(`browser fetch returned no HTML for ${url}`);
     }
-    return this.truncate(html);
+    return this.normalizeHtml(html);
   }
 
-  private truncate(html: string): string {
+  private filterClasses(val: string): string {
+    return val.split(/\s+/).filter(c => c && !UTILITY_CLASS_RE.test(c)).join(' ');
+  }
+
+  private normalizeHtml(html: string): string {
     const stripped = html
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-    const result = stripped.slice(0, MAX_HTML_LENGTH);
-    this.logger.debug(`truncate original=${html.length} stripped=${stripped.length} kept=${result.length}`);
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, '')
+      .replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
+
+    const normalized = stripped.replace(
+      /<([a-zA-Z][a-zA-Z0-9-]*)(\s[^>]*)?(\/?)>/g,
+      (_match: string, tag: string, attrsRaw: string | undefined, slash: string) => {
+        if (!attrsRaw) return `<${tag}${slash}>`;
+        const parts: string[] = [];
+        for (const attr of KEEP_ATTRS) {
+          const m = attrsRaw.match(new RegExp(`\\b${attr}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>/"']+))`, 'i'));
+          if (!m) continue;
+          const val = (m[1] ?? m[2] ?? m[3] ?? '').trim();
+          if (!val) continue;
+          if (attr === 'class') {
+            const filtered = this.filterClasses(val);
+            if (filtered) parts.push(`class="${filtered}"`);
+          } else {
+            parts.push(`${attr}="${val}"`);
+          }
+        }
+        const attrStr = parts.length ? ' ' + parts.join(' ') : '';
+        return `<${tag}${attrStr}${slash}>`;
+      },
+    );
+
+    const collapsed = normalized.replace(/\s+/g, ' ').trim();
+    const result = collapsed.slice(0, MAX_HTML_LENGTH);
+    this.logger.debug(`normalizeHtml original=${html.length} normalized=${collapsed.length} kept=${result.length}`);
     return result;
   }
 
   private buildMessages(stage: string, html: string, fetchMode: FetchMode = 'xpath'): Array<{ role: 'system' | 'user'; content: string }> {
-    const refStage: StageConfig | undefined = otakudesuAdapter.stages[stage as Stage];
+    let refStage: StageConfig | undefined = otakudesuAdapter.stages[stage as Stage];
+    // When fetchMode is xpath but the reference stage is browser-only, substitute
+    // a xpath-based stage so the AI sees the correct patterns[] structure.
+    if (fetchMode === 'xpath' && refStage?.engine === 'browser') {
+      refStage = otakudesuAdapter.stages['detail' as Stage] ?? otakudesuAdapter.stages['index' as Stage];
+    }
     const ref = refStage
-      ? `REFERENCE (otakudesu ${stage} stage — match this structure exactly):\n${JSON.stringify(refStage, null, 2)}`
+      ? `REFERENCE (otakudesu — match this structure exactly):\n${JSON.stringify(refStage, null, 2)}`
       : `No reference available for stage "${stage}". Produce a sensible StageConfig JSON object.`;
     const engineHint = fetchMode === 'browser'
       ? `\nIMPORTANT: The target site requires a browser engine. Use "engine": "browser". The workflow MUST use this exact structure:
@@ -165,11 +224,19 @@ export class AiPatternService {
   "discover": [{ "stage": "<nextStage>", "fromKey": "<resultKey>" }]
 }
 Use "action": "extract" with CSS selectors for simple data. Use "action": "evaluate" with "value": "() => ..." for complex JS. Each action's "id" becomes the result key. Do NOT use xpath patterns, pipes, or any other structure.`
+      : `\nIMPORTANT: The target site is fetched via plain HTTP (xpath engine). Use "engine": "xpath". Do NOT use "engine": "browser" or any workflow/actions structure — even if the reference uses browser engine. Use xpath patterns and pipes structure only.`;
+
+    const keyHints = STAGE_KEY_HINTS[stage];
+    const discoverHint = STAGE_DISCOVER_HINTS[stage];
+    const keyNote = keyHints
+      ? `\nPREFERRED KEY NAMES for "${stage}" stage: ${keyHints.join(', ')} — use these exact names where applicable.` +
+        (discoverHint ? `\nDISCOVER RULE for "${stage}" stage: ${discoverHint}` : '') +
+        `\nIMPORTANT: For "animeUrl" — breadcrumbs often contain multiple /anime/ links (e.g. a generic /anime/ index AND the specific /anime/slug/ link). Always use [last()] or a condition to target the specific one, not the generic index link.`
       : '';
 
     return [
       { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `Stage: ${stage}${engineHint}\n\n${ref}\n\nTarget HTML:\n${html}` },
+      { role: 'user', content: `Stage: ${stage}${engineHint}${keyNote}\n\n${ref}\n\nTarget HTML:\n${html}` },
     ];
   }
 

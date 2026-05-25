@@ -113,7 +113,7 @@ export function cleanStage(stage0) {
   const stage = stage0 || {};
   const engine = stage.engine || 'xpath';
   const cfg = { engine };
-  const disc = (stage.discover || [])
+  const disc = (Array.isArray(stage.discover) ? stage.discover : [])
     .filter((d) => d && str(d.fromKey).trim())
     .map((d) => ({ stage: d.stage, fromKey: d.fromKey }));
   if (disc.length) cfg.discover = disc;

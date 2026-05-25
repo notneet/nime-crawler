@@ -27,7 +27,7 @@ document.addEventListener('alpine:init', () => {
     get missing() { return STAGE_KEYS.filter((k) => !(k in this.stages)); },
 
     normalize(stage) {
-      stage.discover ||= [];
+      if (!Array.isArray(stage.discover)) stage.discover = [];
       if (stage.engine === 'browser') {
         stage.workflow ||= { version: '1.0', actions: [] };
         stage.workflow.actions ||= [];
