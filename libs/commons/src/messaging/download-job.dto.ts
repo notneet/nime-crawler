@@ -6,4 +6,6 @@ export interface DownloadJobDto {
   // A direct stream URL to archive (resolved server-side from the episode's own
   // streamUrl). Archived as the lowest-ranked entry. Takes precedence over mirrorId.
   streamUrl?: string;
+  // Write to tmp file first + -movflags +faststart → moov at front → browser-playable.
+  faststart?: boolean;
 }

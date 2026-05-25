@@ -55,20 +55,26 @@ describe('EpisodeController', () => {
   it('archive queues a job for the chosen mirror and returns ok flash', async () => {
     episodeService.archive.mockResolvedValue({ ok: true, message: 'archive job queued | https://e/1' });
     const vm = await controller.archive('1', '9');
-    expect(episodeService.archive).toHaveBeenCalledWith(1, { mirrorId: 9, episodeStream: false });
+    expect(episodeService.archive).toHaveBeenCalledWith(1, { mirrorId: 9, episodeStream: false, faststart: false });
     expect(vm).toEqual({ ok: true, message: 'archive job queued | https://e/1', layout: false });
   });
 
   it('archive without mirrorId passes undefined (auto path)', async () => {
     episodeService.archive.mockResolvedValue({ ok: true, message: 'queued' });
     await controller.archive('1');
-    expect(episodeService.archive).toHaveBeenCalledWith(1, { mirrorId: undefined, episodeStream: false });
+    expect(episodeService.archive).toHaveBeenCalledWith(1, { mirrorId: undefined, episodeStream: false, faststart: false });
   });
 
   it('archive with episodeStream flag resolves the episode stream server-side', async () => {
     episodeService.archive.mockResolvedValue({ ok: true, message: 'queued' });
     await controller.archive('1', undefined, 'true');
-    expect(episodeService.archive).toHaveBeenCalledWith(1, { mirrorId: undefined, episodeStream: true });
+    expect(episodeService.archive).toHaveBeenCalledWith(1, { mirrorId: undefined, episodeStream: true, faststart: false });
+  });
+
+  it('archive with faststart flag passes faststart: true', async () => {
+    episodeService.archive.mockResolvedValue({ ok: true, message: 'queued' });
+    await controller.archive('1', undefined, undefined, '1');
+    expect(episodeService.archive).toHaveBeenCalledWith(1, { mirrorId: undefined, episodeStream: false, faststart: true });
   });
 
   it('archive throws 404 when episode missing', async () => {

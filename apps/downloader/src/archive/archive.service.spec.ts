@@ -1,12 +1,17 @@
 import { EventEmitter } from 'node:events';
 import { Readable } from 'node:stream';
 import { spawn } from 'node:child_process';
+import { createReadStream } from 'node:fs';
+
+jest.mock('node:fs', () => ({ createReadStream: jest.fn() }));
+jest.mock('node:fs/promises', () => ({ unlink: jest.fn().mockResolvedValue(undefined) }));
 import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from '@libs/commons/s3/s3.service';
 import { DownloadJobDto } from '@libs/commons/messaging/download-job.dto';
 import { Anime, Episode, Mirror, DownloadArchive } from '@libs/commons/entities';
 import { ArchiveService } from './archive.service';
+import { EmbedResolverService } from './embed-resolver.service';
 
 jest.mock('node:child_process', () => ({ spawn: jest.fn() }));
 
@@ -58,7 +63,8 @@ function mir(id: number, quality: string, host = 'otakuwatch6hd', streamUrl = `h
 describe('ArchiveService', () => {
   let repos: Record<string, MockRepo>;
   let ds: DataSource;
-  let s3: jest.Mocked<Pick<S3Service, 'buildKey' | 'upload'>> & { bucket: string };
+  let s3: jest.Mocked<Pick<S3Service, 'buildKey' | 'upload' | 'ping'>> & { bucket: string };
+  let embedResolver: jest.Mocked<EmbedResolverService>;
   let svc: ArchiveService;
   const spawnMock = spawn as unknown as jest.Mock;
 
@@ -95,6 +101,7 @@ describe('ArchiveService', () => {
           `${a.source}/${a.slug}/ep-${a.number}-${a.quality}.${a.ext}`,
       ),
       upload: jest.fn((key: string) => Promise.resolve({ bucket: 'b', key, sizeBytes: 3 })),
+      ping: jest.fn().mockResolvedValue(true),
     };
 
     repos.Episode.findOneBy.mockResolvedValue(ep);
@@ -109,9 +116,12 @@ describe('ArchiveService', () => {
 
     spawnMock.mockReset();
     spawnMock.mockImplementation(() => makeChild(0));
+    (createReadStream as jest.Mock).mockReset().mockReturnValue(Readable.from([Buffer.from([1, 2, 3])]));
+
+    embedResolver = { resolve: jest.fn() } as unknown as jest.Mocked<EmbedResolverService>;
 
     const cfg = { get: (_k: string, d?: string) => d } as unknown as ConfigService;
-    svc = new ArchiveService(ds, s3 as unknown as S3Service, cfg);
+    svc = new ArchiveService(ds, s3 as unknown as S3Service, embedResolver, cfg);
   });
 
   it('no resolvable mirrors -> nothing archived', async () => {
@@ -145,16 +155,16 @@ describe('ArchiveService', () => {
     expect(doneUpdates).toHaveLength(1);
   });
 
-  it('prefers a desustream.info host at a given quality', async () => {
+  it('multiple mirrors at same quality -> picks lowest id (stable sort)', async () => {
     repos.Mirror.find.mockResolvedValue([
-      mir(1, '720p', 'vidhide', 'https://odvidhide.com/embed/abc'),
-      mir(2, '720p', 'otakuwatch6hd', 'https://desustream.info/x/2'),
       mir(3, '720p', 'mega', 'https://mega.nz/embed/xyz'),
+      mir(1, '720p', 'vidhide', 'https://vidhide.com/embed/abc'),
+      mir(2, '720p', 'host2', 'https://host2.example.com/x/2'),
     ]);
     await svc.handle(job);
     expect(spawnMock).toHaveBeenCalledTimes(1);
     const passedUrl = spawnMock.mock.calls[0][1].at(-1);
-    expect(passedUrl).toBe('https://desustream.info/x/2');
+    expect(passedUrl).toBe('https://vidhide.com/embed/abc');
   });
 
   it('yt-dlp non-zero exit -> marked failed and job rejects (so it dead-letters)', async () => {
@@ -217,6 +227,44 @@ describe('ArchiveService', () => {
     expect(spawnMock.mock.calls[0][1].at(-1)).toBe('https://desustream.info/player/77');
     expect(s3.buildKey).toHaveBeenCalledWith(expect.objectContaining({ quality: 'source' }));
     expect(s3.upload).toHaveBeenCalledTimes(1);
+  });
+
+  it('yt-dlp unsupported URL -> resolves embed, retries with m3u8 + headers', async () => {
+    repos.Mirror.find.mockResolvedValue([mir(1, '720p', 'embed', 'https://embed.example.com/player/1')]);
+    spawnMock.mockImplementationOnce(() => makeChild(1, 'ERROR: Unsupported URL: https://embed.example.com/player/1'));
+    spawnMock.mockImplementationOnce(() => makeChild(0));
+    embedResolver.resolve.mockResolvedValue({
+      url: 'https://cdn.example.com/stream/index.m3u8',
+      headers: { Referer: 'https://embed.example.com/', Origin: 'https://embed.example.com' },
+    });
+    await svc.handle(job);
+    expect(embedResolver.resolve).toHaveBeenCalledWith('https://embed.example.com/player/1');
+    expect(spawnMock).toHaveBeenCalledTimes(2);
+    const retryArgs: string[] = spawnMock.mock.calls[1][1];
+    expect(retryArgs).toContain('--add-header');
+    expect(retryArgs).toContain('Referer:https://embed.example.com/');
+    expect(retryArgs.at(-1)).toBe('https://cdn.example.com/stream/index.m3u8');
+    const done = repos.DownloadArchive.update.mock.calls.filter((c) => (c[1] as { status: string }).status === 'done');
+    expect(done).toHaveLength(1);
+  });
+
+  it('faststart=true -> skips ping, uses tmp file + --postprocessor-args ffmpeg:-movflags +faststart', async () => {
+    repos.Mirror.find.mockResolvedValue([mir(1, '720p')]);
+    await svc.handle({ ...job, faststart: true });
+    expect(s3.ping).not.toHaveBeenCalled();
+    expect(s3.upload).toHaveBeenCalledTimes(1);
+    expect(createReadStream).toHaveBeenCalledTimes(1);
+    const spawnArgs: string[] = spawnMock.mock.calls[0][1];
+    expect(spawnArgs).toContain('--postprocessor-args');
+    expect(spawnArgs).toContain('ffmpeg:-movflags +faststart');
+  });
+
+  it('S3 unreachable -> falls back to temp-file upload (createReadStream used)', async () => {
+    s3.ping.mockResolvedValue(false);
+    repos.Mirror.find.mockResolvedValue([mir(1, '720p')]);
+    await svc.handle(job);
+    expect(s3.upload).toHaveBeenCalledTimes(1);
+    expect(createReadStream).toHaveBeenCalledTimes(1);
   });
 
   it('anime miss -> buildKey slug is unknown-anime-<id>', async () => {

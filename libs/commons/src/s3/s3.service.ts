@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client } from '@aws-sdk/client-s3';
+import { HeadBucketCommand, S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Readable, Transform, type TransformCallback } from 'node:stream';
 
@@ -13,6 +13,15 @@ export class S3Service {
     private readonly cfg: ConfigService,
   ) {
     this.bucket = this.cfg.getOrThrow<string>('S3_BUCKET');
+  }
+
+  async ping(): Promise<boolean> {
+    try {
+      await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   extOfContentType(ct?: string): string {

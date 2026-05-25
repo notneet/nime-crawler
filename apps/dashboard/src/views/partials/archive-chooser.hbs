@@ -1,7 +1,14 @@
-<dialog x-data x-init="$el.showModal()" class="card fixed left-1/2 top-1/2 m-0 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 p-0 text-fg backdrop:bg-ink/70 backdrop:backdrop-blur-sm">
+<dialog x-data="{ faststart: false }" x-init="$el.showModal()" class="card fixed left-1/2 top-1/2 m-0 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 p-0 text-fg backdrop:bg-ink/70 backdrop:backdrop-blur-sm">
+  <input type="hidden" name="faststart" :value="faststart ? '1' : ''" id="archive-faststart">
   <div class="border-b-2 border-ink px-6 py-4 flex items-center justify-between gap-3">
     <h2 class="!text-fg">Archive — pick a mirror</h2>
-    <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="$root.close()">Close</button>
+    <div class="flex items-center gap-3">
+      <label class="flex items-center gap-1.5 cursor-pointer select-none text-sm">
+        <span class="text-mute">Faststart</span>
+        <button type="button" class="btn !px-2 !py-0.5 text-xs" :class="faststart ? 'btn-acid' : 'btn-ghost'" @click="faststart = !faststart" x-text="faststart ? 'on' : 'off'">off</button>
+      </label>
+      <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="$root.close()">Close</button>
+    </div>
   </div>
   <div class="max-h-[70vh] overflow-auto px-6 py-5">
     {{#if mirrors.length}}
@@ -9,17 +16,20 @@
       <button type="button" class="btn btn-acid"
         hx-post="/episode/{{episodeId}}/archive"
         hx-vals='{"mirrorId": {{highest.id}} }'
+        hx-include="#archive-faststart"
         hx-target="#flash" hx-swap="innerHTML"
         hx-on::after-request="this.closest('dialog').close()">Archive highest ({{highest.quality}})</button>
       <button type="button" class="btn btn-ghost"
         hx-post="/episode/{{episodeId}}/archive"
         hx-vals='{"mirrorId": {{lowest.id}} }'
+        hx-include="#archive-faststart"
         hx-target="#flash" hx-swap="innerHTML"
         hx-on::after-request="this.closest('dialog').close()">Archive lowest ({{lowest.quality}})</button>
       {{#if episodeStreamUrl}}
       <button type="button" class="btn btn-ghost"
         hx-post="/episode/{{episodeId}}/archive"
         hx-vals='{"episodeStream": true}'
+        hx-include="#archive-faststart"
         hx-target="#flash" hx-swap="innerHTML"
         hx-on::after-request="this.closest('dialog').close()">Archive episode stream (lowest)</button>
       {{/if}}
@@ -34,6 +44,7 @@
           <td><button type="button" class="btn btn-acid !px-2.5 !py-1.5"
             hx-post="/episode/{{../episodeId}}/archive"
             hx-vals='{"mirrorId": {{this.id}} }'
+            hx-include="#archive-faststart"
             hx-target="#flash" hx-swap="innerHTML"
             hx-on::after-request="this.closest('dialog').close()">Archive</button></td>
         </tr>
@@ -46,6 +57,7 @@
       <button type="button" class="btn btn-acid"
         hx-post="/episode/{{episodeId}}/archive"
         hx-vals='{"episodeStream": true}'
+        hx-include="#archive-faststart"
         hx-target="#flash" hx-swap="innerHTML"
         hx-on::after-request="this.closest('dialog').close()">Archive episode stream (lowest)</button>
     </div>

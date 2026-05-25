@@ -95,10 +95,12 @@ export class EpisodeController {
     @Param('id') id: string,
     @Body('mirrorId') mirrorId?: string,
     @Body('episodeStream') episodeStream?: string,
+    @Body('faststart') faststart?: string,
   ) {
     const res = await this.episode.archive(Number(id), {
       mirrorId: mirrorId ? Number(mirrorId) : undefined,
       episodeStream: episodeStream === 'true' || episodeStream === '1',
+      faststart: faststart === 'true' || faststart === '1',
     });
     if (!res.ok) throw new NotFoundException(res.message);
     return { ok: true, message: res.message, layout: false };

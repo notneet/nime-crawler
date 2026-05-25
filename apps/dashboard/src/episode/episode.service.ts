@@ -116,7 +116,7 @@ export class EpisodeService {
 
   async archive(
     id: number,
-    opts: { mirrorId?: number; episodeStream?: boolean } = {},
+    opts: { mirrorId?: number; episodeStream?: boolean; faststart?: boolean } = {},
   ): Promise<{ ok: boolean; message: string }> {
     const ep = await this.episode.findOneBy({ id });
     if (!ep) return { ok: false, message: 'episode not found' };
@@ -129,7 +129,7 @@ export class EpisodeService {
     await this.amqp.publish(
       EXCHANGES.download,
       routingKey('download', 'episode', ep.source),
-      { episodeId: ep.id, source: ep.source, manual: true, mirrorId: opts.mirrorId, streamUrl } satisfies DownloadJobDto,
+      { episodeId: ep.id, source: ep.source, manual: true, mirrorId: opts.mirrorId, streamUrl, faststart: opts.faststart } satisfies DownloadJobDto,
     );
     return { ok: true, message: `archive job queued | ${ep.url}` };
   }
