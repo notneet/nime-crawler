@@ -107,6 +107,13 @@ $ pnpm run test:e2e
 $ pnpm run test:cov
 ```
 
+## Preview
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/38c9ccbb-7aba-46f4-9950-fea07ca26e7f" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/67f9a565-52a1-456b-afd1-03ebcaefd09c" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/72f2b61d-3b33-4c00-a58f-6fa1ee50c911" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/37ec1cc6-708b-4117-ac9e-bc9e55a5f1d4" />
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
