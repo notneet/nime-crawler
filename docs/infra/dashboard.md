@@ -40,6 +40,9 @@ GET    /adapter/:source     edit form
 POST   /adapter/:source     update
 DELETE /adapter/:source     delete
 POST   /adapter/:source/toggle  flip enabled
+GET    /adapter/ai-pattern         AI Pattern Finder page
+POST   /adapter/ai-pattern/fetch   fetch page HTML (body: { url, fetchMode })
+POST   /adapter/ai-pattern         suggest stage config (body: { html, stage, fetchMode })
 ```
 
 ## Auth
@@ -102,6 +105,52 @@ detail page lists existing `download_archive` rows (read-only).
 - Downloads are split by `kind`: `/anime/:id/downloads` shows episode-kind links
   (`ownerUrl` = an episode URL); `/anime/:id/batch` shows batch-kind links
   (`ownerUrl` = the anime URL). Both delete via `DELETE /episode/download/:id`.
+## AI Pattern Finder
+
+`GET /adapter/ai-pattern` opens a 3-step wizard for generating stage configs from
+a live page without writing selectors by hand.
+
+**Step 1 — Form.** Enter URL, select stage (`index` / `detail` / `episode` /
+`batch`), and pick fetch mode (`xpath` = server-side XPath parse; `browser` =
+headless evaluate returning `outerHTML`). Click "Load Page" to POST
+`/adapter/ai-pattern/fetch`.
+
+**Step 2 — Editor.** Fetched HTML rendered in a [GrapesJS](https://grapesjs.com)
+iframe canvas. Click elements to select/delete noise. Toolbar actions:
+- **↺ Reload** — re-fetch the URL.
+- **Keep Selected** — strips all root siblings except the selected element's
+  ancestor, narrowing the payload.
+- **Find Patterns** — strips `<style>`/`<script>` tags, truncates to 40 000 chars,
+  POSTs to `/adapter/ai-pattern`.
+
+**Step 3 — Result.** AI returns a stage config JSON block. Buttons: "← Edit again",
+"New URL", "▶ Test" (opens the standard test modal pre-filled with the config and
+URL), "Copy".
+
+### Fetch modes
+
+| Mode      | Mechanism                                                  | Use when                   |
+|-----------|------------------------------------------------------------|----------------------------|
+| `xpath`   | `EngineService.parse` with xpath `rawHTML` pattern on `/html` | Public HTML pages          |
+| `browser` | `EngineService.parse` with browser `evaluate` + `outerHTML` | JS-rendered / cookie-gated |
+
+403 / Cloudflare errors are caught and returned as a user-facing message
+suggesting a switch to browser mode.
+
+### AI integration
+
+| Env var               | Default                              | Notes                            |
+|-----------------------|--------------------------------------|----------------------------------|
+| `AI_PROVIDER`         | `anthropic`                          | `anthropic` or `openrouter`      |
+| `ANTHROPIC_API_KEY`   | —                                    | Required when provider=anthropic |
+| `OPENROUTER_API_KEY`  | —                                    | Required when provider=openrouter|
+| `AI_MODEL`            | `claude-haiku-4-5-20251001` / `openai/gpt-4o-mini` | Override model per provider |
+
+SDKs: `@anthropic-ai/sdk`, `@openrouter/sdk`. The otakudesu adapter's stage
+config is passed as a structural reference. `fetchMode=browser` adds a hint to
+emit `"engine": "browser"` with `workflow.version="1.0"`; `fetchMode=xpath`
+generates xpath patterns. Output is parsed JSON, not raw text.
+
 - Adapter `stages` is edited as a raw JSON textarea, validated on save for stage
   keys (`index|detail|episode|batch`), `engine` (`xpath|browser`), and the shape
   each engine needs (`xpath` → `patterns` array; `browser` → `workflow` object).

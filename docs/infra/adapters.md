@@ -51,6 +51,29 @@ fields; `stages` is edited as a raw JSON textarea, validated on save (stage keys
 engine, and the per-engine required shape). `source` is read-only on edit; a
 duplicate `source` on create is rejected.
 
+## AI Pattern Finder
+
+The dashboard ships a built-in AI tool for generating stage configs from a live
+page. Entry point: `GET /adapter/ai-pattern`.
+
+**3-step flow:**
+
+1. Enter the target URL, select the stage (`index` / `detail` / `episode` /
+   `batch`), and pick a fetch mode (`xpath` for static pages, `browser` for
+   JS-rendered or cookie-gated pages).
+2. The fetched HTML opens in a GrapesJS visual editor. Trim noise by selecting
+   elements and clicking "Keep Selected", then click "Find Patterns" to send the
+   cleaned HTML to the AI.
+3. The AI returns a ready-to-use stage config JSON. From the result screen you
+   can paste it into the stages editor, or click "▶ Test" to run it immediately
+   through the standard test modal against the original URL — same flow as
+   adapter-detail testing.
+
+Requires at least one of `ANTHROPIC_API_KEY` (provider `anthropic`, the default)
+or `OPENROUTER_API_KEY` (provider `openrouter`) in `.env`. See
+[dashboard § AI Pattern Finder](./dashboard.md#ai-pattern-finder) for full env
+var reference and fetch-mode details.
+
 ## ⚠️ Mapper coupling caveat
 
 This feature makes adapters **editable** and supports **new** adapters that emit
