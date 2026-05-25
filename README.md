@@ -1,3 +1,7 @@
+## Disclaimer
+
+This project crawls third-party websites. The legality of web crawling varies by jurisdiction and site terms of service. **I take no responsibility for how this software is used.** Use at your own risk.
+
 ## Description
 
 Multi-site anime crawler on a NestJS monorepo. A cron seeder publishes crawl jobs
