@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Like, QueryDeepPartialEntity, Repository } from 'typeorm';
+import { In, IsNull, Like, QueryDeepPartialEntity, Repository } from 'typeorm';
 import { Anime, AnimeGenre, Genre, Episode, Mirror, DownloadLink } from '@libs/commons/entities';
 import { DEFAULT_LIMIT } from '../common/pagination';
 
@@ -15,6 +15,8 @@ export interface AnimeDetail {
   anime: Anime;
   episodes: Episode[];
   genres: Genre[];
+  aliases: Anime[];
+  isAlias: boolean;
 }
 
 export interface AnimeEpisodeList {
@@ -80,8 +82,17 @@ export class AnimeService {
     @InjectRepository(DownloadLink) private readonly download: Repository<DownloadLink>,
   ) {}
 
+  private async resolveCanonicalAnime(id: number): Promise<Anime | null> {
+    const anime = await this.anime.findOneBy({ id });
+    if (!anime) return null;
+    if (anime.canonicalId) return this.anime.findOneBy({ id: anime.canonicalId });
+    return anime;
+  }
+
   async list(q: string, page: number, pageSize = DEFAULT_LIMIT): Promise<AnimeList> {
-    const where = q ? { title: Like(`%${q}%`) } : {};
+    const where = q
+      ? { title: Like(`%${q}%`), canonicalId: IsNull() }
+      : { canonicalId: IsNull() };
     const [rows, total] = await this.anime.findAndCount({
       where,
       order: { id: 'DESC' },
@@ -92,20 +103,36 @@ export class AnimeService {
   }
 
   async detail(id: number): Promise<AnimeDetail | null> {
-    const anime = await this.anime.findOneBy({ id });
+    const raw = await this.anime.findOneBy({ id });
+    if (!raw) return null;
+    const isAlias = !!raw.canonicalId;
+    const anime = isAlias
+      ? await this.anime.findOneBy({ id: raw.canonicalId! })
+      : raw;
     if (!anime) return null;
-    const episodes = await this.episode.findBy({ animeUrl: anime.url });
-    const links = await this.animeGenre.findBy({ animeId: id });
+
+    const aliases = await this.anime.findBy({ canonicalId: anime.id });
+    const allUrls = [anime.url, ...aliases.map((a) => a.url)];
+
+    const episodes = await this.episode.find({
+      where: { animeUrl: In(allUrls) },
+      order: { id: 'ASC' },
+    });
+
+    const links = await this.animeGenre.findBy({ animeId: anime.id });
     const genreIds = links.map((l) => l.genreId);
     const genres = genreIds.length ? await this.genre.findBy({ id: In(genreIds) }) : [];
-    return { anime, episodes, genres };
+
+    return { anime, episodes, genres, aliases, isAlias };
   }
 
   async episodesOf(id: number, page = 1, limit = DEFAULT_LIMIT): Promise<AnimeEpisodeList | null> {
-    const anime = await this.anime.findOneBy({ id });
+    const anime = await this.resolveCanonicalAnime(id);
     if (!anime) return null;
+    const aliases = await this.anime.findBy({ canonicalId: anime.id });
+    const allUrls = [anime.url, ...aliases.map((a) => a.url)];
     const [episodes, total] = await this.episode.findAndCount({
-      where: { animeUrl: anime.url },
+      where: { animeUrl: In(allUrls) },
       order: { id: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -114,14 +141,16 @@ export class AnimeService {
   }
 
   async mirrorsOf(id: number, page = 1, limit = DEFAULT_LIMIT): Promise<AnimeMirrorList | null> {
-    const anime = await this.anime.findOneBy({ id });
+    const anime = await this.resolveCanonicalAnime(id);
     if (!anime) return null;
-    const episodes = await this.episode.findBy({ animeUrl: anime.url });
+    const aliases = await this.anime.findBy({ canonicalId: anime.id });
+    const allUrls = [anime.url, ...aliases.map((a) => a.url)];
+    const episodes = await this.episode.findBy({ animeUrl: In(allUrls) });
     const byUrl = new Map(episodes.map((e) => [e.url, e]));
-    const urls = episodes.map((e) => e.url);
-    if (!urls.length) return { anime, rows: [], total: 0 };
+    const epUrls = episodes.map((e) => e.url);
+    if (!epUrls.length) return { anime, rows: [], total: 0 };
     const [mirrors, total] = await this.mirror.findAndCount({
-      where: { episodeUrl: In(urls) },
+      where: { episodeUrl: In(epUrls) },
       order: { id: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -141,14 +170,16 @@ export class AnimeService {
   }
 
   async downloadsOf(id: number, page = 1, limit = DEFAULT_LIMIT): Promise<AnimeDownloadList | null> {
-    const anime = await this.anime.findOneBy({ id });
+    const anime = await this.resolveCanonicalAnime(id);
     if (!anime) return null;
-    const episodes = await this.episode.findBy({ animeUrl: anime.url });
+    const aliases = await this.anime.findBy({ canonicalId: anime.id });
+    const allUrls = [anime.url, ...aliases.map((a) => a.url)];
+    const episodes = await this.episode.findBy({ animeUrl: In(allUrls) });
     const byUrl = new Map(episodes.map((e) => [e.url, e]));
-    const urls = episodes.map((e) => e.url);
-    if (!urls.length) return { anime, rows: [], total: 0 };
+    const epUrls = episodes.map((e) => e.url);
+    if (!epUrls.length) return { anime, rows: [], total: 0 };
     const [downloads, total] = await this.download.findAndCount({
-      where: { ownerUrl: In(urls) },
+      where: { ownerUrl: In(epUrls) },
       order: { id: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -172,13 +203,15 @@ export class AnimeService {
   // Batch downloads key on the /batch/ page URL, which has no DB link to the anime.
   // The only bridge is the detail-page discover output, persisted in anime.raw.batchLinks.
   async batchOf(id: number, page = 1, limit = DEFAULT_LIMIT): Promise<AnimeBatchList | null> {
-    const anime = await this.anime.findOneBy({ id });
+    const anime = await this.resolveCanonicalAnime(id);
     if (!anime) return null;
-    const raw = anime.raw as Record<string, unknown> | null | undefined;
-    const linksRaw = raw?.['batchLinks'];
-    const batchUrls = Array.isArray(linksRaw)
-      ? linksRaw.filter((u): u is string => typeof u === 'string')
-      : [];
+    const aliases = await this.anime.findBy({ canonicalId: anime.id });
+    const allAnime = [anime, ...aliases];
+    const batchUrls: string[] = allAnime.flatMap((a) => {
+      const raw = a.raw as Record<string, unknown> | null | undefined;
+      const links = raw?.['batchLinks'];
+      return Array.isArray(links) ? links.filter((u): u is string => typeof u === 'string') : [];
+    });
     if (!batchUrls.length) return { anime, rows: [], total: 0 };
     const [downloads, total] = await this.download.findAndCount({
       where: { ownerUrl: In(batchUrls), kind: 'batch' },
@@ -201,9 +234,31 @@ export class AnimeService {
     return this.anime.findOneBy({ id });
   }
 
+  async link(aliasId: number, canonicalId: number): Promise<{ ok: boolean; error?: string }> {
+    if (aliasId === canonicalId) return { ok: false, error: 'cannot link anime to itself' };
+    const canonical = await this.anime.findOneBy({ id: canonicalId });
+    if (!canonical) return { ok: false, error: 'canonical not found' };
+    if (canonical.canonicalId) return { ok: false, error: 'no chain: canonical is itself an alias' };
+    const alias = await this.anime.findOneBy({ id: aliasId });
+    if (!alias) return { ok: false, error: 'alias not found' };
+    const existingAliases = await this.anime.countBy({ canonicalId: aliasId });
+    if (existingAliases > 0) return { ok: false, error: 'no chain: alias already has aliases pointing to it' };
+    await this.anime.update(aliasId, { canonicalId } as unknown as QueryDeepPartialEntity<Anime>);
+    return { ok: true };
+  }
+
+  async unlink(aliasId: number): Promise<boolean> {
+    const alias = await this.anime.findOneBy({ id: aliasId });
+    if (!alias || alias.canonicalId == null) return false;
+    await this.anime.update(aliasId, { canonicalId: null } as unknown as QueryDeepPartialEntity<Anime>);
+    return true;
+  }
+
   async remove(id: number): Promise<boolean> {
     const found = await this.anime.findOneBy({ id });
     if (!found) return false;
+    const aliasCount = await this.anime.countBy({ canonicalId: id });
+    if (aliasCount > 0) return false;
     await this.animeGenre.delete({ animeId: id });
     await this.anime.delete(id);
     return true;

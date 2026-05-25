@@ -12,8 +12,11 @@ describe('AnimeController', () => {
     episodesOf: jest.fn(),
     mirrorsOf: jest.fn(),
     downloadsOf: jest.fn(),
+    batchOf: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
+    link: jest.fn(),
+    unlink: jest.fn(),
   };
   const recrawl = { anime: jest.fn() };
   const controller = new AnimeController(
@@ -43,16 +46,28 @@ describe('AnimeController', () => {
     expect(animeService.list).toHaveBeenCalledWith('', 1, 50);
   });
 
-  it('detail returns the detail view-model', async () => {
-    const detail = { anime: { id: 1 } as Anime, episodes: [], genres: [] };
+  it('detail renders the detail view-model', async () => {
+    const detail = { anime: { id: 1 } as Anime, episodes: [], genres: [], isAlias: false };
     animeService.detail.mockResolvedValue(detail);
-    const vm = await controller.detail('1');
-    expect(vm).toBe(detail);
+    const res = { render: jest.fn(), redirect: jest.fn() } as unknown as Response;
+    await controller.detail('1', res);
+    expect(res.render).toHaveBeenCalledWith('anime-detail', detail);
+    expect(res.redirect).not.toHaveBeenCalled();
+  });
+
+  it('detail redirects to canonical when alias', async () => {
+    const detail = { anime: { id: 5 } as Anime, episodes: [], genres: [], isAlias: true };
+    animeService.detail.mockResolvedValue(detail);
+    const res = { render: jest.fn(), redirect: jest.fn() } as unknown as Response;
+    await controller.detail('1', res);
+    expect(res.redirect).toHaveBeenCalledWith(302, '/anime/5');
+    expect(res.render).not.toHaveBeenCalled();
   });
 
   it('detail throws 404 when missing', async () => {
     animeService.detail.mockResolvedValue(null);
-    await expect(controller.detail('999')).rejects.toBeInstanceOf(NotFoundException);
+    const res = { render: jest.fn(), redirect: jest.fn() } as unknown as Response;
+    await expect(controller.detail('999', res)).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('episodes returns the list view-model with a pager', async () => {
@@ -107,6 +122,32 @@ describe('AnimeController', () => {
     const vm = await controller.recrawl('1');
     expect(recrawl.anime).toHaveBeenCalledWith('otakudesu', 'https://a/1');
     expect(vm).toEqual({ ok: true, message: 'Re-crawl queued', layout: false });
+  });
+
+  it('link returns ok flash when successful', async () => {
+    animeService.link.mockResolvedValue({ ok: true });
+    const vm = await controller.link('2', { canonicalId: 1 });
+    expect(animeService.link).toHaveBeenCalledWith(2, 1);
+    expect(vm).toEqual({ ok: true, message: 'Linked as alias', layout: false });
+  });
+
+  it('link returns error flash when failed', async () => {
+    animeService.link.mockResolvedValue({ ok: false, error: 'Would create cycle' });
+    const vm = await controller.link('2', { canonicalId: 1 });
+    expect(vm).toEqual({ ok: false, message: 'Would create cycle', layout: false });
+  });
+
+  it('unlink returns ok flash when successful', async () => {
+    animeService.unlink.mockResolvedValue(true);
+    const vm = await controller.unlink('2');
+    expect(animeService.unlink).toHaveBeenCalledWith(2);
+    expect(vm).toEqual({ ok: true, message: 'Unlinked', layout: false });
+  });
+
+  it('unlink returns error flash when not alias', async () => {
+    animeService.unlink.mockResolvedValue(false);
+    const vm = await controller.unlink('2');
+    expect(vm).toEqual({ ok: false, message: 'Not an alias', layout: false });
   });
 
   it('remove deletes and redirects to /anime', async () => {

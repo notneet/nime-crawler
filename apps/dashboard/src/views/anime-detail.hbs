@@ -57,5 +57,49 @@
         {{#each episodes}}<li><a href="/episode/{{this.id}}">{{this.title}}</a></li>{{else}}<li class="text-mute">none</li>{{/each}}
       </ul>
     </div>
+
+    <div class="card p-6" id="aliases-card">
+      <h2 class="mb-3">Aliases</h2>
+      <div id="aliases-flash" class="empty:hidden mb-3"></div>
+      {{#if aliases.length}}
+        <ul class="space-y-2 mb-4">
+          {{#each aliases}}
+            <li class="flex items-center justify-between gap-2">
+              <div class="text-sm">
+                <span class="pill mr-1">{{this.source}}</span>
+                <span class="text-mute">{{this.title}}</span>
+              </div>
+              <button class="btn btn-ghost text-xs !py-0.5"
+                hx-delete="/anime/{{this.id}}/link"
+                hx-confirm="Unlink this alias?"
+                hx-target="#aliases-flash"
+                hx-swap="innerHTML">
+                Unlink
+              </button>
+            </li>
+          {{/each}}
+        </ul>
+      {{else}}
+        <p class="text-xs text-mute mb-4">No aliases linked.</p>
+      {{/if}}
+      <form x-data="{ aliasId: '' }"
+            @submit.prevent="
+              if (!aliasId) return;
+              htmx.ajax('POST', '/anime/' + aliasId + '/link', {
+                target: '#aliases-flash',
+                swap: 'innerHTML',
+                values: { canonicalId: '{{anime.id}}' }
+              });
+              aliasId = '';
+            "
+            class="flex gap-2 items-end">
+        <div class="flex-1">
+          <label class="label text-xs">Link alias by ID</label>
+          <input type="number" x-model="aliasId" placeholder="Alias anime ID" class="input w-full" required />
+        </div>
+        <button type="submit" class="btn btn-ghost text-sm">Link</button>
+      </form>
+      <p class="mt-2 text-xs text-mute">Enter the ID of the duplicate anime to mark it as an alias of this one.</p>
+    </div>
   </div>
 </div>

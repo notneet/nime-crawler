@@ -15,6 +15,7 @@ import {
 import type { Response } from 'express';
 import { AnimeService } from './anime.service';
 import { AnimeEditDto } from './anime-edit.dto';
+import { AnimeCanonicalDto } from './anime-canonical.dto';
 import { RecrawlService } from '../recrawl/recrawl.service';
 import { buildPager, parseLimit, parsePage } from '../common/pagination';
 
@@ -40,11 +41,14 @@ export class AnimeController {
   }
 
   @Get(':id')
-  @Render('anime-detail')
-  async detail(@Param('id') id: string) {
+  async detail(@Param('id') id: string, @Res() res: Response): Promise<void> {
     const detail = await this.anime.detail(Number(id));
     if (!detail) throw new NotFoundException('anime not found');
-    return detail;
+    if (detail.isAlias) {
+      res.redirect(302, `/anime/${detail.anime.id}`);
+      return;
+    }
+    res.render('anime-detail', detail);
   }
 
   @Get(':id/episodes')
@@ -123,6 +127,21 @@ export class AnimeController {
     if (!detail) throw new NotFoundException('anime not found');
     await this.recrawlService.anime(detail.anime.source, detail.anime.url);
     return { ok: true, message: 'Re-crawl queued', layout: false };
+  }
+
+  @Post(':id/link')
+  @Render('partials/flash')
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async link(@Param('id') id: string, @Body() dto: AnimeCanonicalDto) {
+    const result = await this.anime.link(Number(id), dto.canonicalId);
+    return { ok: result.ok, message: result.ok ? 'Linked as alias' : result.error, layout: false };
+  }
+
+  @Delete(':id/link')
+  @Render('partials/flash')
+  async unlink(@Param('id') id: string) {
+    const ok = await this.anime.unlink(Number(id));
+    return { ok, message: ok ? 'Unlinked' : 'Not an alias', layout: false };
   }
 
   @Delete(':id')

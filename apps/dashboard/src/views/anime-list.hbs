@@ -12,18 +12,19 @@
 <div class="card overflow-hidden">
   <table class="tbl">
     <thead>
-      <tr><th class="w-20">ID</th><th>Title</th><th class="w-32">Status</th><th class="w-24">Score</th></tr>
+      <tr><th class="w-20">ID</th><th>Title</th><th class="w-32">Source</th><th class="w-32">Status</th><th class="w-24">Score</th></tr>
     </thead>
     <tbody>
       {{#each rows}}
         <tr>
           <td class="text-mute">{{this.id}}</td>
           <td><a href="/anime/{{this.id}}" class="font-bold">{{this.title}}</a></td>
+          <td><span class="pill">{{this.source}}</span></td>
           <td><span class="pill">{{this.status}}</span></td>
           <td class="font-bold text-acid">{{this.score}}</td>
         </tr>
       {{else}}
-        <tr><td colspan="4" class="py-10 text-center text-mute">no results</td></tr>
+        <tr><td colspan="5" class="py-10 text-center text-mute">no results</td></tr>
       {{/each}}
     </tbody>
   </table>

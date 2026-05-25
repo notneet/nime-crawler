@@ -52,6 +52,21 @@ describe('AnimeService', () => {
     expect(res.rows[0].title).toBe('Naruto');
   });
 
+  it('list excludes alias rows (canonicalId set)', async () => {
+    const canonical = await seedAnime({ title: 'Naruto', source: 'otakudesu' });
+    await seedAnime({ title: 'Naruto', source: 'samehadaku', canonicalId: canonical.id });
+    const res = await service.list('', 1, 20);
+    expect(res.total).toBe(1);
+    expect(res.rows[0].id).toBe(canonical.id);
+  });
+
+  it('list includes all rows when none are aliases', async () => {
+    await seedAnime({ title: 'A', source: 'otakudesu' });
+    await seedAnime({ title: 'B', source: 'samehadaku' });
+    const res = await service.list('', 1, 20);
+    expect(res.total).toBe(2);
+  });
+
   it('detail returns anime, its episodes and genres', async () => {
     const a = await seedAnime();
     await ds.getRepository(Episode).save({ source: 'otakudesu', url: 'https://e/1', animeUrl: a.url } as Episode);
@@ -131,5 +146,114 @@ describe('AnimeService', () => {
 
   it('delete returns false for missing id', async () => {
     expect(await service.remove(999)).toBeFalsy();
+  });
+
+  describe('canonical / alias resolution', () => {
+    it('detail on canonical includes episodes from its aliases', async () => {
+      const canonical = await seedAnime({ source: 'otakudesu', url: 'https://otakudesu/naruto' });
+      const alias = await seedAnime({ source: 'samehadaku', url: 'https://samehadaku/naruto', canonicalId: canonical.id });
+      await ds.getRepository(Episode).save({ source: 'otakudesu', url: 'https://ep/1', animeUrl: canonical.url } as Episode);
+      await ds.getRepository(Episode).save({ source: 'samehadaku', url: 'https://ep/2', animeUrl: alias.url } as Episode);
+      const d = await service.detail(canonical.id);
+      expect(d?.anime.id).toBe(canonical.id);
+      expect(d?.episodes).toHaveLength(2);
+      expect(d?.aliases).toHaveLength(1);
+      expect(d?.aliases[0].id).toBe(alias.id);
+      expect(d?.isAlias).toBe(false);
+    });
+
+    it('detail on alias resolves to canonical and sets isAlias=true', async () => {
+      const canonical = await seedAnime({ source: 'otakudesu', url: 'https://otakudesu/naruto' });
+      const alias = await seedAnime({ source: 'samehadaku', url: 'https://samehadaku/naruto', canonicalId: canonical.id });
+      const d = await service.detail(alias.id);
+      expect(d?.anime.id).toBe(canonical.id);
+      expect(d?.isAlias).toBe(true);
+    });
+
+    it('episodesOf on alias resolves to canonical data', async () => {
+      const canonical = await seedAnime({ source: 'otakudesu', url: 'https://otakudesu/naruto' });
+      const alias = await seedAnime({ source: 'samehadaku', url: 'https://samehadaku/naruto', canonicalId: canonical.id });
+      await ds.getRepository(Episode).save({ source: 'samehadaku', url: 'https://ep/2', animeUrl: alias.url } as Episode);
+      const res = await service.episodesOf(alias.id);
+      expect(res?.anime.id).toBe(canonical.id);
+      expect(res?.episodes).toHaveLength(1);
+    });
+  });
+
+  describe('link / unlink', () => {
+    it('link sets canonicalId on alias', async () => {
+      const canonical = await seedAnime({ source: 'otakudesu' });
+      const alias = await seedAnime({ source: 'samehadaku' });
+      const result = await service.link(alias.id, canonical.id);
+      expect(result).toEqual({ ok: true });
+      const updated = await ds.getRepository(Anime).findOneBy({ id: alias.id });
+      expect(updated?.canonicalId).toBe(canonical.id);
+    });
+
+    it('link rejects chaining (canonical is itself an alias)', async () => {
+      const root = await seedAnime({ source: 'a' });
+      const mid = await seedAnime({ source: 'b', canonicalId: root.id });
+      const leaf = await seedAnime({ source: 'c' });
+      const result = await service.link(leaf.id, mid.id);
+      expect(result.ok).toBe(false);
+      expect(result.error).toMatch(/chain/i);
+    });
+
+    it('link rejects self-link', async () => {
+      const a = await seedAnime();
+      const result = await service.link(a.id, a.id);
+      expect(result.ok).toBe(false);
+    });
+
+    it('link returns error when canonical not found', async () => {
+      const a = await seedAnime();
+      const result = await service.link(a.id, 9999);
+      expect(result.ok).toBe(false);
+      expect(result.error).toMatch(/not found/i);
+    });
+
+    it('link returns error when alias not found', async () => {
+      const c = await seedAnime();
+      const result = await service.link(9999, c.id);
+      expect(result.ok).toBe(false);
+      expect(result.error).toMatch(/not found/i);
+    });
+
+    it('unlink clears canonicalId', async () => {
+      const canonical = await seedAnime({ source: 'a' });
+      const alias = await seedAnime({ source: 'b', canonicalId: canonical.id });
+      const ok = await service.unlink(alias.id);
+      expect(ok).toBe(true);
+      const updated = await ds.getRepository(Anime).findOneBy({ id: alias.id });
+      expect(updated?.canonicalId).toBeNull();
+    });
+
+    it('unlink returns false when anime is not an alias', async () => {
+      const a = await seedAnime();
+      expect(await service.unlink(a.id)).toBe(false);
+    });
+
+    it('unlink returns false when anime not found', async () => {
+      expect(await service.unlink(9999)).toBe(false);
+    });
+
+    it('link rejects when aliasId already has aliases (would create chain)', async () => {
+      const a = await seedAnime({ source: 'a' });
+      const b = await seedAnime({ source: 'b', canonicalId: a.id }); // b is alias of a
+      const c = await seedAnime({ source: 'c' });                    // c has no aliases yet
+      // linking a as alias of c would make b→a→c chain
+      // but 'a' already has aliases (b points to a), so this must be rejected
+      const result = await service.link(a.id, c.id);
+      expect(result.ok).toBe(false);
+      expect(result.error).toMatch(/chain/i);
+    });
+  });
+
+  it('delete returns false and does not delete a canonical with active aliases', async () => {
+    const canonical = await seedAnime({ source: 'a' });
+    await seedAnime({ source: 'b', canonicalId: canonical.id });
+    const ok = await service.remove(canonical.id);
+    expect(ok).toBe(false);
+    expect(await ds.getRepository(Anime).findOneBy({ id: canonical.id })).not.toBeNull();
   });
 });

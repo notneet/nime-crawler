@@ -66,4 +66,7 @@ export class Anime {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @Column({ type: 'int', nullable: true })
+  canonicalId?: number | null;
 }
