@@ -2,8 +2,12 @@
   <div class="border-b-2 border-ink px-6 py-4 flex items-center justify-between gap-3">
     <h2 class="!text-fg" x-text="title">Test result</h2>
     <div class="flex gap-2">
-      <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="toggle()" x-text="showingRaw ? 'Table' : 'Raw JSON'">Raw JSON</button>
+      <label x-show="publish && stageOnlyToggle" class="flex cursor-pointer select-none items-center gap-2">
+        <input type="checkbox" class="check" x-model="stageOnly" />
+        <span class="font-mono text-[0.58rem] font-bold uppercase tracking-[0.18em] text-mute">Stage only</span>
+      </label>
       <button type="button" class="btn btn-acid !px-2.5 !py-1.5" x-show="publish" :disabled="committing || running || !result" @click="commit()">Inject</button>
+      <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="toggle()" x-text="showingRaw ? 'Table' : 'Raw JSON'">Raw JSON</button>
       <button type="button" class="btn btn-ghost !px-2.5 !py-1.5" @click="$root.close()">Close</button>
     </div>
   </div>

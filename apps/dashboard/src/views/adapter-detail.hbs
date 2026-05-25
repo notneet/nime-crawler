@@ -46,12 +46,13 @@
             </div>
             <div class="flex items-center gap-2">
               <button type="button" class="btn btn-ghost" @click="test(stages[key], key)">▶ test</button>
+              <button type="button" class="btn btn-ghost" @click="toggleJson(key)" x-text="stages[key].__showJson ? '{ } hide' : '{ } json'">{ } json</button>
               <button type="button" class="btn btn-danger" @click="removeStage(key)">✕ remove</button>
             </div>
           </div>
 
           <!-- discover -->
-          <div class="space-y-2" x-show="stages[key].__open">
+          <div class="space-y-2" x-show="stages[key].__open && !stages[key].__showJson">
             <div class="flex items-center justify-between">
               <label class="label !mb-0">discover</label>
               <button type="button" class="btn btn-ghost" @click="addDiscover(stages[key])">+ rule</button>
@@ -69,8 +70,20 @@
             </div>
           </div>
 
+          <!-- raw json -->
+          <div x-show="stages[key].__showJson" class="space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-mono text-[0.62rem] text-deep" x-show="stages[key].__jsonErr" x-text="stages[key].__jsonErr"></p>
+              <button type="button" class="btn btn-ghost !px-2 !py-1 !text-[0.6rem] ml-auto" @click="copy(stages[key].__jsonStr, $event)">Copy</button>
+            </div>
+            <textarea class="input font-mono text-xs" rows="20" spellcheck="false"
+              x-model="stages[key].__jsonStr"
+              @input="applyJson(key, stages[key].__jsonStr)"
+              :class="stages[key].__jsonErr ? 'border-deep' : ''"></textarea>
+          </div>
+
           <!-- body -->
-          <div class="stage-body space-y-3" x-show="stages[key].__open">
+          <div class="stage-body space-y-3" x-show="stages[key].__open && !stages[key].__showJson">
             <!-- BROWSER -->
             <template x-if="stages[key].engine === 'browser'">
               <div class="space-y-3">

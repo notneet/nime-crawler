@@ -4,7 +4,7 @@ export const ACTION_TYPES = ['navigate', 'wait', 'waitFor', 'click', 'type', 'se
   'hover', 'keyPress', 'clear', 'waitForNetwork', 'reload'];
 export const CUSTOM_TYPES = ['regex', 'num-normalize', 'parse-as-url', 'extract-email', 'date-format', 'url-resolve'];
 
-const clone = (o) => (typeof structuredClone === 'function' ? structuredClone(o) : JSON.parse(JSON.stringify(o)));
+const clone = (o) => JSON.parse(JSON.stringify(o));
 const stripUi = (o) => {
   const c = { ...o };
   for (const k of Object.keys(c)) if (k.startsWith('__')) delete c[k];

@@ -13,6 +13,8 @@ document.addEventListener('alpine:init', () => {
     result: null,
     current: null,
     publish: null,
+    stageOnly: false,
+    stageOnlyToggle: false,
     running: false,
     committing: false,
 
@@ -25,6 +27,8 @@ document.addEventListener('alpine:init', () => {
     open(opts) {
       this.current = { endpoint: opts.endpoint, buildBody: opts.buildBody };
       this.publish = opts.publish || null;
+      this.stageOnlyToggle = !!opts.stageOnlyToggle;
+      this.stageOnly = !!opts.stageOnly;
       this.result = null;
       this.showingRaw = false;
       this.status = '';
@@ -69,7 +73,7 @@ document.addEventListener('alpine:init', () => {
       if (!this.publish || this.committing) return;
       const go = () => {
         let body;
-        try { body = this.publish.buildBody(this.url); }
+        try { body = this.publish.buildBody(this.url, this.stageOnly); }
         catch (err) { this.setStatus(err && err.message ? err.message : 'invalid request', true); return; }
         this.committing = true;
         this.setStatus('Injecting…', false);

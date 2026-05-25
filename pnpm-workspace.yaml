@@ -1,5 +1,6 @@
 allowBuilds:
   '@nestjs/core': true
+  '@openrouter/sdk': true
   better-sqlite3: true
   libxmljs2: true
   puppeteer: set this to true or false

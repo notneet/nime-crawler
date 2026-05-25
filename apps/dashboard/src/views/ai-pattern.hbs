@@ -1,0 +1,239 @@
+<link rel="stylesheet" href="https://unpkg.com/grapesjs/dist/css/grapes.min.css" />
+<script src="https://unpkg.com/grapesjs"></script>
+
+<div x-data="aiPattern()" class="space-y-4">
+
+  <!-- ── breadcrumb ── -->
+  <div class="crumb"><a href="/adapter">Adapters</a> <span class="gap">/</span> <span class="text-fg">AI Pattern Finder</span></div>
+
+  <!-- ── step: form ── -->
+  <template x-if="step === 'form'">
+    <div class="space-y-6">
+      <div>
+        <h1>AI Pattern Finder</h1>
+        <p class="mt-2 text-sm text-mute">Load a page, clean it visually, then let AI suggest XPath patterns.</p>
+      </div>
+
+      <div class="card p-6 space-y-4 max-w-2xl">
+        <div class="grid gap-4 sm:grid-cols-[1fr_150px_150px]">
+          <div>
+            <label class="label">Page URL</label>
+            <input class="input" type="url" x-model="url" placeholder="https://…" @keydown.enter.prevent="load()" />
+          </div>
+          <div>
+            <label class="label">Stage</label>
+            <select class="input" x-model="stage">
+              <option value="index">index</option>
+              <option value="detail">detail</option>
+              <option value="episode">episode</option>
+              <option value="batch">batch</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Load via</label>
+            <select class="input" x-model="fetchMode">
+              <option value="xpath">xpath / html</option>
+              <option value="browser">browser</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button type="button" class="btn btn-acid" @click="load()" :disabled="loading || !url">
+            <span x-show="!loading">Load Page</span>
+            <span x-show="loading">Loading…</span>
+          </button>
+          <span class="font-mono text-[0.62rem] text-mute" x-show="loading">Fetching HTML…</span>
+        </div>
+
+        <p class="font-mono text-[0.62rem] text-deep" x-show="error" x-text="error"></p>
+      </div>
+    </div>
+  </template>
+
+  <!-- ── step: editor ── -->
+  <div x-show="step === 'editor'" class="space-y-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1>Edit HTML</h1>
+        <p class="mt-1 text-sm text-mute">Select and delete noise (ads, nav, footer). Keep only what you want AI to analyze.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="pill" x-text="stage"></span>
+        <span class="font-mono text-[0.62rem] text-mute" x-text="url"></span>
+        <button type="button" class="btn btn-ghost" @click="step = 'form'">← Back</button>
+        <button type="button" class="btn btn-ghost" @click="reload()" :disabled="loading">↺ Reload</button>
+        <button type="button" class="btn btn-ghost" @click="keepSelected()" :disabled="!_editor" title="Remove everything except the selected element">Keep Selected</button>
+        <button type="button" class="btn btn-acid" @click="suggest()" :disabled="loading">
+          <span x-show="!loading">Find Patterns</span>
+          <span x-show="loading">Analyzing…</span>
+        </button>
+      </div>
+    </div>
+
+    <p class="font-mono text-[0.62rem] text-deep" x-show="error" x-text="error"></p>
+
+    <!-- GrapesJS mounts here — kept in DOM at all times so GrapesJS finds it -->
+    <div class="border-2 border-ink" style="height: 72vh; box-shadow: 8px 8px 0 0 var(--color-ink)">
+      <div id="gjs"></div>
+    </div>
+  </div>
+
+  <!-- ── step: result ── -->
+  <template x-if="step === 'result'">
+    <div class="space-y-4 max-w-2xl">
+      <div class="flex items-center justify-between">
+        <h1>Suggested Patterns</h1>
+        <div class="flex items-center gap-2">
+          <button type="button" class="btn btn-ghost" @click="step = 'editor'">← Edit again</button>
+          <button type="button" class="btn btn-ghost" @click="step = 'form'">New URL</button>
+          <button type="button" class="btn btn-ghost" @click="testResult()">▶ Test</button>
+          <button type="button" class="btn btn-ghost !px-2 !py-1 !text-[0.6rem]" @click="copy($event)">Copy</button>
+        </div>
+      </div>
+      <p class="text-xs text-mute">Paste into the stage JSON editor (JSON toggle on the stage card).</p>
+      <div class="card p-4">
+        <textarea class="input font-mono text-xs" rows="28" spellcheck="false" readonly x-model="result"></textarea>
+      </div>
+    </div>
+  </template>
+
+{{> test-result-dialog}}
+
+</div>
+
+<script type="module" src="/static/js/test-modal.mjs"></script>
+<script>
+  function aiPattern() {
+    return {
+      url: '',
+      stage: 'index',
+      fetchMode: 'xpath',
+      loading: false,
+      step: 'form',
+      result: '',
+      error: '',
+      _editor: null,
+
+      async load() {
+        if (!this.url) return;
+        this.loading = true;
+        this.error = '';
+        try {
+          const res = await fetch('/adapter/ai-pattern/fetch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: this.url, fetchMode: this.fetchMode }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            this.error = this._msg(data);
+            return;
+          }
+          this.step = 'editor';
+          // x-show removes display:none after next tick; wait two rAFs so the
+          // browser has painted the container before GrapesJS measures its size.
+          await this.$nextTick();
+          requestAnimationFrame(() => requestAnimationFrame(() => this._initEditor(data.html)));
+        } catch (e) {
+          this.error = e.message || 'Network error';
+        } finally {
+          this.loading = false;
+        }
+      },
+
+      _initEditor(html) {
+        if (this._editor) {
+          try { this._editor.destroy(); } catch {}
+          this._editor = null;
+        }
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const bodyHtml = doc.body.innerHTML;
+        const inlineStyles = [...doc.querySelectorAll('style')]
+          .map((s) => s.textContent)
+          .join('\n');
+
+        this._editor = grapesjs.init({
+          container: '#gjs',
+          height: '100%',
+          width: 'auto',
+          storageManager: false,
+          deviceManager: false,
+          fromElement: false,
+          components: bodyHtml,
+          panels: { defaults: [] },
+          ...(inlineStyles && { style: inlineStyles }),
+        });
+      },
+
+      reload() {
+        this.load();
+      },
+
+      keepSelected() {
+        if (!this._editor) return;
+        const selected = this._editor.getSelected();
+        if (!selected) return;
+        const wrapper = this._editor.getWrapper();
+        let root = selected;
+        while (root.parent() && root.parent() !== wrapper) {
+          root = root.parent();
+        }
+        [...wrapper.components().models].forEach((c) => { if (c !== root) c.remove(); });
+      },
+
+      async suggest() {
+        if (!this._editor) return;
+        this.loading = true;
+        this.error = '';
+        try {
+          const html = this._editor.getHtml();
+          const res = await fetch('/adapter/ai-pattern', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ html, stage: this.stage, fetchMode: this.fetchMode }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            this.error = this._msg(data);
+            return;
+          }
+          this.result = JSON.stringify(data, null, 2);
+          this.step = 'result';
+        } catch (e) {
+          this.error = e.message || 'Network error';
+        } finally {
+          this.loading = false;
+        }
+      },
+
+      testResult() {
+        if (!window.TestModal) return;
+        let config;
+        try { config = JSON.parse(this.result); } catch { return; }
+        window.TestModal.open({
+          stageLabel: this.stage,
+          endpoint: '/inject/test-config',
+          urlInput: true,
+          initialUrl: this.url,
+          buildBody: (url) => ({ config, url, baseUrl: this.url, stage: this.stage }),
+        });
+      },
+
+      copy(ev) {
+        if (!navigator.clipboard?.writeText) return;
+        const b = ev.currentTarget;
+        const o = b.textContent;
+        navigator.clipboard.writeText(this.result).then(
+          () => { b.textContent = '✓'; setTimeout(() => { b.textContent = o; }, 1200); },
+          () => {},
+        );
+      },
+
+      _msg(data) {
+        return (Array.isArray(data.message) ? data.message.join('; ') : data.message)
+          || data.error || 'Request failed';
+      },
+    };
+  }
+</script>

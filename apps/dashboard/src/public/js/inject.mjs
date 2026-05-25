@@ -32,14 +32,16 @@ document.addEventListener('alpine:init', () => {
         initialUrl: this.$refs.url.value,
         urlInput: true,
         autoRun: true,
+        stageOnlyToggle: true,
+        stageOnly: !!(noDiscoverEl && noDiscoverEl.checked),
         publish: {
           endpoint: '/inject',
           confirmMsg: 'Inject this URL into the crawl pipeline?',
-          buildBody: (u) => ({
+          buildBody: (u, stageOnly) => ({
             source: this.source,
             stage: this.stage,
             url: u,
-            noDiscover: noDiscoverEl && noDiscoverEl.checked ? 'on' : '',
+            noDiscover: stageOnly ? 'on' : '',
           }),
         },
       });

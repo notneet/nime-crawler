@@ -107,6 +107,43 @@ document.addEventListener('alpine:init', () => {
 
     serializeStage(stage) { return cleanStage(stage); },
 
+    copy(text, ev) {
+      if (!(navigator.clipboard && navigator.clipboard.writeText)) return;
+      const b = ev.currentTarget;
+      const o = b.textContent;
+      navigator.clipboard.writeText(text).then(() => { b.textContent = '✓'; setTimeout(() => { b.textContent = o; }, 1200); }, () => {});
+    },
+
+    toggleJson(key) {
+      const stage = this.stages[key];
+      stage.__showJson = !stage.__showJson;
+      if (stage.__showJson) {
+        stage.__jsonStr = JSON.stringify(this.stageJson(stage), null, 2);
+        stage.__jsonErr = '';
+      }
+    },
+
+    applyJson(key, text) {
+      const stage = this.stages[key];
+      try {
+        const parsed = JSON.parse(text);
+        const { __open, __showJson, __jsonStr } = stage;
+        this.stages[key] = { ...parsed };
+        this.normalize(this.stages[key]);
+        Object.assign(this.stages[key], { __open, __showJson, __jsonStr, __jsonErr: '' });
+      } catch (e) {
+        stage.__jsonErr = e.message;
+      }
+    },
+
+    stageJson(stage) {
+      const plain = JSON.parse(JSON.stringify(stage, (k, v) => k.startsWith('__') ? undefined : v));
+      const out = cleanStage(plain);
+      const disc = (plain.discover || []).map((d) => ({ stage: d.stage, fromKey: d.fromKey }));
+      if (disc.length) out.discover = disc;
+      return out;
+    },
+
     onSubmit(e) {
       try {
         this.$refs.field.value = JSON.stringify(serializeStages(this.stages, this.order));

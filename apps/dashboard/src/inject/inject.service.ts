@@ -29,6 +29,10 @@ export class InjectService {
     }));
   }
 
+  private static origin(url: string): string {
+    try { return new URL(url).origin; } catch { return url.trim(); }
+  }
+
   private async resolve(source: string, stage: string, url: string) {
     const adapter = await this.adapters.get(source);
     if (!adapter || !adapter.enabled) {
@@ -38,8 +42,8 @@ export class InjectService {
       throw new BadRequestException(`adapter "${source}" has no "${stage}" stage`);
     }
     const trimmed = url.trim();
-    if (!trimmed.startsWith(adapter.baseUrl)) {
-      throw new BadRequestException(`url must start with ${adapter.baseUrl}`);
+    if (InjectService.origin(trimmed) !== InjectService.origin(adapter.baseUrl)) {
+      throw new BadRequestException(`url must be on ${InjectService.origin(adapter.baseUrl)}`);
     }
     return { adapter, trimmed };
   }
@@ -59,8 +63,8 @@ export class InjectService {
 
   async testConfig(config: StageConfig, url: string, baseUrl: string): Promise<Record<string, unknown>> {
     const trimmed = url.trim();
-    if (!trimmed.startsWith(baseUrl)) {
-      throw new BadRequestException(`url must start with ${baseUrl}`);
+    if (InjectService.origin(trimmed) !== InjectService.origin(baseUrl)) {
+      throw new BadRequestException(`url must be on ${InjectService.origin(baseUrl)}`);
     }
     return this.engine.parse(config, trimmed);
   }

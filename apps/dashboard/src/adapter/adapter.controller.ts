@@ -14,6 +14,8 @@ import {
 import type { Response } from 'express';
 import { AdapterAdminService } from './adapter.service';
 import { AdapterFormDto } from './adapter-form.dto';
+import { AiPatternService } from './ai-pattern.service';
+import { AiPatternDto, AiPatternFetchDto } from './ai-pattern.dto';
 
 const BLANK_STAGES = JSON.stringify(
   { index: { engine: 'xpath', patterns: [], discover: [] } },
@@ -24,7 +26,25 @@ const BLANK_STAGES = JSON.stringify(
 @Controller('adapter')
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class AdapterController {
-  constructor(private readonly adapters: AdapterAdminService) {}
+  constructor(
+    private readonly adapters: AdapterAdminService,
+    private readonly aiPattern: AiPatternService,
+  ) {}
+
+  @Get('ai-pattern')
+  @Render('ai-pattern')
+  aiPatternPage() { return {}; }
+
+  @Post('ai-pattern/fetch')
+  async aiPatternFetch(@Body() dto: AiPatternFetchDto) {
+    const html = await this.aiPattern.fetchPageHtml(dto.url, dto.fetchMode);
+    return { html };
+  }
+
+  @Post('ai-pattern')
+  async aiPatternSuggest(@Body() dto: AiPatternDto) {
+    return this.aiPattern.suggest(dto.html, dto.stage, [], dto.fetchMode);
+  }
 
   @Get()
   @Render('adapter-list')
