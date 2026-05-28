@@ -24,8 +24,8 @@ importers:
         specifier: ^9.0.2
         version: 9.0.2(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.23)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@hanivanrizky/nestjs-browser-action':
-        specifier: ^0.11.0
-        version: 0.11.0(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.23)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        specifier: ^0.13.1
+        version: 0.13.1(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.23)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@hanivanrizky/nestjs-xpath-parser':
         specifier: ^0.3.1
         version: 0.3.1(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.23)(@noble/hashes@1.8.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -615,8 +615,8 @@ packages:
       reflect-metadata: ^0.2.2
       rxjs: ^7.8.1
 
-  '@hanivanrizky/nestjs-browser-action@0.11.0':
-    resolution: {integrity: sha512-/3eczhdLKj1/BY4y5ugvp2TGhEaUCae6MEcL4uDtUIknpZkmUstmPuacdAUa+SZccjlOkdyuQ+g/2sHrCzF02Q==}
+  '@hanivanrizky/nestjs-browser-action@0.13.1':
+    resolution: {integrity: sha512-z9hZPRpNMeUN6RNOz5qTCcmwhKP9OXuroth/orDcxxJO+Ttq5/4rO9HFCQQ30RkEPxkd/1b6tZ2Eyeytx3gDBw==}
     engines: {node: '>=18.13.0'}
     peerDependencies:
       '@nestjs/common': ^11.0.0
@@ -1935,8 +1935,8 @@ packages:
     resolution: {integrity: sha512-k7ndgKhwoQveBL+/1tqGJYNz097I7WOvwbmmU2AR5+magtbjPWQTS1C5vzGkBC8Ym8UWRzfKUzUUqFLypY4Q+w==}
     engines: {node: '>=20'}
 
-  cloakbrowser@0.3.30:
-    resolution: {integrity: sha512-e7kDZzOmqRn9VOFskTDLU6rFqj+TYj68942XFqs2m+CC5G8yHwkHhitjMQJaI/c5Zvl7Aez/kf1JjO/b3VqYaA==}
+  cloakbrowser@0.3.31:
+    resolution: {integrity: sha512-HtwlpwFKd5FJh4jjCS5awsScWIKB9ofNSTkHLSEh/9JH0Hv1L79zu0MExSMOCP1nzOsgrohbacwwWocuKloQ1A==}
     engines: {node: '>=20.0.0'}
     hasBin: true
     peerDependencies:
@@ -3652,8 +3652,8 @@ packages:
     resolution: {integrity: sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==}
     engines: {node: '>=10.0.0'}
 
-  streamx@2.25.0:
-    resolution: {integrity: sha512-0nQuG6jf1w+wddNEEXCF4nTg3LtufWINB5eFEN+5TNZW7KWJp6x87+JFL43vaAUPyCfH1wID+mNVyW6OHtFamg==}
+  streamx@2.26.0:
+    resolution: {integrity: sha512-VvNG1K72Po/xwJzxZFnZ++Tbrv4lwSptsbkFuzXCJAYZvCK5nnxsvXU6ajqkv7chyiI1Y0YXq2Jh8Iy8Y7NF/A==}
 
   string-length@4.0.2:
     resolution: {integrity: sha512-+l6rNN5fYHNhZZy41RXsYptCjA2Igmq4EG7kZAYFQI1E1VTXarr6ZPXBg6eq7Y6eK4FEhY6AJlyuFIb/v/S0VQ==}
@@ -4182,6 +4182,18 @@ packages:
 
   ws@8.20.1:
     resolution: {integrity: sha512-It4dO0K5v//JtTXuPkfEOaI3uUN87iYPnqo/ZzqCoG3g8uhA66QUMs/SrM0YK7/NAu+r4LMh/9dq2A7k+rHs+w==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.21.0:
+    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -4895,13 +4907,13 @@ snapshots:
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
 
-  '@hanivanrizky/nestjs-browser-action@0.11.0(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.23)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@hanivanrizky/nestjs-browser-action@0.13.1(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.23)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.23(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.23)(@nestjs/platform-express@11.1.23)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       class-transformer: 0.5.1
       class-validator: 0.15.1
-      cloakbrowser: 0.3.30(mmdb-lib@3.0.2)(puppeteer-core@24.43.1)(socks-proxy-agent@10.0.0)
+      cloakbrowser: 0.3.31(mmdb-lib@3.0.2)(puppeteer-core@24.43.1)(socks-proxy-agent@10.0.0)
       luxon: 3.7.2
       puppeteer-core: 24.43.1
       reflect-metadata: 0.2.2
@@ -6219,7 +6231,7 @@ snapshots:
 
   bare-stream@2.13.1(bare-events@2.8.3):
     dependencies:
-      streamx: 2.25.0
+      streamx: 2.26.0
       teex: 1.0.1
     optionalDependencies:
       bare-events: 2.8.3
@@ -6428,7 +6440,7 @@ snapshots:
       strip-ansi: 7.2.0
       wrap-ansi: 9.0.2
 
-  cloakbrowser@0.3.30(mmdb-lib@3.0.2)(puppeteer-core@24.43.1)(socks-proxy-agent@10.0.0):
+  cloakbrowser@0.3.31(mmdb-lib@3.0.2)(puppeteer-core@24.43.1)(socks-proxy-agent@10.0.0):
     dependencies:
       tar: 7.5.15
     optionalDependencies:
@@ -8099,7 +8111,7 @@ snapshots:
       devtools-protocol: 0.0.1608973
       typed-query-selector: 2.12.2
       webdriver-bidi-protocol: 0.4.1
-      ws: 8.20.1
+      ws: 8.21.0
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -8353,7 +8365,7 @@ snapshots:
 
   streamsearch@1.1.0: {}
 
-  streamx@2.25.0:
+  streamx@2.26.0:
     dependencies:
       events-universal: 1.0.1
       fast-fifo: 1.3.2
@@ -8485,7 +8497,7 @@ snapshots:
       b4a: 1.8.1
       bare-fs: 4.7.1
       fast-fifo: 1.3.2
-      streamx: 2.25.0
+      streamx: 2.26.0
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -8501,7 +8513,7 @@ snapshots:
 
   teex@1.0.1:
     dependencies:
-      streamx: 2.25.0
+      streamx: 2.26.0
     transitivePeerDependencies:
       - bare-abort-controller
       - react-native-b4a
@@ -8902,6 +8914,8 @@ snapshots:
       signal-exit: 4.1.0
 
   ws@8.20.1: {}
+
+  ws@8.21.0: {}
 
   xml-name-validator@5.0.0: {}
 
